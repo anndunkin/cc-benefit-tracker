@@ -121,6 +121,59 @@ describe('Usage log & projections', () => {
     proj = computeProjections(db, now.getUTCFullYear()).find(p => p.benefit.id === b.id)!;
     expect(proj.status).toBe('available');
   });
+
+  // v1.0.1: quarterly benefit stores per-period value; projection filters usages
+  // by current-quarter period_key and totals the per-period cap.
+  it('quarterly benefit reports per-period max and only counts current-quarter usages', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Q credit', category: 'airline_credit',
+      reset_cadence: 'quarterly', uses_per_period: 1, value_usd: 50,
+    });
+    const year = new Date().getUTCFullYear();
+    // Log two usages in Q1 and Q2 of the current year.
+    usageCreate(db, { benefit_id: b.id, used_on: `${year}-03-11`, amount_usd: 50 });
+    usageCreate(db, { benefit_id: b.id, used_on: `${year}-06-10`, amount_usd: 50 });
+    // Anchor projection at Q3 (2026-07-28 style)
+    // computeProjections uses today's UTC date for the current year, so we can
+    // only pin the assertion for the actual current quarter. What matters is:
+    // uses_max is 1 (per current period) and total_value is 1 * 50 = 50.
+    const proj = computeProjections(db, year).find(p => p.benefit.id === b.id)!;
+    expect(proj.uses_max).toBe(1);
+    // total_value = uses_max * value_usd = 1 * 50 = 50
+    // Depending on which quarter today falls in:
+    //   Q1 or Q2 (Jan-Jun): the current-period usage is present, exhausted.
+    //   Q3 or Q4 (Jul-Dec): no current-period usage, available with $50 remaining.
+    if (proj.uses_count === 0) {
+      expect(proj.value_remaining_usd).toBe(50);
+      expect(proj.status).toBe('available');
+    } else {
+      expect(proj.uses_count).toBe(1);
+      expect(proj.status).toBe('exhausted');
+    }
+  });
+
+  // v1.0.1: single-use "toggle" flow. Tile records a usage with null amount;
+  // projection must still count it and mark the benefit exhausted.
+  it('single-use toggle: null-amount usage still counts toward exhaustion', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Companion cert', category: 'companion_ticket',
+      reset_cadence: 'annual', uses_per_period: 1, value_usd: null,
+    });
+    const year = new Date().getUTCFullYear();
+    usageCreate(db, { benefit_id: b.id, used_on: `${year}-04-01`, amount_usd: null });
+    const proj = computeProjections(db, year).find(p => p.benefit.id === b.id)!;
+    expect(proj.uses_count).toBe(1);
+    expect(proj.uses_max).toBe(1);
+    expect(proj.status).toBe('exhausted');
+    // No dollar value stored on the benefit or usage — remaining stays null.
+    expect(proj.value_remaining_usd).toBeNull();
+  });
 });
 
 describe('Refresh workflow (diff & review)', () => {

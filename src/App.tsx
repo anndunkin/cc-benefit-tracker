@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './theme';
-import Dashboard from './pages/Dashboard';
+import DashboardConsumable from './pages/DashboardConsumable';
+import DashboardOngoing from './pages/DashboardOngoing';
 import Cards from './pages/Cards';
 import CardDetail from './pages/CardDetail';
 import Programs from './pages/Programs';
@@ -12,7 +13,8 @@ import Settings from './pages/Settings';
 import RefreshBanner from './components/RefreshBanner';
 
 const NAV = [
-  { to: '/',          label: 'Dashboard', end: true },
+  { to: '/',          label: 'Credits & Usages', end: true },
+  { to: '/ongoing',   label: 'Ongoing Benefits' },
   { to: '/cards',     label: 'Cards' },
   { to: '/programs',  label: 'Programs' },
   { to: '/benefits',  label: 'Manage Benefits' },
@@ -63,7 +65,8 @@ function Shell() {
 
       <main className="flex-1 overflow-auto p-6">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<DashboardConsumable />} />
+          <Route path="/ongoing" element={<DashboardOngoing />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/programs" element={<Programs />} />
