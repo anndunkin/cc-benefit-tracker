@@ -540,7 +540,9 @@ describe('v1.0.3 seed-refresh migration', () => {
     const db = legacyDb();
     applyDataMigrations(db);
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(row.value).toBe('1.0.5');
+    // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
+    // sequentially; the final stamp is whatever the latest release is.
+    expect(row.value).toBe('1.0.6');
   });
 });
 
@@ -557,7 +559,8 @@ describe('v1.0.4 migration and features', () => {
     applyDataMigrations(db);
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.5');
+    // Migrations run through the whole chain; final stamp is the latest release.
+    expect(stamp.value).toBe('1.0.6');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -791,5 +794,208 @@ describe('v1.0.5 migration and features', () => {
     applyDataMigrations(db);
     const benCols = db.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
     expect(benCols.some((c) => c.name === 'reset_years')).toBe(true);
+  });
+});
+
+// ─── v1.0.6 tests ────────────────────────────────────────────────────────────
+
+describe('v1.0.6 migration and features', () => {
+  it('#1 Delta Reserve Sky Club visits benefit instructs count-based logging', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT notes FROM benefits
+      WHERE card_id = 'delta_reserve' AND title LIKE '%Delta Sky Club Visits%'
+    `).get() as { notes: string | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.notes ?? '').toMatch(/one use|no dollar/i);
+  });
+
+  it('#2 Delta Reserve unlimited SkyClub after $75k spend exists', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, spend_threshold_usd FROM benefits
+      WHERE card_id = 'delta_reserve' AND title LIKE '%Unlimited Delta Sky Club Access%'
+    `).get() as { reset_cadence: string; spend_threshold_usd: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('spend_threshold');
+    expect(row!.spend_threshold_usd).toBe(75000);
+  });
+
+  it('#3 Amex Platinum Centurion guest access after $75k spend exists', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, spend_threshold_usd FROM benefits
+      WHERE card_id = 'amex_platinum' AND title LIKE '%Centurion%Guest Access%'
+    `).get() as { reset_cadence: string; spend_threshold_usd: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('spend_threshold');
+    expect(row!.spend_threshold_usd).toBe(75000);
+  });
+
+  it('#4 deleting a logged usage removes the usage row (baseline)', () => {
+    const db = seededDb();
+    const anyBenefit = benefitsGetAll(db).find(b => b.reset_cadence !== 'unlimited')!;
+    const u = usageCreate(db, {
+      benefit_id: anyBenefit.id, used_on: '2026-01-15', amount_usd: 10, notes: 'test',
+    } as any);
+    const uid = (u as any).id as number;
+    expect(usagesForBenefit(db, anyBenefit.id).length).toBeGreaterThan(0);
+    usageDelete(db, uid);
+    expect(usagesForBenefit(db, anyBenefit.id).find(x => x.id === uid)).toBeUndefined();
+  });
+
+  it('#5 Amex Platinum Uber One credit is monthly', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, uses_per_period FROM benefits
+      WHERE card_id = 'amex_platinum' AND title LIKE '%Uber One%'
+    `).get() as { reset_cadence: string; uses_per_period: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('monthly');
+  });
+
+  it('#6 Amex Platinum $200 Uber credit description explains Jan-Nov + Dec split', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT description FROM benefits
+      WHERE card_id = 'amex_platinum' AND title LIKE '%Uber Cash%'
+    `).get() as { description: string | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.description ?? '').toMatch(/15.*Jan|Nov.*15|\$35.*Dec|Dec.*\$35/i);
+  });
+
+  it('#7 Bonvoy Gold + Hilton Gold status benefits are unlimited/ongoing', () => {
+    const db = seededDb();
+    const bonvoy = db.prepare(`
+      SELECT reset_cadence FROM benefits
+      WHERE card_id = 'amex_platinum' AND title LIKE '%Bonvoy Gold%'
+    `).get() as { reset_cadence: string } | undefined;
+    expect(bonvoy).toBeDefined();
+    expect(bonvoy!.reset_cadence).toBe('unlimited');
+    const marriottBiz = db.prepare(`
+      SELECT reset_cadence FROM benefits
+      WHERE card_id = 'marriott_business' AND title LIKE '%Bonvoy Gold%'
+    `).get() as { reset_cadence: string } | undefined;
+    expect(marriottBiz).toBeDefined();
+    expect(marriottBiz!.reset_cadence).toBe('unlimited');
+  });
+
+  it('#8/#9 no duplicate legacy Virgin Atlantic titles remain', () => {
+    const db = seededDb();
+    // Legacy titles missing suffix must be absent.
+    const legacyTierPoints = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'ba_visa' AND title = 'Tier Points on Spend'
+    `).get() as { n: number };
+    expect(legacyTierPoints.n).toBe(0);
+    const legacyAuth = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = '2,500 Virgin Points per Authorized User'
+    `).get() as { n: number };
+    expect(legacyAuth.n).toBe(0);
+  });
+
+  it('#10 no BofA legacy benefit rows in seeded DB', () => {
+    const db = seededDb();
+    const bofa = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits WHERE title LIKE '[LEGACY BofA card]%'
+    `).get() as { n: number };
+    expect(bofa.n).toBe(0);
+  });
+
+  it('#11 AA elite ladder: 15K/60K/100K/175K/250K/400K tiers exist, no tier > 400K', () => {
+    const db = seededDb();
+    const tiers = db.prepare(`
+      SELECT title FROM benefits WHERE program_id = 'aa_status' AND is_choice_option = 0
+      ORDER BY sort_order ASC
+    `).all() as Array<{ title: string }>;
+    const titles = tiers.map(t => t.title).join(' || ');
+    for (const marker of ['15,000 Loyalty Points', '60,000 Loyalty Points', '100,000 Loyalty Points',
+                          '175,000 Loyalty Points', '250,000 Loyalty Points', '400,000 Loyalty Points']) {
+      expect(titles).toContain(marker);
+    }
+    // No tier > 400K modeled.
+    for (const skip of ['550,000', '750,000', '1,000,000', '3,000,000', '5,000,000']) {
+      expect(titles).not.toContain(skip);
+    }
+  });
+
+  it('#11 AA prerequisite chain wires each tier to its predecessor', () => {
+    const db = seededDb();
+    // Get 100K row; its prerequisite_benefit_id should point at 60K row.
+    const t100 = db.prepare(`
+      SELECT id, prerequisite_benefit_id FROM benefits
+      WHERE program_id = 'aa_status' AND title LIKE '100,000 Loyalty Points%' AND is_choice_option = 0
+    `).get() as { id: number; prerequisite_benefit_id: number | null } | undefined;
+    expect(t100).toBeDefined();
+    expect(t100!.prerequisite_benefit_id).not.toBeNull();
+    const parent = db.prepare(`SELECT title FROM benefits WHERE id = ?`).get(t100!.prerequisite_benefit_id) as { title: string };
+    expect(parent.title).toMatch(/60,000 Loyalty Points/);
+  });
+
+  it('#11 AA choice options are flagged is_choice_option=1 and point at their tier', () => {
+    const db = seededDb();
+    // Pick a 175K choice option row.
+    const choice = db.prepare(`
+      SELECT prerequisite_benefit_id, is_choice_option FROM benefits
+      WHERE program_id = 'aa_status' AND title LIKE '175K LP Choice - %'
+      LIMIT 1
+    `).get() as { prerequisite_benefit_id: number | null; is_choice_option: number } | undefined;
+    expect(choice).toBeDefined();
+    expect(choice!.is_choice_option).toBe(1);
+    expect(choice!.prerequisite_benefit_id).not.toBeNull();
+    const parent = db.prepare(`SELECT title FROM benefits WHERE id = ?`).get(choice!.prerequisite_benefit_id) as { title: string };
+    expect(parent.title).toMatch(/175,000 Loyalty Points/);
+  });
+
+  it('#12 Admirals Club Membership is unlimited/ongoing', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence FROM benefits
+      WHERE card_id = 'aa_executive' AND title LIKE '%Admirals Club Membership%'
+    `).get() as { reset_cadence: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('unlimited');
+  });
+
+  it('adds prerequisite/choice columns on legacy DBs at v1.0.5', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        expiration_date TEXT, reset_years INTEGER,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.5')`).run();
+    applyDataMigrations(db);
+    const benCols = db.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+    expect(benCols.some((c) => c.name === 'prerequisite_benefit_id')).toBe(true);
+    expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
+    expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
+    const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(meta.value).toBe('1.0.6');
+  });
+
+  it('choice_selected toggle survives via benefitUpdate', () => {
+    const db = seededDb();
+    // Find any is_choice_option row.
+    const choice = db.prepare(`
+      SELECT id, choice_selected FROM benefits WHERE is_choice_option = 1 LIMIT 1
+    `).get() as { id: number; choice_selected: number } | undefined;
+    expect(choice).toBeDefined();
+    expect(choice!.choice_selected).toBe(0);
+    benefitUpdate(db, choice!.id, { choice_selected: 1 } as any);
+    const after = db.prepare(`SELECT choice_selected FROM benefits WHERE id = ?`).get(choice!.id) as { choice_selected: number };
+    expect(after.choice_selected).toBe(1);
   });
 });

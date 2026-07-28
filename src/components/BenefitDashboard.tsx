@@ -51,13 +51,54 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
   }
   useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [refYear]);
 
+  // Build the set of benefit IDs whose current-period cap has been met (uses_count >= uses_max).
+  // Prerequisite tiers are hidden until their parent's cap is met. Untracked (uses_max === null)
+  // benefits are treated as always-achieved so downstream tiers appear when the parent is
+  // marked as an ongoing benefit.
+  const achievedIds = useMemo(() => {
+    const s = new Set<number>();
+    for (const p of projections) {
+      const cap = p.uses_max;
+      if (cap === null || p.uses_count >= cap) s.add(p.benefit.id);
+    }
+    return s;
+  }, [projections]);
+
+  // Map of parent benefit id -> array of child projections that represent selectable
+  // choice options. Used by tiles to render a "Choose rewards" affordance on the parent.
+  const choiceChildrenByParent = useMemo(() => {
+    const m = new Map<number, BenefitProjection[]>();
+    for (const p of projections) {
+      if (p.benefit.is_choice_option === 1 && p.benefit.prerequisite_benefit_id) {
+        const pid = p.benefit.prerequisite_benefit_id;
+        const list = m.get(pid) ?? [];
+        list.push(p);
+        m.set(pid, list);
+      }
+    }
+    return m;
+  }, [projections]);
+
+  // Track which parent tier's choice picker is currently open.
+  const [choicePickerParentId, setChoicePickerParentId] = useState<number | null>(null);
+
   // Split by mode: `unlimited` cadence goes to ongoing, everything else to consumable.
+  // Additionally hide any benefit whose prerequisite has not been achieved, and any
+  // is_choice_option row whose choice_selected flag is off.
   const modeFiltered = useMemo(() => {
     return projections.filter(p => {
+      // Prerequisite gate: hide the row until its parent tier has been achieved.
+      if (p.benefit.prerequisite_benefit_id && !achievedIds.has(p.benefit.prerequisite_benefit_id)) {
+        return false;
+      }
+      // Choice-option gate: only show choice options the user has ticked.
+      if (p.benefit.is_choice_option === 1 && p.benefit.choice_selected !== 1) {
+        return false;
+      }
       const isUnlimited = p.benefit.reset_cadence === 'unlimited';
       return mode === 'ongoing' ? isUnlimited : !isUnlimited;
     });
-  }, [projections, mode]);
+  }, [projections, mode, achievedIds]);
 
   const filtered = useMemo(() => {
     return modeFiltered.filter(p => {
@@ -212,21 +253,38 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
               <span className="ml-auto text-xs text-slate-500">{g.items.length} benefit{g.items.length === 1 ? '' : 's'}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {g.items.map(p =>
-                mode === 'consumable' ? (
+              {g.items.map(p => {
+                const childOptions = choiceChildrenByParent.get(p.benefit.id) ?? [];
+                return mode === 'consumable' ? (
                   <ConsumableTile
                     key={p.benefit.id}
                     p={p}
                     onLogUsage={() => setModalBenefitId(p.benefit.id)}
                     onChanged={reload}
+                    choiceChildrenCount={childOptions.length}
+                    onOpenChoicePicker={() => setChoicePickerParentId(p.benefit.id)}
                   />
                 ) : (
-                  <OngoingTile key={p.benefit.id} p={p} />
-                )
-              )}
+                  <OngoingTile
+                    key={p.benefit.id}
+                    p={p}
+                    choiceChildrenCount={childOptions.length}
+                    onOpenChoicePicker={() => setChoicePickerParentId(p.benefit.id)}
+                  />
+                );
+              })}
             </div>
           </section>
         ))
+      )}
+
+      {choicePickerParentId !== null && (
+        <ChoicePickerModal
+          parent={projections.find(p => p.benefit.id === choicePickerParentId)!.benefit}
+          children={choiceChildrenByParent.get(choicePickerParentId) ?? []}
+          onClose={() => setChoicePickerParentId(null)}
+          onSaved={() => { setChoicePickerParentId(null); reload(); }}
+        />
       )}
 
       {modalBenefitId !== null && (
@@ -242,7 +300,19 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
 
 // ─── Consumable benefit tile (used-of-max, log usage) ─────────────────────────
 
-function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; onLogUsage: () => void; onChanged: () => void }) {
+function ConsumableTile({
+  p,
+  onLogUsage,
+  onChanged,
+  choiceChildrenCount = 0,
+  onOpenChoicePicker,
+}: {
+  p: BenefitProjection;
+  onLogUsage: () => void;
+  onChanged: () => void;
+  choiceChildrenCount?: number;
+  onOpenChoicePicker?: () => void;
+}) {
   const b = p.benefit;
   const usesMax = p.uses_max;
   const usesCount = p.uses_count;
@@ -433,6 +503,11 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
             Source ↗
           </a>
         )}
+        {choiceChildrenCount > 0 && onOpenChoicePicker && (
+          <button className="btn-ghost text-xs py-1 px-2" onClick={onOpenChoicePicker} title="Pick which Loyalty Choice Rewards to show">
+            Choose rewards ({choiceChildrenCount})
+          </button>
+        )}
         {p.usages.length > 0 && (
           <span className="ml-auto text-xs text-slate-400">
             last: {p.usages[0].used_on}
@@ -446,7 +521,15 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
 
 // ─── Ongoing benefit tile (no usage tracking) ─────────────────────────────────
 
-function OngoingTile({ p }: { p: BenefitProjection }) {
+function OngoingTile({
+  p,
+  choiceChildrenCount = 0,
+  onOpenChoicePicker,
+}: {
+  p: BenefitProjection;
+  choiceChildrenCount?: number;
+  onOpenChoicePicker?: () => void;
+}) {
   const b = p.benefit;
 
   return (
@@ -473,12 +556,119 @@ function OngoingTile({ p }: { p: BenefitProjection }) {
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-auto pt-1">
+      <div className="flex items-center gap-2 mt-auto pt-1 flex-wrap">
         {b.source_url && (
           <a href={b.source_url} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
             Source ↗
           </a>
         )}
+        {choiceChildrenCount > 0 && onOpenChoicePicker && (
+          <button className="btn-ghost text-xs py-1 px-2" onClick={onOpenChoicePicker} title="Pick which Loyalty Choice Rewards to show">
+            Choose rewards ({choiceChildrenCount})
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Choice picker modal (parent tier → toggle which child options appear) ─────
+
+function ChoicePickerModal({
+  parent,
+  children,
+  onClose,
+  onSaved,
+}: {
+  parent: import('../../electron/types').Benefit;
+  children: BenefitProjection[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [selected, setSelected] = useState<Set<number>>(
+    () => new Set(children.filter(c => c.benefit.choice_selected === 1).map(c => c.benefit.id))
+  );
+  const [saving, setSaving] = useState(false);
+
+  function toggle(id: number) {
+    setSelected(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+
+  async function save() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      for (const c of children) {
+        const want = selected.has(c.benefit.id) ? 1 : 0;
+        if (c.benefit.choice_selected !== want) {
+          await window.api.benefits.update(c.benefit.id, { choice_selected: want });
+        }
+      }
+      onSaved();
+    } catch (e) {
+      alert(`Failed to save choices: ${e}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-4"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-2 mb-3">
+          <div className="flex-1">
+            <div className="font-semibold">Choose rewards</div>
+            <div className="text-xs text-slate-500 mt-0.5">{parent.title}</div>
+          </div>
+          <button className="text-slate-400 hover:text-slate-600 text-xl leading-none" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+          Tick the option(s) you selected for this tier. Only ticked options appear on the dashboard.
+        </div>
+        <div className="flex flex-col gap-2">
+          {children.map(c => {
+            const isOn = selected.has(c.benefit.id);
+            return (
+              <label
+                key={c.benefit.id}
+                className={`flex items-start gap-2 p-2 rounded-md border cursor-pointer ${
+                  isOn
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={isOn}
+                  onChange={() => toggle(c.benefit.id)}
+                />
+                <div className="flex-1 text-sm">
+                  <div className="font-medium leading-tight">{c.benefit.title}</div>
+                  {c.benefit.description && (
+                    <div className="text-xs text-slate-500 mt-0.5">{c.benefit.description}</div>
+                  )}
+                </div>
+              </label>
+            );
+          })}
+          {children.length === 0 && (
+            <div className="text-xs text-slate-500">No choice options defined for this tier.</div>
+          )}
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <button className="btn-ghost text-sm" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn-primary text-sm" onClick={save} disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
       </div>
     </div>
   );

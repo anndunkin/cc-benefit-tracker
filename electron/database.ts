@@ -82,6 +82,9 @@ export function initSchema(database: Database.Database): void {
       expiration_note TEXT,
       expiration_date TEXT,
       reset_years INTEGER,
+      prerequisite_benefit_id INTEGER REFERENCES benefits(id) ON DELETE SET NULL,
+      is_choice_option INTEGER NOT NULL DEFAULT 0,
+      choice_selected INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
       sort_order INTEGER NOT NULL DEFAULT 0,
       source_url TEXT,
@@ -164,10 +167,12 @@ export function seedIfFresh(database: Database.Database): void {
   const insertBenefit = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, reset_years, sort_order, source_url, notes
+      value_usd, spend_threshold_usd, expiration_note, reset_years, is_choice_option,
+      sort_order, source_url, notes
     ) VALUES (
       @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
-      @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @sort_order, @source_url, @notes
+      @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @is_choice_option,
+      @sort_order, @source_url, @notes
     )
   `);
 
@@ -198,6 +203,7 @@ export function seedIfFresh(database: Database.Database): void {
       spend_threshold_usd: b.spend_threshold_usd ?? null,
       expiration_note: b.expiration_note ?? null,
       reset_years: (b as any).reset_years ?? null,
+      is_choice_option: (b as any).is_choice_option ?? 0,
       sort_order: b.sort_order ?? 0,
       source_url: b.source_url ?? null,
       notes: b.notes ?? null,
@@ -205,10 +211,21 @@ export function seedIfFresh(database: Database.Database): void {
       category: b.category,
       reset_cadence: b.reset_cadence,
     });
+
+    // Resolve prerequisite_benefit_title → prerequisite_benefit_id for fresh DBs.
+    const findRow = database.prepare('SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?');
+    const updateFk = database.prepare('UPDATE benefits SET prerequisite_benefit_id = ? WHERE id = ?');
+    for (const b of SEED_BENEFITS) {
+      const parentTitle = (b as any).prerequisite_benefit_title as string | undefined;
+      if (!parentTitle) continue;
+      const child = findRow.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+      const parent = findRow.get(b.card_id ?? null, b.program_id ?? null, parentTitle) as { id: number } | undefined;
+      if (child && parent) updateFk.run(parent.id, child.id);
+    }
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.5');
+  metaSet(database, 'seed_version', '1.0.6');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -594,6 +611,179 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  // v1.0.6 — add prerequisite_benefit_id / is_choice_option / choice_selected
+  // columns to existing DBs; delete legacy Virgin Atlantic duplicates and any
+  // BofA legacy rows still lingering from v1.0.0; UPSERT every seed benefit
+  // (which now includes the AA prereq/choice-split rewrite plus the two new
+  // Amex Plat + Delta Reserve $75k spend unlocks); resolve prerequisite_benefit_title
+  // → prerequisite_benefit_id by title lookup.
+  const seedVersion4 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion4 !== '1.0.6') {
+    const tx = database.transaction(() => {
+      // 1) Add prerequisite/choice columns idempotently.
+      const benCols = database.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+      if (!benCols.some((c) => c.name === 'prerequisite_benefit_id')) {
+        database.exec('ALTER TABLE benefits ADD COLUMN prerequisite_benefit_id INTEGER REFERENCES benefits(id) ON DELETE SET NULL');
+        run.push('v1_0_6_added_prerequisite_benefit_id');
+      }
+      if (!benCols.some((c) => c.name === 'is_choice_option')) {
+        database.exec('ALTER TABLE benefits ADD COLUMN is_choice_option INTEGER NOT NULL DEFAULT 0');
+        run.push('v1_0_6_added_is_choice_option');
+      }
+      if (!benCols.some((c) => c.name === 'choice_selected')) {
+        database.exec('ALTER TABLE benefits ADD COLUMN choice_selected INTEGER NOT NULL DEFAULT 0');
+        run.push('v1_0_6_added_choice_selected');
+      }
+
+      // 2) Delete legacy duplicate / removed benefit rows by title (items #8, #9, #10).
+      //    Virgin Atlantic duplicates: legacy titles missing the newer suffixes.
+      const delQueries: Array<{ title: string; cardId: string | null }> = [
+        // #8: legacy "Tier Points on Spend" (superseded by "($1,500 per £5,000…)" title)
+        { title: 'Tier Points on Spend', cardId: 'ba_visa' },
+        // #9: legacy "2,500 Virgin Points per Authorized User" (superseded by "(up to 4 users)")
+        { title: '2,500 Virgin Points per Authorized User', cardId: 'virgin_atlantic' },
+        // #10: any remaining BofA legacy rows
+        { title: '[LEGACY BofA card] 7,500 bonus miles at $15,000 spend', cardId: null },
+        { title: '[LEGACY BofA card] Companion award ticket at $25,000 spend', cardId: null },
+      ];
+      let deletedLegacy = 0;
+      const delByTitle = database.prepare('DELETE FROM benefits WHERE title = ? AND (? IS NULL OR card_id = ?)');
+      for (const q of delQueries) {
+        const r = delByTitle.run(q.title, q.cardId, q.cardId);
+        deletedLegacy += r.changes;
+      }
+      // Also delete any row whose title starts with the legacy BofA marker.
+      const delLegacyPrefix = database.prepare("DELETE FROM benefits WHERE title LIKE '[LEGACY BofA card]%'").run();
+      deletedLegacy += delLegacyPrefix.changes;
+      if (deletedLegacy > 0) run.push(`v1_0_6_deleted_${deletedLegacy}_legacy_benefits`);
+
+      // 3) UPSERT all seed cards + programs first (in case new ones were added).
+      const insertCard = database.prepare(`
+        INSERT OR IGNORE INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url)
+        VALUES (@id, @name, @issuer, @network, @annual_fee_usd, 1, 1, @color_hex, @notes, @source_url)
+      `);
+      for (const c of SEED_CARDS) insertCard.run({
+        id: c.id,
+        name: c.name,
+        issuer: c.issuer,
+        network: c.network,
+        annual_fee_usd: c.annual_fee_usd ?? null,
+        color_hex: (c as any).color_hex ?? null,
+        notes: (c as any).notes ?? null,
+        source_url: (c as any).source_url ?? null,
+      });
+      const insertProgram = database.prepare(`
+        INSERT OR IGNORE INTO programs (id, name, program_type, is_active, notes, source_url)
+        VALUES (@id, @name, @program_type, 1, @notes, @source_url)
+      `);
+      for (const p of SEED_PROGRAMS) insertProgram.run({
+        id: p.id,
+        name: p.name,
+        program_type: p.program_type,
+        notes: (p as any).notes ?? null,
+        source_url: (p as any).source_url ?? null,
+      });
+
+      // 4) UPSERT every seed benefit — update writable columns including the new
+      //    is_choice_option flag (choice_selected is intentionally NOT overwritten
+      //    so the user's manual selections survive re-seed).
+      const findBenefit = database.prepare(`
+        SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?
+      `);
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          reset_years = @reset_years,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, reset_years, is_choice_option,
+          sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @is_choice_option,
+          @sort_order, @source_url, @notes
+        )
+      `);
+      let updated = 0, inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        if (b.card_id) {
+          const cardExists = database.prepare('SELECT 1 FROM cards WHERE id = ?').get(b.card_id);
+          if (!cardExists) continue;
+        }
+        if (b.program_id) {
+          const progExists = database.prepare('SELECT 1 FROM programs WHERE id = ?').get(b.program_id);
+          if (!progExists) continue;
+        }
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        const params = {
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        };
+        if (existing) {
+          updateBenefit.run({ ...params, id: existing.id });
+          updated++;
+        } else {
+          insertBenefit.run(params);
+          inserted++;
+        }
+      }
+      if (updated > 0) run.push(`v1_0_6_upserted_${updated}_benefits`);
+      if (inserted > 0) run.push(`v1_0_6_inserted_${inserted}_benefits`);
+
+      // 5) Resolve prerequisite_benefit_title → prerequisite_benefit_id.
+      //    For every seed benefit that declares prerequisite_benefit_title,
+      //    find its DB row (matching by card/program + title) AND the parent
+      //    (same card/program, matching title) and wire the FK. This runs
+      //    every v1.0.6 seed so it self-heals if titles change.
+      const findRow = database.prepare(`
+        SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?
+      `);
+      const updateFk = database.prepare(`UPDATE benefits SET prerequisite_benefit_id = ? WHERE id = ?`);
+      let linked = 0;
+      for (const b of SEED_BENEFITS) {
+        const parentTitle = (b as any).prerequisite_benefit_title as string | undefined;
+        if (!parentTitle) continue;
+        const child = findRow.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        const parent = findRow.get(b.card_id ?? null, b.program_id ?? null, parentTitle) as { id: number } | undefined;
+        if (child && parent) {
+          updateFk.run(parent.id, child.id);
+          linked++;
+        }
+      }
+      if (linked > 0) run.push(`v1_0_6_linked_${linked}_prerequisites`);
+
+      metaSet(database, 'seed_version', '1.0.6');
+      run.push('v1_0_6_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 
@@ -749,6 +939,7 @@ export function programDelete(database: Database.Database, id: string): void {
 
 const BEN_COLS = `id, card_id, program_id, title, description, category, reset_cadence,
   uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+  prerequisite_benefit_id, is_choice_option, choice_selected,
   is_active, sort_order, source_url, notes, is_user_modified, created_at, updated_at`;
 
 export function benefitsGetAll(database: Database.Database): Benefit[] {
@@ -771,9 +962,11 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
   const info = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years, is_active, sort_order, source_url,
+      value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+      is_choice_option, choice_selected,
+      is_active, sort_order, source_url,
       notes, is_user_modified
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     input.card_id ?? null,
     input.program_id ?? null,
@@ -787,6 +980,8 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.expiration_note ?? null,
     input.expiration_date ?? null,
     input.reset_years ?? null,
+    input.is_choice_option ?? 0,
+    input.choice_selected ?? 0,
     input.is_active ?? 1,
     input.sort_order ?? 0,
     input.source_url ?? null,
@@ -810,6 +1005,8 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       expiration_note = @expiration_note,
       expiration_date = @expiration_date,
       reset_years = @reset_years,
+      is_choice_option = COALESCE(@is_choice_option, is_choice_option),
+      choice_selected = COALESCE(@choice_selected, choice_selected),
       is_active = COALESCE(@is_active, is_active),
       sort_order = COALESCE(@sort_order, sort_order),
       source_url = @source_url,
@@ -829,6 +1026,8 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     expiration_note: patch.expiration_note ?? current.expiration_note,
     expiration_date: patch.expiration_date ?? current.expiration_date,
     reset_years: patch.reset_years ?? current.reset_years,
+    is_choice_option: patch.is_choice_option ?? null,
+    choice_selected: patch.choice_selected ?? null,
     is_active: patch.is_active ?? null,
     sort_order: patch.sort_order ?? null,
     source_url: patch.source_url ?? current.source_url,

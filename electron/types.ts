@@ -104,6 +104,20 @@ export interface Benefit {
   expiration_note: string | null;
   expiration_date: string | null;   // YYYY-MM-DD, user-set expiry for time-bound rewards
   reset_years: number | null;       // for one_time benefits: years between resets (4 for Amex/Chase GE, 5 for Citi GE)
+  // v1.0.6 additions:
+  // prerequisite_benefit_id: if set, this benefit is only shown once the
+  //   prerequisite has been marked as achieved (uses_count >= uses_max). Used
+  //   to hide AA status tiers until the previous tier is reached, and to
+  //   hide AA Loyalty Choice Reward options until their parent tier is
+  //   achieved.
+  // is_choice_option: 1 when this benefit represents one selectable option of
+  //   a Loyalty Choice Reward menu at an AA tier. Choice options stay hidden
+  //   unless (a) prerequisite is achieved AND (b) choice_selected = 1.
+  // choice_selected: 1 when the user has ticked this specific choice option
+  //   as one of the choices they took at that tier.
+  prerequisite_benefit_id: number | null;
+  is_choice_option: number;         // 0 | 1
+  choice_selected: number;          // 0 | 1
   is_active: number;
   sort_order: number;
   source_url: string | null;
@@ -126,6 +140,12 @@ export interface BenefitInput {
   expiration_note?: string | null;
   expiration_date?: string | null;
   reset_years?: number | null;
+  // v1.0.6 additions — see Benefit for semantics. When seeding by title, use
+  // prerequisite_benefit_title (resolved to prerequisite_benefit_id at seed
+  // time) so the seed file stays human-readable and stable across ids.
+  prerequisite_benefit_title?: string | null;
+  is_choice_option?: number;
+  choice_selected?: number;
   sort_order?: number;
   source_url?: string | null;
   notes?: string | null;

@@ -21,9 +21,18 @@ export default function LogUsageModal({
     ]).then(([b, u]) => {
       setBenefit(b);
       setHistory(u);
-      if (b?.value_usd != null) setAmount(String(b.value_usd));
+      // Only prefill the amount when this is a dollar-valued benefit.
+      // Count-based benefits (SkyClub visits, upgrade certificates, etc.)
+      // record no dollar amount — leave the field empty and hide it.
+      if (b && (b.value_usd ?? 0) > 0) setAmount(String(b.value_usd));
     });
   }, [benefitId]);
+
+  // A benefit is "count-based" when it has no per-use dollar value. Logging
+  // one of these should not prompt for a dollar amount — it is a visit /
+  // certificate / upgrade count only. Applies to SkyClub visits, Centurion
+  // guest visits, systemwide upgrades, etc.
+  const isCountBased = !!benefit && (benefit.value_usd == null || benefit.value_usd === 0);
 
   async function save() {
     setSaving(true); setErr(null);
@@ -31,7 +40,8 @@ export default function LogUsageModal({
       await window.api.usages.create({
         benefit_id: benefitId,
         used_on: usedOn,
-        amount_usd: amount === '' ? null : parseFloat(amount),
+        // Count-based benefits never carry a dollar amount.
+        amount_usd: isCountBased ? null : (amount === '' ? null : parseFloat(amount)),
         notes: notes.trim() || null,
       });
       onSaved();
@@ -45,6 +55,10 @@ export default function LogUsageModal({
     if (!confirm('Delete this usage entry?')) return;
     await window.api.usages.delete(id);
     setHistory(await window.api.usages.getForBenefit(benefitId));
+    // v1.0.6 fix: also refresh the dashboard so the deleted usage disappears
+    // from the parent card's counters/progress. Previously the modal refreshed
+    // its own history but the dashboard state was stale until reload.
+    onSaved();
   }
 
   if (!benefit) return null;
@@ -60,16 +74,18 @@ export default function LogUsageModal({
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className={isCountBased ? '' : 'grid grid-cols-2 gap-3'}>
           <div>
             <label className="label">Date used</label>
             <input type="date" className="input" value={usedOn} onChange={e => setUsedOn(e.target.value)} />
           </div>
-          <div>
-            <label className="label">Amount (USD)</label>
-            <input type="number" step="0.01" className="input" value={amount} onChange={e => setAmount(e.target.value)}
-              placeholder={benefit.value_usd?.toString() ?? '0.00'} />
-          </div>
+          {!isCountBased && (
+            <div>
+              <label className="label">Amount (USD)</label>
+              <input type="number" step="0.01" className="input" value={amount} onChange={e => setAmount(e.target.value)}
+                placeholder={benefit.value_usd?.toString() ?? '0.00'} />
+            </div>
+          )}
         </div>
         <div className="mt-3">
           <label className="label">Notes</label>
@@ -90,7 +106,11 @@ export default function LogUsageModal({
               {history.map(u => (
                 <div key={u.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <span className="font-mono text-xs w-24 text-slate-500">{u.used_on}</span>
-                  <span className="font-mono w-20">{fmtUsd(u.amount_usd)}</span>
+                  {isCountBased ? (
+                    <span className="font-mono w-20 text-slate-500">1 use</span>
+                  ) : (
+                    <span className="font-mono w-20">{fmtUsd(u.amount_usd)}</span>
+                  )}
                   <span className="text-xs text-slate-500 flex-1 truncate">{u.notes ?? ''}</span>
                   <button className="text-xs text-red-500 hover:text-red-700" onClick={() => del(u.id)}>Delete</button>
                 </div>

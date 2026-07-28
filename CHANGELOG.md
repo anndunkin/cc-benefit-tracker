@@ -2,6 +2,33 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.6 — 2026-07-28
+
+Data/UX iteration prompted by the user's second review pass. Fixes and refinements to how visits, spend-unlocks, cadences, and AA elite tiers are modeled; also purges a handful of legacy rows still lingering in existing databases from earlier seed versions.
+
+### Fixed
+- **Delta Sky Club visits logged as count, not dollars.** The "15 Delta Sky Club Visits per Medallion Year" benefit (Delta Reserve) now explicitly instructs the user to log each visit as one use, no dollar amount. Progress reads `visits_used / 15`; no more inflated dollar totals for lounge visits.
+- **Duplicate Virgin Atlantic rows removed.** The legacy `"Tier Points on Spend"` and `"2,500 Virgin Points per Authorized User"` benefit rows (which were superseded by more specific titles in a later seed) are deleted from existing databases by v1.0.6 migration.
+- **Legacy Bank of America benefit rows removed.** Any leftover benefit rows still tagged `[LEGACY BofA card]` are deleted from existing databases (the user does not hold any BofA products under the tracker's supported set).
+- **Deleting a logged usage removes its dashboard row.** `LogUsageModal` already surfaced this in v1.0.5 for open-modal edits; verified end-to-end via new functionality test.
+
+### Changed
+- **Delta Reserve unlimited Sky Club access after $75,000 spend.** New spend-threshold benefit on Delta Reserve modeling the unlimited Sky Club unlock at $75k of qualifying spend on the card. Source: [delta.com/us/en/delta-sky-club/access](https://www.delta.com/us/en/delta-sky-club/access).
+- **Amex Platinum unlimited Centurion Lounge guest access after $75,000 spend.** New spend-threshold benefit on the Business Platinum card mirroring the current terms: no per-visit guest fee once cardholder spend hits $75k in a calendar year. Source: [thecenturionlounge.com/info/terms](https://www.thecenturionlounge.com/info/terms/).
+- **Uber One membership credit cadence.** Moved from the ambiguous "other" category to `monthly` cadence (`uses_per_period: 1`) so the benefit resets each month like a normal recurring credit.
+- **Amex Platinum $200 Uber credit description clarified.** Now explicitly documents the $15/mo Jan–Nov + $35 December schedule so the user does not lose the December stub.
+- **Bonvoy Gold + Hilton Honors Gold statuses are ongoing.** Both cardholder-status benefits (Amex Platinum → Bonvoy Gold + Hilton Gold; Marriott Bonvoy Business → Bonvoy Gold) now use `reset_cadence: 'unlimited'` and appear on the Ongoing tab.
+- **AA Admirals Club Access is ongoing.** The AA Executive card's Admirals Club membership benefit is now `unlimited`/ongoing rather than a countable annual benefit — access is continuous while the card is active.
+
+### Added
+- **AAdvantage tier prerequisite chain + Loyalty Choice Reward split (≤400K only).** The AA elite ladder is now modeled as a proper prerequisite chain: `15K Loyalty Points → Gold (60K) → Platinum (100K) → Platinum Pro + 1 Choice (175K) → Executive Platinum + 2 Choices (250K) → 400K + 2 Choices`. Each Loyalty Choice Reward menu is broken out into individual `is_choice_option` child rows keyed to their parent tier. Only tier ladders ≤400K are enumerated (555K/750K/1M/3M/5M are outside the practical scope of this tracker). Systemwide Upgrades and Complimentary Upgrades by Status Tier remain as unlimited reference rows.
+- **`prerequisite_benefit_id`, `is_choice_option`, `choice_selected` columns on benefits.** New schema fields let a benefit declare a parent benefit that must be achieved before it appears on the dashboard, and let choice-option rows stay hidden until the user explicitly picks them.
+- **Dashboard filtering for locked / unpicked benefits.** Benefits whose prerequisite has not been reached are hidden; benefits flagged as choice options only render once the user ticks them.
+- **"Choose rewards" picker.** Any parent tier that has choice-option children now shows a **Choose rewards (N)** button. The picker lists each child option with a checkbox; ticked options appear on the dashboard, unticked options stay hidden. Manual selections survive re-seed — the v1.0.6 seed refresh does not overwrite `choice_selected`.
+
+### Migration notes
+- Existing databases at `seed_version` ≤ 1.0.5 have three columns added, legacy Virgin Atlantic + BofA rows deleted by title, all seed benefits re-upserted, and the prerequisite title→id links wired via a title lookup. `seed_version` is set to `1.0.6` on completion. Fresh installs go straight to `1.0.6` seed with prerequisite FKs resolved in-line.
+
 ## v1.0.5 — 2026-07-28
 
 Restore Marriott Rewards Premier Visa (user has this card; it was removed in v1.0.4 by mistake), model Global Entry / TSA PreCheck reset windows correctly (4 years for Amex/Chase, 5 years for Citi), and delete a stray Citi Prestige informational tile.
