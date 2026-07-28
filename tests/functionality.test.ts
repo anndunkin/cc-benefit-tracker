@@ -19,7 +19,7 @@ describe('Seed data loads correctly', () => {
     const cards = cardsGetAll(db);
     const programs = programsGetAll(db);
     const benefits = benefitsGetAll(db);
-    expect(cards.length).toBeGreaterThanOrEqual(10);   // 10 seeded (post v1.0.4 marriott_premier removal)
+    expect(cards.length).toBeGreaterThanOrEqual(11);   // 11 seeded (v1.0.5 restored marriott_premier)
     expect(programs.length).toBe(4);
     expect(benefits.length).toBeGreaterThan(20);
   });
@@ -536,16 +536,16 @@ describe('v1.0.3 seed-refresh migration', () => {
     expect(benefitsSecond.n).toBe(benefitsFirst.n);
   });
 
-  it('stamps seed_version = 1.0.4 in app_meta', () => {
+  it('stamps seed_version = 1.0.5 in app_meta', () => {
     const db = legacyDb();
     applyDataMigrations(db);
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(row.value).toBe('1.0.4');
+    expect(row.value).toBe('1.0.5');
   });
 });
 
 describe('v1.0.4 migration and features', () => {
-  it('purges marriott_premier if present in an upgraded DB', () => {
+  it('preserves marriott_premier on migration (v1.0.5 restored the card v1.0.4 mistakenly removed)', () => {
     const db = new Database(':memory:');
     db.pragma('foreign_keys = ON');
     initSchema(db);
@@ -555,9 +555,9 @@ describe('v1.0.4 migration and features', () => {
     db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.3')`).run();
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     applyDataMigrations(db);
-    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeUndefined();
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.4');
+    expect(stamp.value).toBe('1.0.5');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -669,8 +669,8 @@ describe('v1.0.4 migration and features', () => {
     const va = db.prepare(`SELECT name FROM cards WHERE id = 'virgin_atlantic'`).get() as { name: string } | undefined;
     if (va) expect(va.name).toMatch(/Virgin Atlantic Credit Card/);
 
-    // marriott_premier fully purged from seed.
-    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeUndefined();
+    // marriott_premier restored in v1.0.5 (user has this card).
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
 
     // Global Entry: single-use, $120 total across every card that offers it.
     const ge = db.prepare(`SELECT card_id, reset_cadence, uses_per_period, value_usd FROM benefits WHERE title LIKE '%Global Entry%'`).all() as Array<{ card_id: string; reset_cadence: string; uses_per_period: number | null; value_usd: number | null }>;
@@ -694,5 +694,102 @@ describe('v1.0.4 migration and features', () => {
     // Citi Prestige Priority Pass Membership: unlimited.
     const pp = db.prepare(`SELECT reset_cadence FROM benefits WHERE card_id = 'citi_prestige' AND title LIKE '%Priority Pass%'`).get() as { reset_cadence: string } | undefined;
     if (pp) expect(pp.reset_cadence).toBe('unlimited');
+  });
+});
+
+describe('v1.0.5 migration and features', () => {
+  it('AA Executive Global Entry reset window is every 5 years (per Citi terms)', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_years, description FROM benefits
+      WHERE card_id = 'aa_executive' AND title LIKE '%Global Entry%'
+    `).get() as { reset_years: number | null; description: string | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_years).toBe(5);
+    expect(row!.description ?? '').toMatch(/5\s*year/i);
+  });
+
+  it('Amex Platinum / IHG Premier / Delta Reserve Global Entry reset every 4 years', () => {
+    const db = seededDb();
+    for (const cardId of ['amex_platinum', 'ihg_premier', 'delta_reserve']) {
+      const row = db.prepare(`
+        SELECT reset_years FROM benefits WHERE card_id = ? AND title LIKE '%Global Entry%'
+      `).get(cardId) as { reset_years: number | null } | undefined;
+      expect(row).toBeDefined();
+      expect(row!.reset_years).toBe(4);
+    }
+  });
+
+  it('Citi Prestige Global Entry resets every 5 years', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_years FROM benefits
+      WHERE card_id = 'citi_prestige' AND title LIKE '%Global Entry%'
+    `).get() as { reset_years: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_years).toBe(5);
+  });
+
+  it('marriott_premier is present with at least 10 benefits', () => {
+    const db = seededDb();
+    const card = db.prepare(`SELECT id FROM cards WHERE id = 'marriott_premier'`).get();
+    expect(card).toBeDefined();
+    const count = (db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'marriott_premier'`).get() as { n: number }).n;
+    expect(count).toBeGreaterThanOrEqual(10);
+  });
+
+  it('citi_prestige Closed-to-New-Applicants tile is not in the seeded DB', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT 1 FROM benefits
+      WHERE card_id = 'citi_prestige' AND title = 'Closed to New Applicants (existing benefits retained)'
+    `).get();
+    expect(row).toBeUndefined();
+  });
+
+  it('reset_years persists on benefit create/update', () => {
+    const db = seededDb();
+    const anyCard = cardsGetAll(db)[0];
+    const created = benefitCreate(db, {
+      card_id: anyCard.id, program_id: null,
+      title: 'Test benefit with reset_years',
+      category: 'other', reset_cadence: 'one_time', uses_per_period: 1,
+      value_usd: null, spend_threshold_usd: null,
+      expiration_note: null, expiration_date: null,
+      reset_years: 4,
+      sort_order: 0, source_url: null, notes: null, is_active: 1,
+    } as any);
+    const id = (created as any).id as number;
+    const row = db.prepare(`SELECT reset_years FROM benefits WHERE id = ?`).get(id) as { reset_years: number | null };
+    expect(row.reset_years).toBe(4);
+    benefitUpdate(db, id, { reset_years: 5 } as any);
+    const row2 = db.prepare(`SELECT reset_years FROM benefits WHERE id = ?`).get(id) as { reset_years: number | null };
+    expect(row2.reset_years).toBe(5);
+  });
+
+  it('adds reset_years column to benefits on legacy DBs', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        expiration_date TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.4')`).run();
+    applyDataMigrations(db);
+    const benCols = db.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+    expect(benCols.some((c) => c.name === 'reset_years')).toBe(true);
   });
 });

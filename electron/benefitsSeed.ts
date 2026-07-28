@@ -57,6 +57,15 @@ const FALLBACK_CARDS: (CardInput & { id: string; color_hex: string })[] = [
     source_url: 'https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card',
   },
   {
+    id: 'marriott_premier',
+    name: 'Marriott Rewards Premier Card (legacy Chase)',
+    issuer: 'Chase',
+    network: 'Visa',
+    annual_fee_usd: 85,
+    color_hex: '#7c2d12',
+    source_url: 'https://marriott.chase.com/premier',
+  },
+  {
     id: 'marriott_business',
     name: 'Marriott Bonvoy Business American Express Card',
     issuer: 'American Express',
@@ -206,6 +215,7 @@ function MINIMAL_FALLBACK_BENEFITS_LIST(): BenefitInput[] { return [
     description: 'Anniversary free night reward valid up to 40,000 points/night (points top-off allowed).',
     source_url: 'https://creditcards.chase.com/travel-credit-cards/ihg/premier', sort_order: 10 },
   // Marriott Business (Amex)
+  { card_id: 'marriott_premier', title: 'Anniversary Free Night Award (up to 25,000 points)', category: 'free_night', reset_cadence: 'annual', uses_per_period: 1, value_usd: 0, expiration_note: 'Certificate expires 12 months from issuance.', sort_order: 10, source_url: 'https://marriott.chase.com/premier' },
   { card_id: 'marriott_business', title: 'Annual Free Night Award', category: 'free_night',
     reset_cadence: 'annual', uses_per_period: 1, value_usd: 0,
     description: 'One Free Night Award every year after card renewal; points-based redemption, dollar value varies by property.',

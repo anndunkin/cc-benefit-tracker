@@ -24,6 +24,7 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
     spend_threshold_usd: initial?.spend_threshold_usd ?? null,
     expiration_note: initial?.expiration_note ?? '',
     expiration_date: initial?.expiration_date ?? null,
+    reset_years: initial?.reset_years ?? null,
     sort_order: initial?.sort_order ?? 0,
     source_url: initial?.source_url ?? '',
     notes: initial?.notes ?? '',
@@ -56,6 +57,7 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
         description: form.description?.trim() || null,
         expiration_note: form.expiration_note?.trim() || null,
         expiration_date: form.expiration_date || null,
+        reset_years: form.reset_years ?? null,
         source_url: form.source_url?.trim() || null,
         notes: form.notes?.trim() || null,
       };
@@ -118,6 +120,14 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
             <input type="date" className="input" value={form.expiration_date ?? ''}
               onChange={e => setForm({ ...form, expiration_date: e.target.value || null })} />
           </div>
+          {form.reset_cadence === 'one_time' && (
+            <div>
+              <label className="label">Reset every N years</label>
+              <input type="number" min={1} className="input" value={form.reset_years ?? ''}
+                onChange={e => setForm({ ...form, reset_years: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
+                placeholder="e.g., 4 for Global Entry (Amex/Chase), 5 for Citi" />
+            </div>
+          )}
           <div>
             <label className="label">Expiration note</label>
             <input className="input" value={form.expiration_note ?? ''}

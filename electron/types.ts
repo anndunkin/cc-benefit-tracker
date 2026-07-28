@@ -103,6 +103,7 @@ export interface Benefit {
   spend_threshold_usd: number | null;
   expiration_note: string | null;
   expiration_date: string | null;   // YYYY-MM-DD, user-set expiry for time-bound rewards
+  reset_years: number | null;       // for one_time benefits: years between resets (4 for Amex/Chase GE, 5 for Citi GE)
   is_active: number;
   sort_order: number;
   source_url: string | null;
@@ -124,6 +125,7 @@ export interface BenefitInput {
   spend_threshold_usd?: number | null;
   expiration_note?: string | null;
   expiration_date?: string | null;
+  reset_years?: number | null;
   sort_order?: number;
   source_url?: string | null;
   notes?: string | null;

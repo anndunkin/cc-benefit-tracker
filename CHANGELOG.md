@@ -2,6 +2,36 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.5 — 2026-07-28
+
+Restore Marriott Rewards Premier Visa (user has this card; it was removed in v1.0.4 by mistake), model Global Entry / TSA PreCheck reset windows correctly (4 years for Amex/Chase, 5 years for Citi), and delete a stray Citi Prestige informational tile.
+
+### Added
+- **`reset_years` field on benefits.** New nullable `INTEGER` column on `benefits` for `one_time` benefits that reset on a multi-year cycle. Editable in the benefit editor (only visible when the reset cadence is set to `one_time`). Dashboard tiles for `one_time` benefits with `reset_years` set now render a **"Last used: YYYY • Next available: YYYY"** line; when the next-available year is at or before the current year, the line turns green with an "(available now)" hint.
+- **Marriott Rewards Premier Visa is back.** Card row and all 10 seeded benefits restored to `GENERATED_CARDS` / `GENERATED_BENEFITS` and to `FALLBACK_CARDS`. Existing installs get it re-inserted via the v1.0.5 migration UPSERT.
+
+### Fixed
+- **Citi AA Executive Global Entry credit corrected to a 5-year reset.** v1.0.4 modeled every Global Entry credit with the same reset; Citi's terms actually resets every 5 years, while Amex Platinum, Chase IHG Premier, and Delta Reserve reset every 4 years. Sourced from the Citi AA Executive product page ([creditcards.aa.com](https://creditcards.aa.com/credit-cards/citi-executive-card-american-airlines-direct/)), Amex's expedited-travel benefits page ([americanexpress.com](https://www.americanexpress.com/en-us/benefits/travel/expedite-your-travel/)), and Chase IHG Premier's product page ([chase.com](https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier)). Citi Prestige also stays at 5 years ([One Mile at a Time](https://onemileatatime.com/guides/citi-prestige-card/)).
+- **`reset_years` populated on all five Global Entry tiles.** IHG Premier / Amex Platinum / Delta Reserve = 4; AA Executive / Citi Prestige = 5.
+- **Citi Prestige "Closed to New Applicants" informational tile removed.** Was a benefit-shaped row that displayed as a normal tile on the Citi Prestige card page; deleted from the seed and from existing DBs via the v1.0.5 migration.
+
+### Migration path
+On first launch of v1.0.5, `applyDataMigrations` runs a one-shot upgrade for any install with `seed_version != '1.0.5'`:
+1. `ALTER TABLE benefits ADD COLUMN reset_years INTEGER` (idempotent via `PRAGMA table_info`).
+2. `DELETE FROM benefits WHERE card_id = 'citi_prestige' AND title = 'Closed to New Applicants (existing benefits retained)'`.
+3. `INSERT OR IGNORE` marriott_premier card, then UPSERT every seeded benefit by `(card_id, program_id, title)` so `reset_years` lands, AA Exec's 5-year window replaces the previous 4-year value, and the 10 marriott_premier benefit rows re-materialize.
+4. Stamp `seed_version = '1.0.5'`.
+
+### Tests
+- AA Exec GE resets every 5 years (reset_years + description regex).
+- Amex Platinum / IHG Premier / Delta Reserve GE reset every 4 years.
+- Citi Prestige GE resets every 5 years.
+- marriott_premier is seeded with at least 10 benefits.
+- Citi Prestige "Closed to New Applicants" tile is absent from the seeded DB.
+- `reset_years` persists on `benefitCreate` and `benefitUpdate`.
+- Legacy DB gains `reset_years` column after migration.
+- Existing v1.0.4 assertions updated: seed stamps `1.0.5`, marriott_premier is preserved (not purged), and the seeded card count is `>= 11` again.
+
 ## v1.0.4 — 2026-07-28
 
 Dashboard history, per-card visibility toggle, seed corrections, and a few tile clean-ups. Every change is covered by the v1.0.4 migration so existing installs converge on first launch.

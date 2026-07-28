@@ -81,6 +81,7 @@ export function initSchema(database: Database.Database): void {
       spend_threshold_usd REAL,
       expiration_note TEXT,
       expiration_date TEXT,
+      reset_years INTEGER,
       is_active INTEGER NOT NULL DEFAULT 1,
       sort_order INTEGER NOT NULL DEFAULT 0,
       source_url TEXT,
@@ -163,10 +164,10 @@ export function seedIfFresh(database: Database.Database): void {
   const insertBenefit = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, sort_order, source_url, notes
+      value_usd, spend_threshold_usd, expiration_note, reset_years, sort_order, source_url, notes
     ) VALUES (
       @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
-      @value_usd, @spend_threshold_usd, @expiration_note, @sort_order, @source_url, @notes
+      @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @sort_order, @source_url, @notes
     )
   `);
 
@@ -196,6 +197,7 @@ export function seedIfFresh(database: Database.Database): void {
       value_usd: b.value_usd ?? null,
       spend_threshold_usd: b.spend_threshold_usd ?? null,
       expiration_note: b.expiration_note ?? null,
+      reset_years: (b as any).reset_years ?? null,
       sort_order: b.sort_order ?? 0,
       source_url: b.source_url ?? null,
       notes: b.notes ?? null,
@@ -206,7 +208,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.4');
+  metaSet(database, 'seed_version', '1.0.5');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -358,7 +360,8 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
       }
 
       // 2) Purge cards the user does not have. FKs cascade to benefits and usages.
-      const purgeIds = ['marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy', 'marriott_premier'];
+      // (Note: marriott_premier was purged in v1.0.4 by mistake; v1.0.5 restores it.)
+      const purgeIds = ['marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy'];
       const delCard = database.prepare('DELETE FROM cards WHERE id = ?');
       let purged = 0;
       for (const id of purgeIds) {
@@ -466,6 +469,127 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.4');
       run.push('v1_0_4_seed_refresh');
+    });
+    tx();
+  }
+
+  // v1.0.5 — restore Marriott Rewards Premier Visa (user does have it; removed
+  // in v1.0.4 by mistake); add reset_years column for one_time benefits with
+  // multi-year reset windows (Global Entry: 4yr Amex/Chase, 5yr Citi); delete
+  // the citi_prestige 'Closed to New Applicants' informational tile; refresh
+  // seed so AA Executive Global Entry moves to a 5-year reset window.
+  const seedVersion3 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion3 !== '1.0.5') {
+    const tx = database.transaction(() => {
+      // 1) Add reset_years column (idempotent).
+      const benCols = database.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+      if (!benCols.some((c) => c.name === 'reset_years')) {
+        database.exec("ALTER TABLE benefits ADD COLUMN reset_years INTEGER");
+        run.push('v1_0_5_added_benefits_reset_years');
+      }
+
+      // 2) Delete the citi_prestige 'Closed to New Applicants' informational tile.
+      const delCloseTile = database.prepare(
+        "DELETE FROM benefits WHERE card_id = 'citi_prestige' AND title = 'Closed to New Applicants (existing benefits retained)'"
+      ).run();
+      if (delCloseTile.changes > 0) run.push('v1_0_5_removed_prestige_closed_tile');
+
+      // 3) Re-insert marriott_premier card if missing, then UPSERT every seeded
+      //    benefit so reset_years lands + AA Exec becomes 5yr + marriott_premier
+      //    benefit rows reappear.
+      const insertCard = database.prepare(`
+        INSERT OR IGNORE INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url)
+        VALUES (@id, @name, @issuer, @network, @annual_fee_usd, 1, 1, @color_hex, @notes, @source_url)
+      `);
+      for (const c of SEED_CARDS) insertCard.run({
+        id: c.id,
+        name: c.name,
+        issuer: c.issuer,
+        network: c.network,
+        annual_fee_usd: c.annual_fee_usd ?? null,
+        color_hex: (c as any).color_hex ?? null,
+        notes: (c as any).notes ?? null,
+        source_url: (c as any).source_url ?? null,
+      });
+      const insertProgram = database.prepare(`
+        INSERT OR IGNORE INTO programs (id, name, program_type, is_active, notes, source_url)
+        VALUES (@id, @name, @program_type, 1, @notes, @source_url)
+      `);
+      for (const p of SEED_PROGRAMS) insertProgram.run({
+        id: p.id,
+        name: p.name,
+        program_type: p.program_type,
+        notes: (p as any).notes ?? null,
+        source_url: (p as any).source_url ?? null,
+      });
+
+      const findBenefit = database.prepare(`
+        SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?
+      `);
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          reset_years = @reset_years,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, reset_years, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @sort_order, @source_url, @notes
+        )
+      `);
+      let updated = 0, inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        if (b.card_id) {
+          const cardExists = database.prepare('SELECT 1 FROM cards WHERE id = ?').get(b.card_id);
+          if (!cardExists) continue;
+        }
+        if (b.program_id) {
+          const progExists = database.prepare('SELECT 1 FROM programs WHERE id = ?').get(b.program_id);
+          if (!progExists) continue;
+        }
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        const params = {
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        };
+        if (existing) {
+          updateBenefit.run({ ...params, id: existing.id });
+          updated++;
+        } else {
+          insertBenefit.run(params);
+          inserted++;
+        }
+      }
+      if (updated > 0) run.push(`v1_0_5_upserted_${updated}_benefits`);
+      if (inserted > 0) run.push(`v1_0_5_inserted_${inserted}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.5');
+      run.push('v1_0_5_seed_refresh');
     });
     tx();
   }
@@ -624,7 +748,7 @@ export function programDelete(database: Database.Database, id: string): void {
 // ─── Benefits CRUD ───────────────────────────────────────────────────────────
 
 const BEN_COLS = `id, card_id, program_id, title, description, category, reset_cadence,
-  uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date,
+  uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
   is_active, sort_order, source_url, notes, is_user_modified, created_at, updated_at`;
 
 export function benefitsGetAll(database: Database.Database): Benefit[] {
@@ -647,9 +771,9 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
   const info = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, expiration_date, is_active, sort_order, source_url,
+      value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years, is_active, sort_order, source_url,
       notes, is_user_modified
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     input.card_id ?? null,
     input.program_id ?? null,
@@ -662,6 +786,7 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.spend_threshold_usd ?? null,
     input.expiration_note ?? null,
     input.expiration_date ?? null,
+    input.reset_years ?? null,
     input.is_active ?? 1,
     input.sort_order ?? 0,
     input.source_url ?? null,
@@ -684,6 +809,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       spend_threshold_usd = @spend_threshold_usd,
       expiration_note = @expiration_note,
       expiration_date = @expiration_date,
+      reset_years = @reset_years,
       is_active = COALESCE(@is_active, is_active),
       sort_order = COALESCE(@sort_order, sort_order),
       source_url = @source_url,
@@ -702,6 +828,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     spend_threshold_usd: patch.spend_threshold_usd ?? current.spend_threshold_usd,
     expiration_note: patch.expiration_note ?? current.expiration_note,
     expiration_date: patch.expiration_date ?? current.expiration_date,
+    reset_years: patch.reset_years ?? current.reset_years,
     is_active: patch.is_active ?? null,
     sort_order: patch.sort_order ?? null,
     source_url: patch.source_url ?? current.source_url,

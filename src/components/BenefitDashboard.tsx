@@ -384,6 +384,25 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
       {daysToReset !== null && p.status !== 'unlimited' && daysToReset <= 30 && daysToReset >= 0 && (
         <div className="text-xs text-amber-600 dark:text-amber-400">Resets in {daysToReset} day{daysToReset === 1 ? '' : 's'}</div>
       )}
+      {b.reset_cadence === 'one_time' && b.reset_years && b.reset_years > 0 && (() => {
+        const lastUsage = p.usages && p.usages.length > 0 ? p.usages[0] : null;
+        if (!lastUsage) {
+          return (
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Resets every {b.reset_years} year{b.reset_years === 1 ? '' : 's'}
+            </div>
+          );
+        }
+        const lastYear = parseInt(lastUsage.used_on.slice(0, 4), 10);
+        const nextYear = lastYear + b.reset_years;
+        const currentYear = new Date().getFullYear();
+        const availableNow = nextYear <= currentYear;
+        return (
+          <div className={`text-xs ${availableNow ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+            Last used: {lastYear} • Next available: {nextYear}{availableNow ? ' (available now)' : ''}
+          </div>
+        );
+      })()}
 
       <div className="flex items-center gap-2 mt-1 flex-wrap">
         {isSingleUse ? (
