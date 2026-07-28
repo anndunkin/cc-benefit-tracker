@@ -2,6 +2,34 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.2 — 2026-07-28
+
+Follow-up on the second round of feedback: quarterly totals math, log-usage crediting, points-based free nights, and moving no-usage benefits to Ongoing.
+
+### Fixed
+- **Header totals are now annualized.** The dashboard "Value remaining" and "Value used" tallies previously summed each benefit's *current-period* dollar cap, so a quarterly $50 credit contributed $50 to the year total instead of $200. `computeProjections` now returns `annual_value_usd`, `annual_value_used_usd`, and `annual_value_remaining_usd` for each benefit, and `BenefitDashboard` sums those. Sub-year usages (quarterly, monthly, semiannual) are rolled up across the full reference year.
+- **Partial-amount usages now credit against the dollar cap.** For a benefit that stores a real per-use dollar value, status now keys off `value_used_usd` vs `total_value` rather than `uses_count` vs `uses_max`. Logging $30 against a $50 quarterly airline credit stays "partial" with $20 left instead of jumping to "exhausted." Point-based, status-boost, and count-only benefits still use the count-based status resolution.
+- **Spend-threshold trackers now track spend, not uses.** The $30K and $60K Hilton Aspire free nights and the $60K Marriott Business free night are `spend_threshold` benefits: the *dollar value* is the free night itself (points-based), and the *trigger* is calendar-year card spend. Tiles now show a progress bar of "$X of $Y spent" with "$Z to go / Unlocked," driven by a new `spend_progress_usd` projection field.
+- **Hilton annual free nights carry no dollar value.** Both the Aspire annual free night and the two Aspire spend-based free nights are points-based redemptions whose dollar value depends entirely on the property chosen. `value_usd` is now `0` on all three (spend thresholds are preserved). Marriott Business anniversary and $60K free nights also switched to `value_usd = 0`.
+- **Moved insurance / status benefits to Ongoing.** These are not consumable credits; they were surfacing on the Credits & Usages page with a fake "1 use / year" toggle. Now `reset_cadence = 'unlimited'` (with `uses_per_period = null`):
+  - Complimentary Hilton Honors Diamond status (Aspire)
+  - National Emerald Club Executive status (Aspire)
+  - Cell Phone Protection (Hilton Aspire, Amex Platinum, Delta Reserve, Citi Prestige)
+
+### Added
+- Tile UI for `spend_threshold` benefits shows a progress bar of cumulative spend toward the threshold instead of a generic "unlocks at $X" hint.
+- `computeProjections` returns yearly aggregates (`annual_value_usd`, `annual_value_used_usd`, `annual_value_remaining_usd`) plus `spend_progress_usd`.
+
+### Tests
+- 59 tests passing (up from 48). New coverage:
+  - Annualized totals math for quarterly, semiannual, monthly, and annual cadences
+  - Partial-amount status resolution ($30 on $50, two partials summing to cap, points-based count-only)
+  - Spend-threshold progress accumulation and threshold-met exhaustion
+  - Seed data assertions for the moved-to-unlimited benefits and zeroed Hilton free-night dollar values
+
+### Notes
+No schema migrations, no seed-key changes. Existing user databases keep every usage row. Reset cadence flips (`annual` → `unlimited`) on Cell Phone Protection etc. are picked up automatically because those rows come from `benefitsSeedData.ts`, not from stored user data; any past usages on those rows are still readable but no longer surface as consumable tiles.
+
 ## v1.0.1 — 2026-07-28
 
 Follow-up on feedback from the initial build session.

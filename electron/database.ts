@@ -528,15 +528,73 @@ export function computeProjections(database: Database.Database, refYear: number)
     const uses_count = usages.length;
     const uses_remaining = uses_max === null ? null : Math.max(0, uses_max - uses_count);
 
-    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? b.value_usd ?? 0), 0);
+    // Per-period dollar burn. If a usage has no amount_usd (single-use toggle),
+    // fall back to the benefit's value_usd only when the benefit stores a
+    // meaningful per-use dollar value; a zero-value points-based benefit
+    // shouldn't inflate value_used_usd.
+    const per_use_fallback = b.value_usd && b.value_usd > 0 ? b.value_usd : 0;
+    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
     const total_value = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
     const value_remaining_usd = total_value === null ? null : Math.max(0, total_value - value_used_usd);
 
+    // ─── Annual (year-scoped) aggregates ───────────────────────────────────
+    // For sub-year cadences (quarterly/monthly/semiannual), roll up the entire
+    // year of usages plus the annualized cap. For year-scoped cadences use the
+    // current-period numbers.
+    const periodsPerYear =
+      b.reset_cadence === 'quarterly' ? 4 :
+      b.reset_cadence === 'semiannual' ? 2 :
+      b.reset_cadence === 'monthly' ? 1 :   // uses_max already spans the year (=12)
+      1;
+
+    const yearUsages = (b.reset_cadence === 'quarterly' || b.reset_cadence === 'semiannual' || b.reset_cadence === 'monthly')
+      ? database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND substr(used_on, 1, 4) = ? ORDER BY used_on DESC`)
+          .all(b.id, String(refYear)) as Usage[]
+      : usages;
+
+    const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
+    const annual_value_usd = total_value === null ? null : total_value * periodsPerYear;
+    const annual_value_remaining_usd = annual_value_usd === null ? null : Math.max(0, annual_value_usd - annual_value_used_usd);
+
+    // ─── Spend-threshold progress ──────────────────────────────────────────
+    // For benefits gated on a spend threshold (e.g. Hilton $30K free night),
+    // sum every logged usage amount in the reference year to display progress.
+    // uses_max stays 1 for these benefits (they're a single unlock per year).
+    let spend_progress_usd: number | null = null;
+    if (b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null) {
+      const spendUsages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND substr(used_on, 1, 4) = ?`)
+        .all(b.id, String(refYear)) as Usage[];
+      spend_progress_usd = spendUsages.reduce((s, u) => s + (u.amount_usd ?? 0), 0);
+    }
+
+    // ─── Status ────────────────────────────────────────────────────────────
+    // Status resolution rules:
+    //   • unlimited cadence   → 'unlimited' (surfaces on the Ongoing dashboard)
+    //   • spend_threshold     → 'exhausted' iff cumulative spend >= threshold,
+    //                           'partial' if any spend logged, else 'available'
+    //   • dollar-valued benefit (value_usd > 0) → status keys off dollar
+    //                           remaining rather than use count, so partial
+    //                           $30 on a $50 credit stays 'partial' with $20 left
+    //   • otherwise (points-based / status_boost / toggle) → status keys off
+    //                           uses_count vs uses_max as before
     let status: BenefitProjection['status'];
-    if (b.reset_cadence === 'unlimited') status = 'unlimited';
-    else if (uses_max !== null && uses_count >= uses_max) status = 'exhausted';
-    else if (uses_count > 0) status = 'partial';
-    else status = 'available';
+    if (b.reset_cadence === 'unlimited') {
+      status = 'unlimited';
+    } else if (b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null) {
+      if ((spend_progress_usd ?? 0) >= b.spend_threshold_usd) status = 'exhausted';
+      else if ((spend_progress_usd ?? 0) > 0) status = 'partial';
+      else status = 'available';
+    } else if (b.value_usd !== null && b.value_usd > 0 && total_value !== null && total_value > 0) {
+      if (value_used_usd >= total_value) status = 'exhausted';
+      else if (value_used_usd > 0) status = 'partial';
+      else status = 'available';
+    } else if (uses_max !== null && uses_count >= uses_max) {
+      status = 'exhausted';
+    } else if (uses_count > 0) {
+      status = 'partial';
+    } else {
+      status = 'available';
+    }
 
     out.push({
       benefit: b,
@@ -550,6 +608,10 @@ export function computeProjections(database: Database.Database, refYear: number)
       uses_remaining,
       value_used_usd,
       value_remaining_usd,
+      annual_value_usd,
+      annual_value_used_usd,
+      annual_value_remaining_usd,
+      spend_progress_usd,
       status,
       usages,
       next_reset: nextResetIso(b.reset_cadence, anchorDate),

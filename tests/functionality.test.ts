@@ -305,3 +305,167 @@ describe('File export / import round-trip', () => {
     expect(usagesForBenefit(db2, roundtrip!.id).length).toBe(1);
   });
 });
+
+describe('Annualized totals (v1.0.2)', () => {
+  it('quarterly $50 credit projects annual_value_usd = $200', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Quarterly credit test', category: 'other',
+      reset_cadence: 'quarterly', uses_per_period: 1, value_usd: 50,
+    });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.annual_value_usd).toBe(200);
+    expect(p.annual_value_used_usd).toBe(0);
+    expect(p.annual_value_remaining_usd).toBe(200);
+  });
+
+  it('semiannual $75 credit projects annual_value_usd = $150', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Semiannual test', category: 'other',
+      reset_cadence: 'semiannual', uses_per_period: 1, value_usd: 75,
+    });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.annual_value_usd).toBe(150);
+  });
+
+  it('monthly $15 credit (uses_per_period=12) projects annual_value_usd = $180', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Monthly test', category: 'other',
+      reset_cadence: 'monthly', uses_per_period: 12, value_usd: 15,
+    });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.annual_value_usd).toBe(180);
+  });
+
+  it('annual credit gives annual_value_usd = value_usd × uses_per_period', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Annual test', category: 'other',
+      reset_cadence: 'annual', uses_per_period: 1, value_usd: 200,
+    });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.annual_value_usd).toBe(200);
+  });
+});
+
+describe('Partial-amount status resolution (v1.0.2)', () => {
+  it('partial $30 spend on a quarterly $50 credit stays PARTIAL with $20 left', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Partial spend test', category: 'other',
+      reset_cadence: 'quarterly', uses_per_period: 1, value_usd: 50,
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    usageCreate(db, { benefit_id: b.id, used_on: today, amount_usd: 30 });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.status).toBe('partial');
+    expect(p.value_used_usd).toBe(30);
+    expect(p.value_remaining_usd).toBe(20);
+  });
+
+  it('two partial usages totaling the cap mark the credit EXHAUSTED', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Two partial test', category: 'other',
+      reset_cadence: 'quarterly', uses_per_period: 1, value_usd: 50,
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    usageCreate(db, { benefit_id: b.id, used_on: today, amount_usd: 30 });
+    usageCreate(db, { benefit_id: b.id, used_on: today, amount_usd: 20 });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.status).toBe('exhausted');
+    expect(p.value_used_usd).toBe(50);
+    expect(p.value_remaining_usd).toBe(0);
+  });
+
+  it('use-count-only benefit (no dollar value) uses count-based status', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Count-only test', category: 'other',
+      reset_cadence: 'annual', uses_per_period: 1, value_usd: null,
+    });
+    const today = new Date().toISOString().slice(0, 10);
+    usageCreate(db, { benefit_id: b.id, used_on: today, amount_usd: null });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.status).toBe('exhausted');
+  });
+});
+
+describe('Spend-threshold benefits (v1.0.2)', () => {
+  it('accumulates spend_progress_usd from logged usages', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Threshold test', category: 'other',
+      reset_cadence: 'spend_threshold', uses_per_period: 1,
+      value_usd: null, spend_threshold_usd: 30000,
+    });
+    const y = String(new Date().getUTCFullYear());
+    usageCreate(db, { benefit_id: b.id, used_on: `${y}-01-15`, amount_usd: 12500 });
+    usageCreate(db, { benefit_id: b.id, used_on: `${y}-04-20`, amount_usd: 5000 });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.spend_progress_usd).toBe(17500);
+    expect(p.status).toBe('partial');
+  });
+
+  it('marks EXHAUSTED once cumulative spend meets the threshold', () => {
+    const db = seededDb();
+    const card = cardsGetAll(db)[0];
+    const b = benefitCreate(db, {
+      card_id: card.id, program_id: null,
+      title: 'Threshold met test', category: 'other',
+      reset_cadence: 'spend_threshold', uses_per_period: 1,
+      value_usd: null, spend_threshold_usd: 30000,
+    });
+    const y = String(new Date().getUTCFullYear());
+    usageCreate(db, { benefit_id: b.id, used_on: `${y}-01-15`, amount_usd: 30000 });
+    const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
+    expect(p.spend_progress_usd).toBe(30000);
+    expect(p.status).toBe('exhausted');
+  });
+});
+
+describe('Unlimited benefits surface on Ongoing dashboard (v1.0.2)', () => {
+  it('seeded Hilton Diamond, National Executive, Cell Phone Protection all use reset_cadence=unlimited', () => {
+    const db = seededDb();
+    const benefits = benefitsGetAll(db);
+    const hiltonDiamond = benefits.find(b => b.title.toLowerCase().includes('hilton') && b.title.toLowerCase().includes('diamond'));
+    const nationalExec = benefits.find(b => b.title.toLowerCase().includes('national') && b.title.toLowerCase().includes('executive'));
+    const cellProt = benefits.filter(b => b.title.toLowerCase().includes('cell phone protection'));
+    expect(hiltonDiamond?.reset_cadence).toBe('unlimited');
+    expect(nationalExec?.reset_cadence).toBe('unlimited');
+    expect(cellProt.length).toBeGreaterThan(0);
+    for (const b of cellProt) expect(b.reset_cadence).toBe('unlimited');
+  });
+
+  it('Hilton spend-threshold free nights have value_usd = 0 (points-based) but keep spend_threshold_usd', () => {
+    const db = seededDb();
+    const benefits = benefitsGetAll(db);
+    const hiltonSpendFn = benefits.filter(b =>
+      b.card_id === 'hilton_aspire' &&
+      b.reset_cadence === 'spend_threshold'
+    );
+    expect(hiltonSpendFn.length).toBeGreaterThan(0);
+    for (const b of hiltonSpendFn) {
+      expect(b.value_usd === 0 || b.value_usd === null).toBe(true);
+      expect(b.spend_threshold_usd).toBeGreaterThan(0);
+    }
+  });
+});

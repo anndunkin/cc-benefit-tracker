@@ -156,11 +156,22 @@ export interface BenefitProjection {
   ref_year: number;
   period_key: string;
   period_label: string;            // human label (e.g., "2026 · Q3", "2026")
-  uses_max: number | null;         // null for unlimited
-  uses_count: number;
+  uses_max: number | null;         // null for unlimited (per-period cap)
+  uses_count: number;              // usages logged in current period
   uses_remaining: number | null;
-  value_used_usd: number;
-  value_remaining_usd: number | null;
+  value_used_usd: number;          // dollar value used in current period
+  value_remaining_usd: number | null;  // dollar value remaining in current period
+  // Yearly aggregates (used by dashboard totals). For year-scoped cadences
+  // (annual / one_time / spend_threshold / unlimited) these equal the
+  // current-period numbers. For quarterly / monthly / semiannual, these
+  // aggregate across all periods in ref_year.
+  annual_value_usd: number | null;      // total dollar value across the year (null if not measurable)
+  annual_value_used_usd: number;        // dollar value logged across the entire year
+  annual_value_remaining_usd: number | null;
+  // Progress toward a spend threshold (e.g. Hilton $30K free night).
+  // Sum of amount_usd across all logged usages in ref_year; null when the
+  // benefit does not track spend.
+  spend_progress_usd: number | null;
   status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked';
   usages: Usage[];                 // for this period only
   next_reset: string | null;       // ISO date when it resets

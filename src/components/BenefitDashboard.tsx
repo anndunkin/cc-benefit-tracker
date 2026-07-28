@@ -93,11 +93,17 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
     });
   }, [filtered, cards, programs]);
 
+  // Header totals are annualized (per-period value × periods per year). This
+  // reflects the full-year value the user gets from these credits rather than
+  // just the current period's cap. Spend-threshold and unlimited benefits are
+  // excluded because their dollar value can't be summed with credit lines.
   const totals = useMemo(() => {
     let value_remaining = 0, value_used = 0;
     for (const p of filtered) {
-      if (p.value_remaining_usd !== null) value_remaining += p.value_remaining_usd;
-      value_used += p.value_used_usd;
+      const cadence = p.benefit.reset_cadence;
+      if (cadence === 'unlimited' || cadence === 'spend_threshold') continue;
+      if (p.annual_value_remaining_usd !== null) value_remaining += p.annual_value_remaining_usd;
+      value_used += p.annual_value_used_usd;
     }
     return { value_remaining, value_used };
   }, [filtered]);
@@ -240,16 +246,39 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
   const b = p.benefit;
   const usesMax = p.uses_max;
   const usesCount = p.uses_count;
-  const pct = usesMax === null ? 100 : Math.min(100, (usesCount / Math.max(1, usesMax)) * 100);
   const daysToReset = daysUntil(p.next_reset);
   const [busy, setBusy] = useState(false);
 
+  // Benefit categories that drive tile behavior:
+  //   • spend-threshold benefit → progress toward b.spend_threshold_usd via
+  //     cumulative spend logged in ref_year. Value comes from the free night /
+  //     unlock itself, not dollar credits, so no dollar-remaining shown.
+  //   • dollar-valued benefit  → progress = value_used_usd / total_value (this
+  //     handles the $50 quarterly Hilton airline case where partial spend must
+  //     stay 'partial' with the correct remaining balance).
+  //   • use-count benefit      → progress = uses_count / uses_max, as before.
+  const isSpendThreshold = b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null;
+  const isDollarValued = !isSpendThreshold && b.value_usd !== null && b.value_usd > 0 && usesMax !== null;
+  const totalPeriodValue = isDollarValued ? (usesMax as number) * (b.value_usd as number) : null;
+
+  let pct: number;
+  if (isSpendThreshold) {
+    const prog = p.spend_progress_usd ?? 0;
+    const cap = b.spend_threshold_usd ?? 1;
+    pct = Math.min(100, (prog / cap) * 100);
+  } else if (isDollarValued && totalPeriodValue && totalPeriodValue > 0) {
+    pct = Math.min(100, (p.value_used_usd / totalPeriodValue) * 100);
+  } else {
+    pct = usesMax === null ? 100 : Math.min(100, (usesCount / Math.max(1, usesMax)) * 100);
+  }
+
   // Fast-path detection: a benefit is a "single-use toggle" when the current
-  // period allows exactly one use. That covers annual companion certificates,
-  // free-night awards, anniversary bonuses, quarterly credits that only allow
-  // one redemption per quarter, etc. Multi-use benefits (Amex Uber $15/month
-  // for 12 months, DoorDash 2/quarter, etc.) still use the modal.
-  const isSingleUse = usesMax === 1;
+  // period allows exactly one use AND it's not a dollar-valued credit (where
+  // partial usage matters). This covers annual companion certificates, free
+  // night awards, anniversary bonuses, etc. Dollar-valued single-cap credits
+  // (e.g., Hilton $50 quarterly airline) still use the modal so the user can
+  // enter the actual amount.
+  const isSingleUse = usesMax === 1 && !isDollarValued && !isSpendThreshold;
   const isMarkedUsed = isSingleUse && usesCount >= 1;
 
   async function toggleUsed() {
@@ -301,15 +330,23 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
       <div>
         <div className="flex justify-between text-xs mb-1">
           <span className="text-slate-500">
-            {usesCount} of {usesMax ?? '∞'} used
+            {isSpendThreshold ? (
+              <>{fmtUsd(p.spend_progress_usd ?? 0)} of {fmtUsd(b.spend_threshold_usd)} spent</>
+            ) : (
+              <>{usesCount} of {usesMax ?? '∞'} used</>
+            )}
           </span>
           <span className="text-slate-500">
-            {p.value_remaining_usd !== null ? `${fmtUsd(p.value_remaining_usd)} left` : ''}
+            {isSpendThreshold ? (
+              (p.spend_progress_usd ?? 0) >= (b.spend_threshold_usd ?? 0) ? 'Unlocked' : `${fmtUsd(Math.max(0, (b.spend_threshold_usd ?? 0) - (p.spend_progress_usd ?? 0)))} to go`
+            ) : (
+              p.value_remaining_usd !== null && (b.value_usd ?? 0) > 0 ? `${fmtUsd(p.value_remaining_usd)} left` : ''
+            )}
           </span>
         </div>
         <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
           <div
-            className={`h-full ${p.status === 'exhausted' ? 'bg-slate-400' : 'bg-primary-500'}`}
+            className={`h-full ${p.status === 'exhausted' ? 'bg-emerald-500' : 'bg-primary-500'}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -320,11 +357,6 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
       )}
       {daysToReset !== null && p.status !== 'unlimited' && daysToReset <= 30 && daysToReset >= 0 && (
         <div className="text-xs text-amber-600 dark:text-amber-400">Resets in {daysToReset} day{daysToReset === 1 ? '' : 's'}</div>
-      )}
-      {b.spend_threshold_usd !== null && (
-        <div className="text-xs text-purple-700 dark:text-purple-400">
-          Unlocks at {fmtUsd(b.spend_threshold_usd)} spend
-        </div>
       )}
 
       <div className="flex items-center gap-2 mt-1 flex-wrap">
