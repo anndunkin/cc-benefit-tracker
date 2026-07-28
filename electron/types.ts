@@ -1,0 +1,275 @@
+// ─── Shared types ────────────────────────────────────────────────────────────
+// Every renderer- and main-side call passes through the shapes below.
+// Keep changes here in lock-step with the SQLite schema in database.ts and the
+// preload/main IPC contract.
+
+export const APP_FILE_VERSION = 1;
+
+/** How often a benefit's usage cap resets. */
+export type ResetCadence =
+  | 'annual'         // 1 use per calendar year
+  | 'semiannual'     // 2 uses per year (H1 / H2)
+  | 'quarterly'      // 4 uses per year
+  | 'monthly'        // 12 uses per year
+  | 'spend_threshold'// unlocks after hitting a $ threshold (e.g., $30k free night)
+  | 'unlimited'      // no cap — status perks, earning multipliers, unlimited discounts
+  | 'one_time';      // single use across the life of the account (or specific expiration)
+
+/** Broad category — drives icons/colors and dashboard grouping. */
+export type BenefitCategory =
+  | 'travel_credit'
+  | 'dining_credit'
+  | 'retail_credit'
+  | 'entertainment_credit'
+  | 'rideshare_credit'
+  | 'wellness_credit'
+  | 'hotel_credit'
+  | 'airline_credit'
+  | 'free_night'
+  | 'upgrade'
+  | 'status_boost'
+  | 'earning_multiplier'
+  | 'lounge_access'
+  | 'other';
+
+/** Networks / issuers — free-form but common values documented. */
+export type CardNetwork = 'Amex' | 'Visa' | 'Mastercard' | 'Other';
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
+
+export interface Card {
+  id: string;
+  name: string;
+  issuer: string;
+  network: CardNetwork;
+  annual_fee_usd: number | null;
+  is_active: number;            // 0 | 1
+  color_hex: string | null;     // optional accent color for the UI card
+  notes: string | null;
+  source_url: string | null;
+  created_at: string;
+}
+
+export interface CardInput {
+  id?: string;                  // if omitted, generated from slugified name
+  name: string;
+  issuer: string;
+  network: CardNetwork;
+  annual_fee_usd: number | null;
+  color_hex?: string | null;
+  notes?: string | null;
+  source_url?: string | null;
+  is_active?: number;
+}
+
+// ─── Programs (status/loyalty) ────────────────────────────────────────────────
+
+export type ProgramType = 'airline' | 'hotel' | 'other' | 'airline_elite_status' | 'hotel_elite_status' | 'hotel_paid_membership';
+
+export interface Program {
+  id: string;
+  name: string;
+  program_type: ProgramType;
+  is_active: number;
+  notes: string | null;
+  source_url: string | null;
+  created_at: string;
+}
+
+export interface ProgramInput {
+  id?: string;
+  name: string;
+  program_type: ProgramType;
+  notes?: string | null;
+  source_url?: string | null;
+  is_active?: number;
+}
+
+// ─── Benefits ─────────────────────────────────────────────────────────────────
+// A benefit belongs to EITHER a card OR a program (exactly one).
+
+export interface Benefit {
+  id: number;
+  card_id: string | null;
+  program_id: string | null;
+  title: string;
+  description: string | null;
+  category: BenefitCategory;
+  reset_cadence: ResetCadence;
+  uses_per_period: number | null;
+  value_usd: number | null;        // per-use dollar value (nullable when unknown / unlimited)
+  spend_threshold_usd: number | null;
+  expiration_note: string | null;
+  is_active: number;
+  sort_order: number;
+  source_url: string | null;
+  notes: string | null;
+  is_user_modified: number;        // 1 if user edited or added — quarterly refresh preserves
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BenefitInput {
+  card_id?: string | null;
+  program_id?: string | null;
+  title: string;
+  description?: string | null;
+  category: BenefitCategory;
+  reset_cadence: ResetCadence;
+  uses_per_period?: number | null;
+  value_usd?: number | null;
+  spend_threshold_usd?: number | null;
+  expiration_note?: string | null;
+  sort_order?: number;
+  source_url?: string | null;
+  notes?: string | null;
+  is_active?: number;
+}
+
+// ─── Usage log ───────────────────────────────────────────────────────────────
+
+export interface Usage {
+  id: number;
+  benefit_id: number;
+  used_on: string;                 // YYYY-MM-DD
+  amount_usd: number | null;
+  period_key: string;              // '2026', '2026-H1', '2026-Q3', '2026-07', 'spend', 'one_time'
+  notes: string | null;
+  created_at: string;
+}
+
+export interface UsageInput {
+  benefit_id: number;
+  used_on: string;
+  amount_usd?: number | null;
+  notes?: string | null;
+}
+
+// ─── Dashboard projection ─────────────────────────────────────────────────────
+// One row per benefit-period combo, with used/remaining counters for a given
+// reference year.
+
+export interface BenefitProjection {
+  benefit: Benefit;
+  card_name: string | null;
+  program_name: string | null;
+  ref_year: number;
+  period_key: string;
+  period_label: string;            // human label (e.g., "2026 · Q3", "2026")
+  uses_max: number | null;         // null for unlimited
+  uses_count: number;
+  uses_remaining: number | null;
+  value_used_usd: number;
+  value_remaining_usd: number | null;
+  status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked';
+  usages: Usage[];                 // for this period only
+  next_reset: string | null;       // ISO date when it resets
+}
+
+// ─── Refresh (quarterly diff & review) ─────────────────────────────────────────
+
+export type RefreshChangeType = 'added' | 'modified' | 'removed';
+export type RefreshStatus = 'pending' | 'approved' | 'rejected';
+
+export interface RefreshRun {
+  id: number;
+  started_at: string;
+  completed_at: string | null;
+  source_notes: string | null;      // e.g., "2026-Q3 refresh — sourced from Amex Aug 2026 T&Cs"
+  status: 'draft' | 'applied' | 'discarded';
+}
+
+export interface RefreshChange {
+  id: number;
+  refresh_run_id: number;
+  change_type: RefreshChangeType;
+  card_id: string | null;
+  program_id: string | null;
+  benefit_id: number | null;        // null for 'added' until applied
+  before_json: string | null;
+  after_json: string | null;
+  review_status: RefreshStatus;
+  review_notes: string | null;
+  created_at: string;
+}
+
+// ─── File management ─────────────────────────────────────────────────────────
+
+export interface AppFilePayload {
+  version: number;
+  exported_at: string;
+  cards: Card[];
+  programs: Program[];
+  benefits: Benefit[];
+  usages: Usage[];
+  refresh_runs: RefreshRun[];
+  refresh_changes: RefreshChange[];
+}
+
+export interface FileResult {
+  success: boolean;
+  filePath?: string;
+  error?: string;
+  payload?: AppFilePayload;
+}
+
+// ─── Renderer <-> Main IPC contract ──────────────────────────────────────────
+
+export interface WindowApi {
+  cards: {
+    getAll: () => Promise<Card[]>;
+    getById: (id: string) => Promise<Card | null>;
+    create: (data: CardInput) => Promise<Card>;
+    update: (id: string, data: Partial<CardInput>) => Promise<Card>;
+    delete: (id: string) => Promise<{ ok: true }>;
+  };
+  programs: {
+    getAll: () => Promise<Program[]>;
+    getById: (id: string) => Promise<Program | null>;
+    create: (data: ProgramInput) => Promise<Program>;
+    update: (id: string, data: Partial<ProgramInput>) => Promise<Program>;
+    delete: (id: string) => Promise<{ ok: true }>;
+  };
+  benefits: {
+    getAll: () => Promise<Benefit[]>;
+    getForCard: (cardId: string) => Promise<Benefit[]>;
+    getForProgram: (programId: string) => Promise<Benefit[]>;
+    getById: (id: number) => Promise<Benefit | null>;
+    create: (data: BenefitInput) => Promise<Benefit>;
+    update: (id: number, data: Partial<BenefitInput>) => Promise<Benefit>;
+    delete: (id: number) => Promise<{ ok: true }>;
+  };
+  usages: {
+    getForBenefit: (benefitId: number) => Promise<Usage[]>;
+    create: (data: UsageInput) => Promise<Usage>;
+    update: (id: number, data: Partial<UsageInput>) => Promise<Usage>;
+    delete: (id: number) => Promise<{ ok: true }>;
+  };
+  projection: {
+    all: (refYear?: number) => Promise<BenefitProjection[]>;
+  };
+  refresh: {
+    getStatus: () => Promise<{ last_run_at: string | null; next_due: string; pending_run_id: number | null }>;
+    startRun: (sourceNotes: string, changes: Array<Omit<RefreshChange, 'id' | 'refresh_run_id' | 'created_at' | 'review_status' | 'review_notes'>>) =>
+      Promise<{ run_id: number }>;
+    getPendingChanges: (runId: number) => Promise<RefreshChange[]>;
+    approveChange: (changeId: number, notes?: string) => Promise<RefreshChange>;
+    rejectChange: (changeId: number, notes?: string) => Promise<RefreshChange>;
+    applyRun: (runId: number) => Promise<{ applied: number; skipped: number }>;
+    discardRun: (runId: number) => Promise<{ ok: true }>;
+  };
+  file: {
+    currentPath: () => Promise<string>;
+    newDb: () => Promise<FileResult>;
+    openDb: () => Promise<FileResult>;
+    saveAs: () => Promise<FileResult>;
+    exportJson: () => Promise<FileResult>;
+    importJson: () => Promise<FileResult>;
+  };
+}
+
+declare global {
+  interface Window {
+    api: WindowApi;
+  }
+}
