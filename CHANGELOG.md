@@ -2,11 +2,14 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
-## v1.0.2 — 2026-07-28
+## v1.0.3 — 2026-07-28
 
-Follow-up on the second round of feedback: quarterly totals math, log-usage crediting, points-based free nights, and moving no-usage benefits to Ongoing.
+Corrections to v1.0.2, which shipped with broken totals and stale card data still visible in installed copies. This release both fixes the underlying seed data and installs the migration path that v1.0.2 was missing.
 
 ### Fixed
+- **Sub-year benefit values were still storing annual sums.** v1.0.1 corrected six *quarterly* rows but left every *monthly* and *semiannual* row wrong. Fixed 10 rows across Hilton Aspire, IHG Premier, Amex Platinum, Delta Reserve, and Citi AA Executive so `value_usd` now holds the true per-USE dollar amount and `uses_per_period = 1` in every case. `computeProjections` annualizes with `value_usd × uses_per_period × periodsPerYear` where `periodsPerYear ∈ {monthly:12, quarterly:4, semiannual:2, annual:1, one_time:1}`. Examples: Amex Platinum Uber $15/mo → $180/yr; Hilton Aspire Resort $200/half → $400/yr; IHG Instacart $10/mo → $120/yr.
+- **Installed databases now receive seed updates.** `seedIfFresh` is idempotent — it never rewrites existing card/benefit rows — so any change to `benefitsSeedData.ts` never reached users who installed v1.0.0/v1.0.1/v1.0.2. New `applyDataMigrations` v1.0.3 path UPSERTs every seeded benefit by (card_id, title). Preserves `benefit.id`, so all logged usages continue to point at the correct benefit. Gated on `app_meta.seed_version` so it runs exactly once per install.
+- **Deprecated Marriott cards now purged from installed databases.** Removed `marriott_bonvoy_brilliant`, `marriott_bonvoy_boundless`, and `marriott_bonvoy_bevy` from both fallback and generated seeds, and the v1.0.3 migration deletes them from existing DBs. FK cascade removes their benefits and any usages logged against them. Marriott Business (Amex) and Marriott Premier (Chase legacy) remain.
 - **Header totals are now annualized.** The dashboard "Value remaining" and "Value used" tallies previously summed each benefit's *current-period* dollar cap, so a quarterly $50 credit contributed $50 to the year total instead of $200. `computeProjections` now returns `annual_value_usd`, `annual_value_used_usd`, and `annual_value_remaining_usd` for each benefit, and `BenefitDashboard` sums those. Sub-year usages (quarterly, monthly, semiannual) are rolled up across the full reference year.
 - **Partial-amount usages now credit against the dollar cap.** For a benefit that stores a real per-use dollar value, status now keys off `value_used_usd` vs `total_value` rather than `uses_count` vs `uses_max`. Logging $30 against a $50 quarterly airline credit stays "partial" with $20 left instead of jumping to "exhausted." Point-based, status-boost, and count-only benefits still use the count-based status resolution.
 - **Spend-threshold trackers now track spend, not uses.** The $30K and $60K Hilton Aspire free nights and the $60K Marriott Business free night are `spend_threshold` benefits: the *dollar value* is the free night itself (points-based), and the *trigger* is calendar-year card spend. Tiles now show a progress bar of "$X of $Y spent" with "$Z to go / Unlocked," driven by a new `spend_progress_usd` projection field.
@@ -21,14 +24,25 @@ Follow-up on the second round of feedback: quarterly totals math, log-usage cred
 - `computeProjections` returns yearly aggregates (`annual_value_usd`, `annual_value_used_usd`, `annual_value_remaining_usd`) plus `spend_progress_usd`.
 
 ### Tests
-- 59 tests passing (up from 48). New coverage:
-  - Annualized totals math for quarterly, semiannual, monthly, and annual cadences
-  - Partial-amount status resolution ($30 on $50, two partials summing to cap, points-based count-only)
-  - Spend-threshold progress accumulation and threshold-met exhaustion
-  - Seed data assertions for the moved-to-unlimited benefits and zeroed Hilton free-night dollar values
+- 63 tests passing (up from 48 in v1.0.1 / 59 in v1.0.2). New coverage in v1.0.3:
+  - v1.0.3 seed-refresh migration: purges deprecated Marriott cards and cascades their benefits
+  - Migration UPSERTs seeded benefits and preserves user usages (usage count unchanged after migration)
+  - Migration is idempotent — running twice does not double-insert cards or benefits
+  - Migration stamps `seed_version = 1.0.3` in `app_meta`
+- v1.0.2 coverage retained: annualized totals math for quarterly/semiannual/monthly/annual, partial-amount status resolution, spend-threshold progress accumulation, seed data assertions for moved-to-unlimited benefits, zeroed Hilton free-night dollar values.
 
-### Notes
-No schema migrations, no seed-key changes. Existing user databases keep every usage row. Reset cadence flips (`annual` → `unlimited`) on Cell Phone Protection etc. are picked up automatically because those rows come from `benefitsSeedData.ts`, not from stored user data; any past usages on those rows are still readable but no longer surface as consumable tiles.
+### Migration behavior
+On first launch of v1.0.3, `applyDataMigrations` runs a one-shot upgrade for any install with `seed_version != '1.0.3'`:
+1. Delete `marriott_bonvoy_brilliant`, `marriott_bonvoy_boundless`, `marriott_bonvoy_bevy` cards. FK cascade removes their benefits and any usages on them.
+2. INSERT OR IGNORE every seeded card and program (adds Marriott Business + Marriott Premier for anyone missing them).
+3. For each seeded benefit, look up by (card_id, program_id, title). If found, UPDATE all metadata columns — `benefit.id` is preserved so usage rows stay linked. If not found, INSERT.
+4. Stamp `seed_version = '1.0.3'` in `app_meta`.
+
+User-added cards, user-added benefits, and all logged usages are untouched.
+
+## v1.0.2 — 2026-07-28  *(broken — superseded by v1.0.3)*
+
+Attempted to fix quarterly totals and add spend-threshold tracking, but shipped with two remaining bugs: (a) monthly/semiannual rows still stored annual sums in `value_usd`; (b) no migration path existed, so installed databases from v1.0.0/v1.0.1 kept the old broken data and the deprecated Marriott cards. The dashboard code was correct; the data behind it was not. See v1.0.3 for the actual fix.
 
 ## v1.0.1 — 2026-07-28
 

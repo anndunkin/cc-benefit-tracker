@@ -9,8 +9,9 @@ import {
   refreshStartRun, refreshPendingChanges, refreshApproveChange, refreshRejectChange,
   refreshApplyRun, refreshDiscardRun, refreshGetStatus,
   buildFilePayload, importFilePayload,
-  seedIfFresh,
+  seedIfFresh, initSchema, applyDataMigrations,
 } from '../electron/database';
+import Database from 'better-sqlite3';
 
 describe('Seed data loads correctly', () => {
   it('seeds cards, programs, and benefits from the research-generated data', () => {
@@ -333,13 +334,13 @@ describe('Annualized totals (v1.0.2)', () => {
     expect(p.annual_value_usd).toBe(150);
   });
 
-  it('monthly $15 credit (uses_per_period=12) projects annual_value_usd = $180', () => {
+  it('monthly $15 credit (uses_per_period=1) projects annual_value_usd = $180', () => {
     const db = seededDb();
     const card = cardsGetAll(db)[0];
     const b = benefitCreate(db, {
       card_id: card.id, program_id: null,
       title: 'Monthly test', category: 'other',
-      reset_cadence: 'monthly', uses_per_period: 12, value_usd: 15,
+      reset_cadence: 'monthly', uses_per_period: 1, value_usd: 15,
     });
     const p = computeProjections(db, new Date().getUTCFullYear()).find(x => x.benefit.id === b.id)!;
     expect(p.annual_value_usd).toBe(180);
@@ -467,5 +468,78 @@ describe('Unlimited benefits surface on Ongoing dashboard (v1.0.2)', () => {
       expect(b.value_usd === 0 || b.value_usd === null).toBe(true);
       expect(b.spend_threshold_usd).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('v1.0.3 seed-refresh migration', () => {
+  function legacyDb(): Database.Database {
+    // Simulate a v1.0.0/v1.0.1 install: schema is initialised and seed rows are
+    // inserted directly (skipping the v1.0.2 upsert path) to prove the migration
+    // rewrites broken rows and purges deprecated Marriott cards without wiping
+    // real user data.
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    initSchema(db);
+    // Legacy cards + benefits — including deprecated Marriott and a broken
+    // monthly row that stores annual value in value_usd.
+    db.prepare(`INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active) VALUES
+      ('marriott_bonvoy_brilliant', 'Marriott Brilliant', 'Amex', 'Amex', 650, 1),
+      ('ihg_premier', 'IHG Premier', 'Chase', 'Mastercard', 99, 1)
+    `).run();
+    db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('marriott_bonvoy_brilliant', 'Legacy Marriott bene', 'other', 'annual', 1, 500)
+    `).run();
+    const legacyBene = db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('ihg_premier', '$10 monthly Instacart credit', 'retail_credit', 'monthly', 12, 120)
+    `).run();
+    // Real user usage on the legacy benefit — MUST be preserved.
+    usageCreate(db, { benefit_id: Number(legacyBene.lastInsertRowid), used_on: '2026-03-15', amount_usd: 10 });
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.1')`).run();
+    return db;
+  }
+
+  it('purges deprecated Marriott cards and cascades their benefits', () => {
+    const db = legacyDb();
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_bonvoy_brilliant'`).get()).toBeDefined();
+    applyDataMigrations(db);
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_bonvoy_brilliant'`).get()).toBeUndefined();
+    expect(db.prepare(`SELECT 1 FROM benefits WHERE card_id = 'marriott_bonvoy_brilliant'`).get()).toBeUndefined();
+  });
+
+  it('UPSERTs seeded benefits to fix broken value/uses_per_period without losing usages', () => {
+    const db = legacyDb();
+    const beforeUsages = db.prepare(`SELECT COUNT(*) AS n FROM usages`).get() as { n: number };
+    expect(beforeUsages.n).toBe(1);
+
+    applyDataMigrations(db);
+
+    const bene = db.prepare(`SELECT id, uses_per_period, value_usd FROM benefits
+      WHERE card_id = 'ihg_premier' AND title = '$10 monthly Instacart credit'`).get() as { id: number; uses_per_period: number; value_usd: number };
+    expect(bene).toBeDefined();
+    // Migration should have rewritten the row to per-USE = $10, uses_per_period = 1.
+    expect(bene.uses_per_period).toBe(1);
+    expect(bene.value_usd).toBe(10);
+    // Usage on that benefit id must still exist (UPDATE, not DELETE+INSERT).
+    const afterUsages = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(bene.id) as { n: number };
+    expect(afterUsages.n).toBe(1);
+  });
+
+  it('is idempotent — running migrations twice does not double-insert', () => {
+    const db = legacyDb();
+    applyDataMigrations(db);
+    const cardsFirst = db.prepare(`SELECT COUNT(*) AS n FROM cards`).get() as { n: number };
+    const benefitsFirst = db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number };
+    applyDataMigrations(db);
+    const cardsSecond = db.prepare(`SELECT COUNT(*) AS n FROM cards`).get() as { n: number };
+    const benefitsSecond = db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number };
+    expect(cardsSecond.n).toBe(cardsFirst.n);
+    expect(benefitsSecond.n).toBe(benefitsFirst.n);
+  });
+
+  it('stamps seed_version = 1.0.3 in app_meta', () => {
+    const db = legacyDb();
+    applyDataMigrations(db);
+    const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(row.value).toBe('1.0.3');
   });
 });

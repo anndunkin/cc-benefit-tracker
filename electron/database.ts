@@ -204,18 +204,136 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.0');
+  metaSet(database, 'seed_version', '1.0.3');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
 export function applyDataMigrations(database: Database.Database): { migrations_run: string[] } {
   const run: string[] = [];
-  // v1.0.0 — schema is initial; no migrations yet. Future migrations gate on
-  // app_meta.schema_version and record their name here.
+  // v1.0.0 — schema is initial; no data migrations needed.
   if (!metaGet(database, 'schema_version')) {
     metaSet(database, 'schema_version', '1.0.0');
     run.push('init_schema_version_1_0_0');
   }
+
+  // v1.0.3 seed refresh: purge deprecated Marriott cards and UPSERT every
+  // seeded benefit by (card_id, title) so installed DBs (v1.0.0/v1.0.1/v1.0.2)
+  // pick up value/cadence/uses_per_period corrections without touching user
+  // usages. v1.0.2 shipped with the same seed data as v1.0.1 but the migration
+  // itself was missing — v1.0.3 both writes the correct seed and installs the
+  // migration path so existing DBs converge.
+  const seedVersion = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion !== '1.0.3') {
+    const tx = database.transaction(() => {
+      // 1) Purge deprecated Marriott card ids. FKs cascade to benefits and usages.
+      const deprecatedIds = ['marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy'];
+      const delCard = database.prepare('DELETE FROM cards WHERE id = ?');
+      let purged = 0;
+      for (const id of deprecatedIds) {
+        const r = delCard.run(id);
+        purged += r.changes;
+      }
+      if (purged > 0) run.push(`v1_0_3_purged_${purged}_marriott_cards`);
+
+      // 2) Ensure every seeded card and program exists (adds marriott_business/premier
+      //    if missing, plus any programs referenced by seeded benefits).
+      const insertCard = database.prepare(`
+        INSERT OR IGNORE INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url)
+        VALUES (@id, @name, @issuer, @network, @annual_fee_usd, 1, @color_hex, @notes, @source_url)
+      `);
+      for (const c of SEED_CARDS) insertCard.run({
+        id: c.id,
+        name: c.name,
+        issuer: c.issuer,
+        network: c.network,
+        annual_fee_usd: c.annual_fee_usd ?? null,
+        color_hex: (c as any).color_hex ?? null,
+        notes: (c as any).notes ?? null,
+        source_url: (c as any).source_url ?? null,
+      });
+      const insertProgram = database.prepare(`
+        INSERT OR IGNORE INTO programs (id, name, program_type, is_active, notes, source_url)
+        VALUES (@id, @name, @program_type, 1, @notes, @source_url)
+      `);
+      for (const p of SEED_PROGRAMS) insertProgram.run({
+        id: p.id,
+        name: p.name,
+        program_type: p.program_type,
+        notes: (p as any).notes ?? null,
+        source_url: (p as any).source_url ?? null,
+      });
+
+      // 3) UPSERT seeded benefits by (card_id, title). Preserves benefit.id (usages FK).
+      const findBenefit = database.prepare(`
+        SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?
+      `);
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @sort_order, @source_url, @notes
+        )
+      `);
+      let updated = 0, inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        // Only reseed for cards/programs that still exist (skip if user deleted the parent).
+        if (b.card_id) {
+          const cardExists = database.prepare('SELECT 1 FROM cards WHERE id = ?').get(b.card_id);
+          if (!cardExists) continue;
+        }
+        if (b.program_id) {
+          const progExists = database.prepare('SELECT 1 FROM programs WHERE id = ?').get(b.program_id);
+          if (!progExists) continue;
+        }
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        const params = {
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        };
+        if (existing) {
+          updateBenefit.run({ ...params, id: existing.id });
+          updated++;
+        } else {
+          insertBenefit.run(params);
+          inserted++;
+        }
+      }
+      if (updated > 0) run.push(`v1_0_3_upserted_${updated}_benefits`);
+      if (inserted > 0) run.push(`v1_0_3_inserted_${inserted}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.3');
+      run.push('v1_0_3_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 
@@ -541,10 +659,12 @@ export function computeProjections(database: Database.Database, refYear: number)
     // For sub-year cadences (quarterly/monthly/semiannual), roll up the entire
     // year of usages plus the annualized cap. For year-scoped cadences use the
     // current-period numbers.
+    // Sub-year cadences: value_usd is per-USE, uses_per_period is uses in ONE
+    // period (typically 1). Annual value = value_usd × uses_per_period × periodsPerYear.
     const periodsPerYear =
       b.reset_cadence === 'quarterly' ? 4 :
       b.reset_cadence === 'semiannual' ? 2 :
-      b.reset_cadence === 'monthly' ? 1 :   // uses_max already spans the year (=12)
+      b.reset_cadence === 'monthly' ? 12 :
       1;
 
     const yearUsages = (b.reset_cadence === 'quarterly' || b.reset_cadence === 'semiannual' || b.reset_cadence === 'monthly')
