@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import {
   getDatabase, openDatabaseAt,
-  cardsGetAll, cardGetById, cardCreate, cardUpdate, cardDelete,
+  cardsGetAll, cardGetById, cardCreate, cardUpdate, cardDelete, cardSetVisible,
   programsGetAll, programGetById, programCreate, programUpdate, programDelete,
   benefitsGetAll, benefitsForCard, benefitsForProgram, benefitGetById,
   benefitCreate, benefitUpdate, benefitDelete,
@@ -133,6 +133,7 @@ ipcMain.handle('cards:getById', (_e, id: string) => cardGetById(getDatabase(), i
 ipcMain.handle('cards:create', (_e, data: CardInput) => cardCreate(getDatabase(), data));
 ipcMain.handle('cards:update', (_e, id: string, data: Partial<CardInput>) => cardUpdate(getDatabase(), id, data));
 ipcMain.handle('cards:delete', (_e, id: string) => { cardDelete(getDatabase(), id); return { ok: true }; });
+ipcMain.handle('cards:setVisible', (_e, id: string, visible: boolean) => cardSetVisible(getDatabase(), id, visible));
 
 // ─── Programs ────────────────────────────────────────────────────────────────
 ipcMain.handle('programs:getAll', () => programsGetAll(getDatabase()));

@@ -23,6 +23,7 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
     value_usd: initial?.value_usd ?? null,
     spend_threshold_usd: initial?.spend_threshold_usd ?? null,
     expiration_note: initial?.expiration_note ?? '',
+    expiration_date: initial?.expiration_date ?? null,
     sort_order: initial?.sort_order ?? 0,
     source_url: initial?.source_url ?? '',
     notes: initial?.notes ?? '',
@@ -54,6 +55,7 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
         title: form.title.trim(),
         description: form.description?.trim() || null,
         expiration_note: form.expiration_note?.trim() || null,
+        expiration_date: form.expiration_date || null,
         source_url: form.source_url?.trim() || null,
         notes: form.notes?.trim() || null,
       };
@@ -111,7 +113,12 @@ export default function BenefitEditor({ initial, ownerType, ownerId, onClose, on
                 onChange={e => setForm({ ...form, spend_threshold_usd: e.target.value === '' ? null : parseFloat(e.target.value) })} />
             </div>
           )}
-          <div className="col-span-2">
+          <div>
+            <label className="label">Expiration date</label>
+            <input type="date" className="input" value={form.expiration_date ?? ''}
+              onChange={e => setForm({ ...form, expiration_date: e.target.value || null })} />
+          </div>
+          <div>
             <label className="label">Expiration note</label>
             <input className="input" value={form.expiration_note ?? ''}
               onChange={e => setForm({ ...form, expiration_note: e.target.value })}

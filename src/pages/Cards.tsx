@@ -26,6 +26,11 @@ export default function Cards() {
     reload();
   }
 
+  async function toggleVisible(id: string, next: boolean) {
+    await window.api.cards.setVisible(id, next);
+    reload();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -37,7 +42,7 @@ export default function Cards() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {cards.map(c => (
           <Link key={c.id} to={`/cards/${c.id}`}
-            className="card p-4 hover:border-primary-400 transition-colors">
+            className={`card p-4 hover:border-primary-400 transition-colors ${c.is_visible === 0 ? 'opacity-60' : ''}`}>
             <div className="flex items-start gap-3">
               {c.color_hex && <span className="inline-block w-3 h-8 rounded" style={{ backgroundColor: c.color_hex }} />}
               <div className="flex-1 min-w-0">
@@ -45,6 +50,7 @@ export default function Cards() {
                 <div className="text-xs text-slate-500 mt-0.5">{c.issuer} · {c.network}</div>
               </div>
               {!c.is_active && <span className="text-xs bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">Inactive</span>}
+              {c.is_visible === 0 && <span className="text-xs bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded">Hidden</span>}
             </div>
             <div className="mt-3 flex justify-between text-sm">
               <span className="text-slate-500">Annual fee</span>
@@ -54,9 +60,18 @@ export default function Cards() {
               <span className="text-slate-500">Benefits</span>
               <span>{benefitCounts[c.id] ?? 0}</span>
             </div>
-            <div className="mt-2 flex justify-end gap-2 text-xs">
-              <button onClick={(e) => { e.preventDefault(); del(c.id, c.name); }}
-                className="text-red-500 hover:text-red-700">Delete</button>
+            <div className="mt-2 flex items-center gap-3 text-xs" onClick={(e) => e.preventDefault()}>
+              <label className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={c.is_visible !== 0}
+                  onChange={(e) => { e.stopPropagation(); toggleVisible(c.id, e.target.checked); }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                Show on dashboard
+              </label>
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); del(c.id, c.name); }}
+                className="ml-auto text-red-500 hover:text-red-700">Delete</button>
             </div>
           </Link>
         ))}

@@ -19,7 +19,7 @@ describe('Seed data loads correctly', () => {
     const cards = cardsGetAll(db);
     const programs = programsGetAll(db);
     const benefits = benefitsGetAll(db);
-    expect(cards.length).toBeGreaterThanOrEqual(11);   // 11 hand fallback, 13 generated
+    expect(cards.length).toBeGreaterThanOrEqual(10);   // 10 seeded (post v1.0.4 marriott_premier removal)
     expect(programs.length).toBe(4);
     expect(benefits.length).toBeGreaterThan(20);
   });
@@ -536,10 +536,163 @@ describe('v1.0.3 seed-refresh migration', () => {
     expect(benefitsSecond.n).toBe(benefitsFirst.n);
   });
 
-  it('stamps seed_version = 1.0.3 in app_meta', () => {
+  it('stamps seed_version = 1.0.4 in app_meta', () => {
     const db = legacyDb();
     applyDataMigrations(db);
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(row.value).toBe('1.0.3');
+    expect(row.value).toBe('1.0.4');
+  });
+});
+
+describe('v1.0.4 migration and features', () => {
+  it('purges marriott_premier if present in an upgraded DB', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    initSchema(db);
+    db.prepare(`INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active) VALUES
+      ('marriott_premier', 'Marriott Rewards Premier Visa', 'Chase', 'Visa', 85, 1)
+    `).run();
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.3')`).run();
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
+    applyDataMigrations(db);
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeUndefined();
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.4');
+  });
+
+  it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    // Create pre-v1.0.4 schema WITHOUT is_visible / expiration_date.
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.3')`).run();
+    applyDataMigrations(db);
+    const cardCols = db.prepare("PRAGMA table_info('cards')").all() as Array<{ name: string }>;
+    const benCols = db.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+    expect(cardCols.some((c) => c.name === 'is_visible')).toBe(true);
+    expect(benCols.some((c) => c.name === 'expiration_date')).toBe(true);
+  });
+
+  it('renames Virgin Atlantic card to "Virgin Atlantic Credit Card" if present under legacy name', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    initSchema(db);
+    db.prepare(`INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active) VALUES
+      ('virgin_atlantic', 'Legacy Virgin Atlantic World Elite Mastercard', 'Synchrony', 'Mastercard', 149, 1)
+    `).run();
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.3')`).run();
+    applyDataMigrations(db);
+    const row = db.prepare(`SELECT name FROM cards WHERE id = 'virgin_atlantic'`).get() as { name: string };
+    expect(row.name).toBe('Virgin Atlantic Credit Card');
+  });
+
+  it('v1.0.4 migration is idempotent — running twice does not double-insert', () => {
+    const db = seededDb();
+    applyDataMigrations(db);
+    const cardsFirst = (db.prepare(`SELECT COUNT(*) AS n FROM cards`).get() as { n: number }).n;
+    const benefitsFirst = (db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number }).n;
+    applyDataMigrations(db);
+    const cardsSecond = (db.prepare(`SELECT COUNT(*) AS n FROM cards`).get() as { n: number }).n;
+    const benefitsSecond = (db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number }).n;
+    expect(cardsSecond).toBe(cardsFirst);
+    expect(benefitsSecond).toBe(benefitsFirst);
+  });
+
+  it('cardSetVisible flips is_visible and hides cards from projections', async () => {
+    const { cardSetVisible } = await import('../electron/database');
+    const db = seededDb();
+    // Pick any card that has at least one non-unlimited benefit so projection filtering is observable.
+    const cardWithBene = db.prepare(`SELECT card_id FROM benefits WHERE card_id IS NOT NULL AND reset_cadence != 'unlimited' LIMIT 1`).get() as { card_id: string };
+    expect(cardWithBene).toBeDefined();
+    const beforeAll = computeProjections(db, 2026);
+    const beforeHasCard = beforeAll.some(p => p.benefit.card_id === cardWithBene.card_id);
+    expect(beforeHasCard).toBe(true);
+    cardSetVisible(db, cardWithBene.card_id, false);
+    const afterAll = computeProjections(db, 2026);
+    const afterHasCard = afterAll.some(p => p.benefit.card_id === cardWithBene.card_id);
+    expect(afterHasCard).toBe(false);
+    // Restoring visibility brings the projections back.
+    cardSetVisible(db, cardWithBene.card_id, true);
+    const restoredAll = computeProjections(db, 2026);
+    expect(restoredAll.some(p => p.benefit.card_id === cardWithBene.card_id)).toBe(true);
+  });
+
+  it('expiration_date persists on benefit create/update', () => {
+    const db = seededDb();
+    const anyCard = cardsGetAll(db)[0];
+    const created = benefitCreate(db, {
+      card_id: anyCard.id, program_id: null,
+      title: 'Test benefit with expiration',
+      category: 'free_night', reset_cadence: 'annual', uses_per_period: 1,
+      value_usd: null, spend_threshold_usd: null,
+      expiration_note: null, expiration_date: '2027-12-31',
+      sort_order: 0, source_url: null, notes: null, is_active: 1,
+    } as any);
+    const id = (created as any).id as number;
+    const row = db.prepare(`SELECT expiration_date FROM benefits WHERE id = ?`).get(id) as { expiration_date: string | null };
+    expect(row.expiration_date).toBe('2027-12-31');
+    benefitUpdate(db, id, { expiration_date: '2028-06-30' } as any);
+    const row2 = db.prepare(`SELECT expiration_date FROM benefits WHERE id = ?`).get(id) as { expiration_date: string | null };
+    expect(row2.expiration_date).toBe('2028-06-30');
+  });
+
+  it('computeProjections attaches period_history for annual/monthly/quarterly benefits', () => {
+    const db = seededDb();
+    const projections = computeProjections(db, 2026);
+    // Every non-unlimited projection should carry a period_history array.
+    const nonUnlimited = projections.filter((p: any) => p.benefit.reset_cadence !== 'unlimited' && p.benefit.reset_cadence !== 'spend_threshold' && p.benefit.reset_cadence !== 'one_time');
+    expect(nonUnlimited.length).toBeGreaterThan(0);
+    for (const p of nonUnlimited) {
+      expect((p as any).period_history).toBeDefined();
+      expect(Array.isArray((p as any).period_history)).toBe(true);
+      expect((p as any).period_history.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('seed corrections landed: Global Entry $120 single-use, Priority Pass unlimited, President\u2019s Circle unlimited, Companion Certificate $0, Virgin Atlantic name', () => {
+    const db = seededDb();
+    // Virgin Atlantic card renamed.
+    const va = db.prepare(`SELECT name FROM cards WHERE id = 'virgin_atlantic'`).get() as { name: string } | undefined;
+    if (va) expect(va.name).toMatch(/Virgin Atlantic Credit Card/);
+
+    // marriott_premier fully purged from seed.
+    expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeUndefined();
+
+    // Global Entry: single-use, $120 total across every card that offers it.
+    const ge = db.prepare(`SELECT card_id, reset_cadence, uses_per_period, value_usd FROM benefits WHERE title LIKE '%Global Entry%'`).all() as Array<{ card_id: string; reset_cadence: string; uses_per_period: number | null; value_usd: number | null }>;
+    expect(ge.length).toBeGreaterThan(0);
+    for (const b of ge) {
+      expect(b.value_usd).toBe(120);
+    }
+
+    // Amex Platinum Global Lounge Collection: unlimited.
+    const gl = db.prepare(`SELECT reset_cadence FROM benefits WHERE title LIKE '%Global Lounge Collection%'`).get() as { reset_cadence: string } | undefined;
+    if (gl) expect(gl.reset_cadence).toBe('unlimited');
+
+    // Delta Reserve Annual Companion Certificate: value $0 (points).
+    const cc = db.prepare(`SELECT value_usd FROM benefits WHERE title LIKE '%Annual Companion Certificate%'`).get() as { value_usd: number | null } | undefined;
+    if (cc) expect(cc.value_usd).toBe(0);
+
+    // President’s Circle: unlimited.
+    const pc = db.prepare(`SELECT reset_cadence FROM benefits WHERE title LIKE '%President%s Circle%'`).get() as { reset_cadence: string } | undefined;
+    if (pc) expect(pc.reset_cadence).toBe('unlimited');
+
+    // Citi Prestige Priority Pass Membership: unlimited.
+    const pp = db.prepare(`SELECT reset_cadence FROM benefits WHERE card_id = 'citi_prestige' AND title LIKE '%Priority Pass%'`).get() as { reset_cadence: string } | undefined;
+    if (pp) expect(pp.reset_cadence).toBe('unlimited');
   });
 });

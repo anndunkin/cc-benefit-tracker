@@ -44,6 +44,7 @@ export interface Card {
   network: CardNetwork;
   annual_fee_usd: number | null;
   is_active: number;            // 0 | 1
+  is_visible: number;           // 0 | 1 — whether card appears on dashboard/cards page
   color_hex: string | null;     // optional accent color for the UI card
   notes: string | null;
   source_url: string | null;
@@ -60,6 +61,7 @@ export interface CardInput {
   notes?: string | null;
   source_url?: string | null;
   is_active?: number;
+  is_visible?: number;
 }
 
 // ─── Programs (status/loyalty) ────────────────────────────────────────────────
@@ -100,6 +102,7 @@ export interface Benefit {
   value_usd: number | null;        // per-use dollar value (nullable when unknown / unlimited)
   spend_threshold_usd: number | null;
   expiration_note: string | null;
+  expiration_date: string | null;   // YYYY-MM-DD, user-set expiry for time-bound rewards
   is_active: number;
   sort_order: number;
   source_url: string | null;
@@ -120,6 +123,7 @@ export interface BenefitInput {
   value_usd?: number | null;
   spend_threshold_usd?: number | null;
   expiration_note?: string | null;
+  expiration_date?: string | null;
   sort_order?: number;
   source_url?: string | null;
   notes?: string | null;
@@ -172,9 +176,22 @@ export interface BenefitProjection {
   // Sum of amount_usd across all logged usages in ref_year; null when the
   // benefit does not track spend.
   spend_progress_usd: number | null;
+  // Per-period history for the reference year. Each entry represents one
+  // completed or current period (Q1..Q4, Jan..Dec, H1/H2, or the year itself).
+  // status: 'used' (>=cap or count>=max), 'partial' (some usage), 'unused'
+  // (period elapsed or current with no activity yet), 'future' (period has not started).
+  period_history: PeriodHistoryEntry[];
   status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked';
   usages: Usage[];                 // for this period only
   next_reset: string | null;       // ISO date when it resets
+}
+
+export interface PeriodHistoryEntry {
+  period_key: string;              // '2026-Q1', '2026-07', '2026-H1', '2026'
+  period_label: string;            // 'Q1', 'Jan', 'H1', '2026'
+  value_used_usd: number;          // dollar amount used in that period
+  uses_count: number;              // number of usages logged in that period
+  status: 'used' | 'partial' | 'unused' | 'future';
 }
 
 // ─── Refresh (quarterly diff & review) ─────────────────────────────────────────
@@ -233,6 +250,7 @@ export interface WindowApi {
     create: (data: CardInput) => Promise<Card>;
     update: (id: string, data: Partial<CardInput>) => Promise<Card>;
     delete: (id: string) => Promise<{ ok: true }>;
+    setVisible: (id: string, visible: boolean) => Promise<Card>;
   };
   programs: {
     getAll: () => Promise<Program[]>;

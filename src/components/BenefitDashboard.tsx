@@ -319,7 +319,7 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
             {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)} · {p.period_label}
           </div>
         </div>
-        {b.value_usd !== null && (
+        {b.value_usd !== null && b.value_usd > 0 && (
           <div className="text-right shrink-0">
             <div className="text-xs text-slate-500">per use</div>
             <div className="font-mono text-sm">{fmtUsd(b.value_usd)}</div>
@@ -350,8 +350,34 @@ function ConsumableTile({ p, onLogUsage, onChanged }: { p: BenefitProjection; on
             style={{ width: `${pct}%` }}
           />
         </div>
+        {p.period_history && p.period_history.length > 1 && (
+          <div className="flex gap-0.5 mt-1.5" aria-label="Per-period history for this year">
+            {p.period_history.map((h) => {
+              const cls =
+                h.status === 'used' ? 'bg-emerald-500'
+                : h.status === 'partial' ? 'bg-amber-500'
+                : h.status === 'unused' ? 'bg-slate-400 dark:bg-slate-600'
+                : 'bg-slate-200 dark:bg-slate-800';
+              const tip = h.status === 'future'
+                ? `${h.period_label}: upcoming`
+                : h.value_used_usd > 0
+                  ? `${h.period_label}: ${fmtUsd(h.value_used_usd)} used`
+                  : `${h.period_label}: ${h.uses_count > 0 ? `${h.uses_count} use${h.uses_count === 1 ? '' : 's'}` : 'not used'}`;
+              return (
+                <span
+                  key={h.period_key}
+                  className={`flex-1 h-1.5 rounded-sm ${cls}`}
+                  title={tip}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
+      {b.expiration_date && (
+        <div className="text-xs text-amber-700 dark:text-amber-400">📅 Expires {b.expiration_date}</div>
+      )}
       {b.expiration_note && (
         <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {b.expiration_note}</div>
       )}

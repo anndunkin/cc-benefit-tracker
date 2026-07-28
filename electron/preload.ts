@@ -8,6 +8,7 @@ const api: WindowApi = {
     create:   (data)           => ipcRenderer.invoke('cards:create', data),
     update:   (id, data)       => ipcRenderer.invoke('cards:update', id, data),
     delete:   (id)             => ipcRenderer.invoke('cards:delete', id),
+    setVisible: (id, visible)  => ipcRenderer.invoke('cards:setVisible', id, visible),
   },
   programs: {
     getAll:   ()               => ipcRenderer.invoke('programs:getAll'),

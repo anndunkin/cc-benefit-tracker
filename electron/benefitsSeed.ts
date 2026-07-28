@@ -66,16 +66,6 @@ const FALLBACK_CARDS: (CardInput & { id: string; color_hex: string })[] = [
     source_url: 'https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-business/',
   },
   {
-    id: 'marriott_premier',
-    name: 'Marriott Rewards Premier Visa',
-    issuer: 'Chase',
-    network: 'Visa',
-    annual_fee_usd: 85,
-    color_hex: '#78350f',
-    notes: 'Legacy Chase Marriott personal card; closed to new applicants since 2018.',
-    source_url: 'https://marriott.chase.com/premier',
-  },
-  {
     id: 'hyatt_visa',
     name: 'World of Hyatt Credit Card',
     issuer: 'Chase',
@@ -220,11 +210,6 @@ function MINIMAL_FALLBACK_BENEFITS_LIST(): BenefitInput[] { return [
     reset_cadence: 'annual', uses_per_period: 1, value_usd: 0,
     description: 'One Free Night Award every year after card renewal; points-based redemption, dollar value varies by property.',
     source_url: 'https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-business/', sort_order: 10 },
-  // Marriott Premier (Chase, legacy)
-  { card_id: 'marriott_premier', title: 'Anniversary Free Night Award (up to 25,000 points)', category: 'free_night',
-    reset_cadence: 'annual', uses_per_period: 1, value_usd: 0,
-    description: 'One Free Night Award every year after account anniversary, up to 25,000 points/night. Points-based redemption, dollar value varies by property.',
-    source_url: 'https://marriott.chase.com/premier', sort_order: 10 },
   // Delta status
   { program_id: 'delta_medallion', title: 'Regional Upgrade Certificates', category: 'upgrade',
     reset_cadence: 'annual', uses_per_period: 12, value_usd: 100,

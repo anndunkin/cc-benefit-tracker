@@ -2,6 +2,38 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.4 — 2026-07-28
+
+Dashboard history, per-card visibility toggle, seed corrections, and a few tile clean-ups. Every change is covered by the v1.0.4 migration so existing installs converge on first launch.
+
+### Added
+- **Per-benefit history strip on the dashboard.** Consumable tiles now show a compact dot-row under the progress bar with one dot per period in the current reference year: green = used at cap, amber = partial, gray = unused (past), faint = future. Hover for the exact dollars-used and use-count for that period. Driven by a new `period_history` field on `BenefitProjection` and a `buildPeriodHistory(db, benefit, refYear, today)` helper.
+- **`expiration_date` field on benefits.** New nullable `TEXT` column on `benefits`. Editable via the benefit editor with a native date picker. When set, tiles show a 📅 expiration line so free-night certificates and other time-boxed awards no longer rely on the free-form expiration note.
+- **Per-card visibility toggle.** New `is_visible INTEGER NOT NULL DEFAULT 1` column on `cards`, plus `cardSetVisible(db, id, visible)` and a `cards:setVisible` IPC. Cards page shows a "Show on dashboard" checkbox next to each card; hidden cards render dimmed with a "Hidden" badge, and dashboard projections filter them out. Program benefits are unaffected. Lets users toggle cards they don't own (Marriott Bonvoy Brilliant, Boundless, and Bevy) without deleting the seed rows.
+
+### Fixed
+- **Marriott Rewards Premier Visa removed from seed.** The Chase Marriott Premier card has been closed to new applicants since 2018; per user report it should not be in the default deck. Removed from both `GENERATED_CARDS` and `FALLBACK_CARDS` and all its benefit rows are gone. The v1.0.4 migration also deletes `marriott_premier` from any installed DB and cascades its benefits.
+- **Global Entry / TSA PreCheck credit no longer annualized.** Was previously modelled as a $24/year credit (five-year fee divided by five). Corrected to a single-use benefit with `value_usd = 120`, `uses_per_period = 1`, and `reset_cadence = 'annual'` — the tile now reads "1 of 1 used" with a $120 value. Applied across every card that offers this credit: IHG Premier, Amex Platinum, Delta Reserve, Citi AA Executive, and Citi Prestige.
+- **Amex Platinum Global Lounge Collection moved to ongoing.** Was annual/uses_per_period=1; there's no annual reset for lounge access. Set to `reset_cadence = 'unlimited'` with `value_usd = 0` so it shows on the ongoing dashboard instead of the consumable one.
+- **Amex Platinum Car Rental Elite Status (Hertz, Avis, National) moved to ongoing.** Same rationale — status is continuous, not annually consumed.
+- **Delta Reserve Annual Companion Certificate `value_usd` zeroed.** The certificate has no fixed cash value (redeems for a Y-fare domestic Main Cabin companion ticket). Was $500; now $0 so it doesn't inflate the annual value totals. Still tracks as annual/uses_per_period=1.
+- **Delta Reserve Hertz President's Circle Status moved to ongoing.** Continuous status, not annual.
+- **Citi Prestige Priority Pass Membership moved to ongoing.** Membership is continuous; `value_usd = 0` (there's no fixed annual cash value to a lounge pass).
+- **Virgin Atlantic card renamed to "Virgin Atlantic Credit Card".** Header now shows the plain card name instead of the older marketing string.
+- **Tiles hide the "per use" field when the benefit has no dollar value.** Point-based benefits (free-night awards, upgrade certificates, status boosts) no longer show a misleading `$0.00` "per use" pill on the dashboard. The pill only appears when `value_usd > 0`.
+- **Marriott Bonvoy Brilliant, Boundless, and Bevy purge re-runs in the v1.0.4 migration.** Idempotent; harmless on any DB where the previous v1.0.3 purge already ran.
+
+### Migration path
+On first launch of v1.0.4, `applyDataMigrations` runs a one-shot upgrade for any install with `seed_version != '1.0.4'`:
+1. `ALTER TABLE cards ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 1` and `ALTER TABLE benefits ADD COLUMN expiration_date TEXT` (idempotent via `PRAGMA table_info`).
+2. `DELETE FROM cards WHERE id IN ('marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy', 'marriott_premier')` — FKs cascade to their benefits and usages.
+3. Rename `virgin_atlantic` card to "Virgin Atlantic Credit Card" if it's still under a legacy name.
+4. `INSERT OR IGNORE` every currently-seeded card and program, then UPSERT every seeded benefit by (card_id, program_id, title) so the v1.0.4 corrections land in existing DBs. Existing `benefit.id` values are preserved, so all logged usages continue to point at the correct benefit.
+5. Stamp `seed_version = '1.0.4'` in `app_meta`.
+
+### Tests
+- 71 passing (up from 63 in v1.0.3). New v1.0.4 coverage: `marriott_premier` purge, `is_visible` / `expiration_date` column additions on legacy DBs, Virgin Atlantic rename, `cardSetVisible` filters `computeProjections`, `expiration_date` persistence on create + update, `period_history` presence, and every seed correction (Global Entry $120, Priority Pass unlimited, President's Circle unlimited, Companion Certificate $0, Global Lounge unlimited, marriott_premier absent).
+
 ## v1.0.3 — 2026-07-28
 
 Corrections to v1.0.2, which shipped with broken totals and stale card data still visible in installed copies. This release both fixes the underlying seed data and installs the migration path that v1.0.2 was missing.

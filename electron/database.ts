@@ -49,6 +49,7 @@ export function initSchema(database: Database.Database): void {
       network TEXT NOT NULL CHECK(network IN ('Amex','Visa','Mastercard','Other')),
       annual_fee_usd REAL,
       is_active INTEGER NOT NULL DEFAULT 1,
+      is_visible INTEGER NOT NULL DEFAULT 1,
       color_hex TEXT,
       notes TEXT,
       source_url TEXT,
@@ -79,6 +80,7 @@ export function initSchema(database: Database.Database): void {
       value_usd REAL,
       spend_threshold_usd REAL,
       expiration_note TEXT,
+      expiration_date TEXT,
       is_active INTEGER NOT NULL DEFAULT 1,
       sort_order INTEGER NOT NULL DEFAULT 0,
       source_url TEXT,
@@ -204,7 +206,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.3');
+  metaSet(database, 'seed_version', '1.0.4');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -334,12 +336,146 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  // v1.0.4 — add is_visible + expiration_date columns for existing DBs; purge
+  // marriott_premier (closed to new applicants; user does not have it); re-run
+  // the brilliant/boundless/bevy purge idempotently; refresh seed with the
+  // v1.0.4 corrections (Global Entry $120 single-use, Priority Pass unlimited,
+  // President's Circle unlimited, Global Lounge unlimited, Companion Certificate
+  // $0, Virgin Atlantic card renamed). Also re-title Virgin Atlantic in cards.
+  const seedVersion2 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion2 !== '1.0.4') {
+    const tx = database.transaction(() => {
+      // 1) Add columns on existing DBs (idempotent via PRAGMA table_info).
+      const cardCols = database.prepare("PRAGMA table_info('cards')").all() as Array<{ name: string }>;
+      if (!cardCols.some((c) => c.name === 'is_visible')) {
+        database.exec("ALTER TABLE cards ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 1");
+        run.push('v1_0_4_added_cards_is_visible');
+      }
+      const benCols = database.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
+      if (!benCols.some((c) => c.name === 'expiration_date')) {
+        database.exec("ALTER TABLE benefits ADD COLUMN expiration_date TEXT");
+        run.push('v1_0_4_added_benefits_expiration_date');
+      }
+
+      // 2) Purge cards the user does not have. FKs cascade to benefits and usages.
+      const purgeIds = ['marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy', 'marriott_premier'];
+      const delCard = database.prepare('DELETE FROM cards WHERE id = ?');
+      let purged = 0;
+      for (const id of purgeIds) {
+        const r = delCard.run(id);
+        purged += r.changes;
+      }
+      if (purged > 0) run.push(`v1_0_4_purged_${purged}_deprecated_cards`);
+
+      // 3) Rename Virgin Atlantic card if present under legacy name.
+      const vaRename = database.prepare("UPDATE cards SET name = 'Virgin Atlantic Credit Card' WHERE id = 'virgin_atlantic' AND name != 'Virgin Atlantic Credit Card'").run();
+      if (vaRename.changes > 0) run.push('v1_0_4_renamed_virgin_atlantic');
+
+      // 4) Ensure every currently-seeded card exists (INSERT OR IGNORE), then
+      //    UPSERT every seeded benefit by (card_id, program_id, title) so the
+      //    v1.0.4 corrections land in existing DBs (Global Entry, Priority Pass,
+      //    President's Circle, Global Lounge, Companion Certificate, etc.).
+      const insertCard = database.prepare(`
+        INSERT OR IGNORE INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url)
+        VALUES (@id, @name, @issuer, @network, @annual_fee_usd, 1, 1, @color_hex, @notes, @source_url)
+      `);
+      for (const c of SEED_CARDS) insertCard.run({
+        id: c.id,
+        name: c.name,
+        issuer: c.issuer,
+        network: c.network,
+        annual_fee_usd: c.annual_fee_usd ?? null,
+        color_hex: (c as any).color_hex ?? null,
+        notes: (c as any).notes ?? null,
+        source_url: (c as any).source_url ?? null,
+      });
+      const insertProgram = database.prepare(`
+        INSERT OR IGNORE INTO programs (id, name, program_type, is_active, notes, source_url)
+        VALUES (@id, @name, @program_type, 1, @notes, @source_url)
+      `);
+      for (const p of SEED_PROGRAMS) insertProgram.run({
+        id: p.id,
+        name: p.name,
+        program_type: p.program_type,
+        notes: (p as any).notes ?? null,
+        source_url: (p as any).source_url ?? null,
+      });
+
+      const findBenefit = database.prepare(`
+        SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?
+      `);
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @sort_order, @source_url, @notes
+        )
+      `);
+      let updated = 0, inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        if (b.card_id) {
+          const cardExists = database.prepare('SELECT 1 FROM cards WHERE id = ?').get(b.card_id);
+          if (!cardExists) continue;
+        }
+        if (b.program_id) {
+          const progExists = database.prepare('SELECT 1 FROM programs WHERE id = ?').get(b.program_id);
+          if (!progExists) continue;
+        }
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        const params = {
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        };
+        if (existing) {
+          updateBenefit.run({ ...params, id: existing.id });
+          updated++;
+        } else {
+          insertBenefit.run(params);
+          inserted++;
+        }
+      }
+      if (updated > 0) run.push(`v1_0_4_upserted_${updated}_benefits`);
+      if (inserted > 0) run.push(`v1_0_4_inserted_${inserted}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.4');
+      run.push('v1_0_4_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 
 // ─── Cards CRUD ──────────────────────────────────────────────────────────────
 
-const CARD_COLS = 'id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url, created_at';
+const CARD_COLS = 'id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url, created_at';
 
 // ─── Input validation helpers ────────────────────────────────────────────────
 
@@ -384,12 +520,13 @@ export function cardCreate(database: Database.Database, input: CardInput): Card 
   requireStr('issuer', input.issuer);
   const id = input.id ?? ensureUniqueId(database, 'cards', slugify(input.name) || 'card');
   database.prepare(`
-    INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, input.name, input.issuer, input.network,
     input.annual_fee_usd ?? null,
     input.is_active ?? 1,
+    input.is_visible ?? 1,
     input.color_hex ?? null,
     input.notes ?? null,
     input.source_url ?? null,
@@ -406,6 +543,7 @@ export function cardUpdate(database: Database.Database, id: string, patch: Parti
       network = COALESCE(@network, network),
       annual_fee_usd = @annual_fee_usd,
       is_active = COALESCE(@is_active, is_active),
+      is_visible = COALESCE(@is_visible, is_visible),
       color_hex = @color_hex,
       notes = @notes,
       source_url = @source_url
@@ -417,6 +555,7 @@ export function cardUpdate(database: Database.Database, id: string, patch: Parti
     network: patch.network ?? null,
     annual_fee_usd: patch.annual_fee_usd ?? current.annual_fee_usd,
     is_active: patch.is_active ?? null,
+    is_visible: patch.is_visible ?? null,
     color_hex: patch.color_hex ?? current.color_hex,
     notes: patch.notes ?? current.notes,
     source_url: patch.source_url ?? current.source_url,
@@ -425,6 +564,12 @@ export function cardUpdate(database: Database.Database, id: string, patch: Parti
 }
 export function cardDelete(database: Database.Database, id: string): void {
   database.prepare('DELETE FROM cards WHERE id = ?').run(id);
+}
+export function cardSetVisible(database: Database.Database, id: string, visible: boolean): Card {
+  const current = cardGetById(database, id);
+  if (!current) throw new Error(`Card ${id} not found`);
+  database.prepare('UPDATE cards SET is_visible = ? WHERE id = ?').run(visible ? 1 : 0, id);
+  return cardGetById(database, id)!;
 }
 
 // ─── Programs CRUD ───────────────────────────────────────────────────────────
@@ -479,8 +624,8 @@ export function programDelete(database: Database.Database, id: string): void {
 // ─── Benefits CRUD ───────────────────────────────────────────────────────────
 
 const BEN_COLS = `id, card_id, program_id, title, description, category, reset_cadence,
-  uses_per_period, value_usd, spend_threshold_usd, expiration_note, is_active, sort_order,
-  source_url, notes, is_user_modified, created_at, updated_at`;
+  uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date,
+  is_active, sort_order, source_url, notes, is_user_modified, created_at, updated_at`;
 
 export function benefitsGetAll(database: Database.Database): Benefit[] {
   return database.prepare(`SELECT ${BEN_COLS} FROM benefits ORDER BY sort_order ASC, title ASC`).all() as Benefit[];
@@ -502,9 +647,9 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
   const info = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, is_active, sort_order, source_url,
+      value_usd, spend_threshold_usd, expiration_note, expiration_date, is_active, sort_order, source_url,
       notes, is_user_modified
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     input.card_id ?? null,
     input.program_id ?? null,
@@ -516,6 +661,7 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.value_usd ?? null,
     input.spend_threshold_usd ?? null,
     input.expiration_note ?? null,
+    input.expiration_date ?? null,
     input.is_active ?? 1,
     input.sort_order ?? 0,
     input.source_url ?? null,
@@ -537,6 +683,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       value_usd = @value_usd,
       spend_threshold_usd = @spend_threshold_usd,
       expiration_note = @expiration_note,
+      expiration_date = @expiration_date,
       is_active = COALESCE(@is_active, is_active),
       sort_order = COALESCE(@sort_order, sort_order),
       source_url = @source_url,
@@ -554,6 +701,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     value_usd: patch.value_usd ?? current.value_usd,
     spend_threshold_usd: patch.spend_threshold_usd ?? current.spend_threshold_usd,
     expiration_note: patch.expiration_note ?? current.expiration_note,
+    expiration_date: patch.expiration_date ?? current.expiration_date,
     is_active: patch.is_active ?? null,
     sort_order: patch.sort_order ?? null,
     source_url: patch.source_url ?? current.source_url,
@@ -615,6 +763,110 @@ export function usageDelete(database: Database.Database, id: number): void {
 // cadences that repeat within a year (semiannual, quarterly, monthly) we only
 // surface the CURRENT period; the UI can drill into history if desired.
 
+// Build per-period history entries for the reference year. Returns one entry
+// per period bucket (Q1..Q4, Jan..Dec, H1/H2, or the year itself for
+// annual/unlimited/one-time). Each entry marks whether the period was fully
+// used, partially used, unused (past periods), or future (period start > today).
+function buildPeriodHistory(
+  database: Database.Database,
+  b: Benefit,
+  refYear: number,
+  today: Date,
+): { period_key: string; period_label: string; value_used_usd: number; uses_count: number; status: 'used' | 'partial' | 'unused' | 'future' }[] {
+  const isCurrentYear = refYear === today.getUTCFullYear();
+  const todayIso = today.toISOString().slice(0, 10);
+  const per_use_fallback = b.value_usd && b.value_usd > 0 ? b.value_usd : 0;
+  const uses_max = uses_max_for(b);
+
+  // Determine the anchor date list for the year based on cadence.
+  // We build one anchor per period, then compute key+label from that.
+  const anchors: string[] = [];
+  switch (b.reset_cadence) {
+    case 'monthly':
+      for (let m = 1; m <= 12; m++) anchors.push(`${refYear}-${String(m).padStart(2, '0')}-15`);
+      break;
+    case 'quarterly':
+      anchors.push(`${refYear}-02-15`, `${refYear}-05-15`, `${refYear}-08-15`, `${refYear}-11-15`);
+      break;
+    case 'semiannual':
+      anchors.push(`${refYear}-03-15`, `${refYear}-09-15`);
+      break;
+    case 'annual':
+    case 'unlimited':
+    case 'one_time':
+    case 'spend_threshold':
+      anchors.push(`${refYear}-06-15`);
+      break;
+  }
+
+  return anchors.map(anchor => {
+    const key = periodKeyFor(b.reset_cadence, anchor);
+    const label = periodLabelFor(b.reset_cadence, anchor);
+
+    // For sub-year cadences, usages are period_key tagged.
+    // For year-scoped cadences we sum all usages in the year.
+    let periodUsages: Usage[];
+    if (b.reset_cadence === 'quarterly' || b.reset_cadence === 'semiannual' || b.reset_cadence === 'monthly') {
+      periodUsages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND period_key = ?`)
+        .all(b.id, key) as Usage[];
+    } else {
+      // Filter to the reference year for year-scoped cadences.
+      periodUsages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND substr(used_on, 1, 4) = ?`)
+        .all(b.id, String(refYear)) as Usage[];
+    }
+
+    const value_used_usd = periodUsages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
+    const uses_count = periodUsages.length;
+
+    // Period start (used to tell past-vs-future for empty periods).
+    const [ay, amStr] = anchor.split('-');
+    const anchorYear = parseInt(ay, 10);
+    const anchorMonth = parseInt(amStr, 10);
+    let periodStartIso: string;
+    switch (b.reset_cadence) {
+      case 'monthly':
+        periodStartIso = `${anchorYear}-${String(anchorMonth).padStart(2, '0')}-01`;
+        break;
+      case 'quarterly': {
+        const q = Math.ceil(anchorMonth / 3);
+        periodStartIso = `${anchorYear}-${String((q - 1) * 3 + 1).padStart(2, '0')}-01`;
+        break;
+      }
+      case 'semiannual':
+        periodStartIso = `${anchorYear}-${anchorMonth <= 6 ? '01' : '07'}-01`;
+        break;
+      default:
+        periodStartIso = `${anchorYear}-01-01`;
+    }
+    const isFuture = isCurrentYear && periodStartIso > todayIso;
+
+    // Status resolution mirrors the main projection logic per period.
+    let status: 'used' | 'partial' | 'unused' | 'future';
+    const per_period_total = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
+    if (b.reset_cadence === 'unlimited') {
+      status = uses_count > 0 ? 'used' : (isFuture ? 'future' : 'unused');
+    } else if (per_period_total !== null && per_period_total > 0) {
+      if (value_used_usd >= per_period_total) status = 'used';
+      else if (value_used_usd > 0) status = 'partial';
+      else status = isFuture ? 'future' : 'unused';
+    } else if (uses_max !== null) {
+      if (uses_count >= uses_max) status = 'used';
+      else if (uses_count > 0) status = 'partial';
+      else status = isFuture ? 'future' : 'unused';
+    } else {
+      status = uses_count > 0 ? 'used' : (isFuture ? 'future' : 'unused');
+    }
+
+    return {
+      period_key: key,
+      period_label: label,
+      value_used_usd,
+      uses_count,
+      status,
+    };
+  });
+}
+
 export function computeProjections(database: Database.Database, refYear: number): BenefitProjection[] {
   const today = new Date();
   const isCurrentYear = refYear === today.getUTCFullYear();
@@ -622,7 +874,16 @@ export function computeProjections(database: Database.Database, refYear: number)
     ? today.toISOString().slice(0, 10)
     : `${refYear}-06-15`; // mid-year anchor for past/future views
 
-  const benefits = database.prepare(`SELECT ${BEN_COLS} FROM benefits WHERE is_active = 1 ORDER BY sort_order, title`).all() as Benefit[];
+  // Skip benefits belonging to cards the user has hidden. Program benefits
+  // (card_id IS NULL) are always visible — they aren't card-scoped.
+  const benefits = database.prepare(`
+    SELECT ${BEN_COLS.split(',').map(c => `b.${c.trim()}`).join(', ')}
+    FROM benefits b
+    LEFT JOIN cards c ON c.id = b.card_id
+    WHERE b.is_active = 1
+      AND (b.card_id IS NULL OR c.is_visible = 1)
+    ORDER BY b.sort_order, b.title
+  `).all() as Benefit[];
   const cardName = new Map<string, string>();
   for (const c of cardsGetAll(database)) cardName.set(c.id, c.name);
   const progName = new Map<string, string>();
@@ -675,6 +936,12 @@ export function computeProjections(database: Database.Database, refYear: number)
     const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
     const annual_value_usd = total_value === null ? null : total_value * periodsPerYear;
     const annual_value_remaining_usd = annual_value_usd === null ? null : Math.max(0, annual_value_usd - annual_value_used_usd);
+
+    // ─── Per-period history for the reference year ─────────────────────────
+    // For dashboard mini-strips: one entry per period (Q1..Q4, Jan..Dec, H1/H2,
+    // or the year itself). Status marks whether the cap was fully used, partial,
+    // unused (past periods only), or future (period hasn't started yet).
+    const period_history = buildPeriodHistory(database, b, refYear, today);
 
     // ─── Spend-threshold progress ──────────────────────────────────────────
     // For benefits gated on a spend threshold (e.g. Hilton $30K free night),
@@ -732,6 +999,7 @@ export function computeProjections(database: Database.Database, refYear: number)
       annual_value_used_usd,
       annual_value_remaining_usd,
       spend_progress_usd,
+      period_history,
       status,
       usages,
       next_reset: nextResetIso(b.reset_cadence, anchorDate),
