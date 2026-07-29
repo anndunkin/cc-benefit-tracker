@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.9');
+    expect(row.value).toBe('1.0.10');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.9');
+    expect(stamp.value).toBe('1.0.10');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -810,15 +810,15 @@ describe('v1.0.6 migration and features', () => {
     expect(row!.notes ?? '').toMatch(/one use|no dollar/i);
   });
 
-  it('#2 Delta Reserve unlimited SkyClub after $75k spend exists', () => {
+  it('#2 Delta Reserve unlimited SkyClub row removed in v1.0.10 (was a duplicate of Amex Platinum Sky Club/Centurion combo)', () => {
     const db = seededDb();
     const row = db.prepare(`
-      SELECT reset_cadence, spend_threshold_usd FROM benefits
+      SELECT id FROM benefits
       WHERE card_id = 'delta_reserve' AND title LIKE '%Unlimited Delta Sky Club Access%'
-    `).get() as { reset_cadence: string; spend_threshold_usd: number | null } | undefined;
-    expect(row).toBeDefined();
-    expect(row!.reset_cadence).toBe('spend_threshold');
-    expect(row!.spend_threshold_usd).toBe(75000);
+    `).get() as { id: number } | undefined;
+    // v1.0.10 removed the duplicate Delta Reserve Sky Club row; only the Amex
+    // Platinum Sky Club + Centurion combo row survives.
+    expect(row).toBeUndefined();
   });
 
   it('#3 Amex Platinum Centurion guest access after $75k spend exists', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.9');
+    expect(meta.value).toBe('1.0.10');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,7 +1103,7 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.9');
+    expect(stamp.value).toBe('1.0.10');
   });
 });
 
@@ -1234,7 +1234,7 @@ describe('v1.0.8 migration and features', () => {
     expect(emDash.n).toBe(0);
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.9');
+    expect(stamp.value).toBe('1.0.10');
   });
 });
 
@@ -1421,7 +1421,7 @@ describe('v1.0.9 migration and features', () => {
 
     // v1.0.9 stamp reached.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.9');
+    expect(stamp.value).toBe('1.0.10');
 
     // Lifetime Platinum removed.
     const lifetime = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'`).get() as { n: number };
@@ -1447,5 +1447,183 @@ describe('v1.0.9 migration and features', () => {
     expect(newMilestone).toBeDefined();
     const migratedUsage = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(newMilestone.id) as { n: number };
     expect(migratedUsage.n).toBe(1);
+  });
+});
+
+// ─── v1.0.10 tests ─────────────────────────────────────────
+
+describe('v1.0.10 migration and features', () => {
+  it('migration guard runs each version once (idempotent), so user expiration_date edits survive', () => {
+    const db = seededDb();
+    // Simulate a user editing an expiration_date on the Diamond Choice tier gate.
+    const stayCredits = db.prepare(`SELECT id, expiration_date FROM benefits WHERE program_id = 'delta_medallion' AND title = 'Diamond Medallion Choice Benefits (3 selections)'`).get() as { id: number; expiration_date: string | null };
+    expect(stayCredits).toBeDefined();
+    const userDate = '2027-06-30';
+    db.prepare(`UPDATE benefits SET expiration_date = ?, is_user_modified = 1 WHERE id = ?`).run(userDate, stayCredits.id);
+
+    // Re-run applyDataMigrations several times — the fixed guards must not
+    // re-run any migration, so the user's edit must persist.
+    applyDataMigrations(db);
+    applyDataMigrations(db);
+    applyDataMigrations(db);
+
+    const after = db.prepare(`SELECT expiration_date FROM benefits WHERE id = ?`).get(stayCredits.id) as { expiration_date: string };
+    expect(after.expiration_date).toBe(userDate);
+  });
+
+  it('dedupes duplicate Amex Venue Collection rows and migrates their usages', () => {
+    const db = seededDb();
+    // Seed a duplicate Venue row to simulate the v1.0.8-→v1.0.9 duplicate bug.
+    const dup = db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('delta_reserve', 'American Express Venue Collection (10% off concessions, up to $250/yr)', 'entertainment_credit', 'annual', 1, 250)`).run().lastInsertRowid as number;
+    // Log a usage against the duplicate row (period_key is not-null; use annual key for 2026).
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, period_key) VALUES (?, '2026-06-01', 50, '2026')`).run(dup);
+    // Force the migration to re-run by rolling the seed_version back to 1.0.9.
+    db.prepare(`UPDATE app_meta SET value = '1.0.9' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    // Only one Venue row remains.
+    const remaining = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'delta_reserve' AND title = 'American Express Venue Collection (10% off concessions, up to $250/yr)'`).get() as { n: number };
+    expect(remaining.n).toBe(1);
+    // Usage was migrated onto the surviving row.
+    const usageSurvives = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE amount_usd = 50 AND used_on = '2026-06-01'`).get() as { n: number };
+    expect(usageSurvives.n).toBe(1);
+  });
+
+  it('deletes the standalone Delta Reserve Sky Club unlimited row', () => {
+    const db = seededDb();
+    // Insert the row that should be deleted (simulating a v1.0.9 seed where
+    // Delta Reserve still had its own Sky Club row).
+    db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, spend_threshold_usd, value_usd)
+      VALUES ('delta_reserve', 'Unlimited Delta Sky Club Access after $75,000 Spend', 'lounge_access', 'spend_threshold', 75000, 0)`).run();
+    db.prepare(`UPDATE app_meta SET value = '1.0.9' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    const skyClub = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'delta_reserve' AND title = 'Unlimited Delta Sky Club Access after $75,000 Spend'`).get() as { n: number };
+    expect(skyClub.n).toBe(0);
+  });
+
+  it('dedupes duplicate Marriott 2025 NUA rows', () => {
+    const db = seededDb();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('marriott_status', 'Nightly Upgrade Awards (10 earned in 2025)', 'upgrade', 'one_time', 10, 0)`).run();
+    db.prepare(`UPDATE app_meta SET value = '1.0.9' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    const nua = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Nightly Upgrade Awards (10 earned in 2025)'`).get() as { n: number };
+    expect(nua.n).toBe(1);
+  });
+
+  it('zeros out Virgin Personal Perks / Authorized User / BA Travel Together values', () => {
+    const db = seededDb();
+    const targets = [
+      { card_id: 'virgin_atlantic', title: '1 Personal Perk after $15,000 annual spend' },
+      { card_id: 'virgin_atlantic', title: '2nd Personal Perk after $30,000 annual spend' },
+      { card_id: 'virgin_atlantic', title: '2,500 Virgin Points per Authorized User (up to 4)' },
+      { card_id: 'ba_visa', title: 'Travel Together Ticket after $30,000 spend' },
+    ];
+    for (const t of targets) {
+      const row = db.prepare(`SELECT value_usd FROM benefits WHERE card_id = ? AND title = ?`).get(t.card_id, t.title) as { value_usd: number };
+      expect(row.value_usd).toBe(0);
+    }
+  });
+
+  it('sets IHG $100 statement credit value to $100 (was $150)', () => {
+    const db = seededDb();
+    const row = db.prepare(`SELECT value_usd FROM benefits WHERE card_id = 'ihg_premier' AND title = '$100 statement credit + 10,000 bonus points after $20,000 spend'`).get() as { value_usd: number };
+    expect(row.value_usd).toBe(100);
+  });
+
+  it('deletes the IHG Ambassador Renewal row', () => {
+    const db = seededDb();
+    const row = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'ihg_ambassador' AND title = 'Membership Cost / Renewal'`).get() as { n: number };
+    expect(row.n).toBe(0);
+  });
+
+  it('restructures Delta Medallion Choice Benefits with option children', () => {
+    const db = seededDb();
+
+    // Platinum tier gate present.
+    const platGate = db.prepare(`SELECT id, uses_per_period, value_usd FROM benefits WHERE program_id = 'delta_medallion' AND title = 'Platinum Medallion Choice Benefit (1 selection)'`).get() as { id: number; uses_per_period: number; value_usd: number };
+    expect(platGate).toBeDefined();
+    expect(platGate.uses_per_period).toBe(1);
+    expect(platGate.value_usd).toBe(0);
+
+    // Platinum option children linked via prerequisite_benefit_id.
+    const platChildren = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'delta_medallion' AND is_choice_option = 1 AND prerequisite_benefit_id = ?`).get(platGate.id) as { n: number };
+    expect(platChildren.n).toBe(10);
+
+    // Diamond tier gate present.
+    const diaGate = db.prepare(`SELECT id, uses_per_period, value_usd FROM benefits WHERE program_id = 'delta_medallion' AND title = 'Diamond Medallion Choice Benefits (3 selections)'`).get() as { id: number; uses_per_period: number; value_usd: number };
+    expect(diaGate).toBeDefined();
+    expect(diaGate.uses_per_period).toBe(3);
+    expect(diaGate.value_usd).toBe(0);
+
+    // Diamond option children (14 total) linked.
+    const diaChildren = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'delta_medallion' AND is_choice_option = 1 AND prerequisite_benefit_id = ?`).get(diaGate.id) as { n: number };
+    expect(diaChildren.n).toBe(14);
+  });
+
+  it('seeds the 12 carried-over Regional Upgrade Certificates from 2026', () => {
+    const db = seededDb();
+    const row = db.prepare(`SELECT uses_per_period, reset_cadence, expiration_date FROM benefits WHERE program_id = 'delta_medallion' AND title = 'Carried-over Regional Upgrade Certificates from 2026 (12 remaining)'`).get() as { uses_per_period: number; reset_cadence: string; expiration_date: string };
+    expect(row).toBeDefined();
+    expect(row.uses_per_period).toBe(12);
+    expect(row.reset_cadence).toBe('one_time');
+    expect(row.expiration_date).toBe('2028-01-31');
+  });
+
+  it('migrates usages from legacy Delta Global/Regional Upgrade rows onto the new Diamond Choice children', () => {
+    // Start from a fully seeded v1.0.10 DB, then reinsert the legacy standalone
+    // Global / Regional Upgrade rows and roll the stamp back to force v1.0.10
+    // migrations to re-run and migrate the usages onto the new children.
+    const db = seededDb();
+    const oldGlobal = db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('delta_medallion', 'Global Upgrade Certificates (Diamond only)', 'upgrade', 'annual', 4, 0)`).run().lastInsertRowid as number;
+    const oldRegional = db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+      VALUES ('delta_medallion', 'Regional Upgrade Certificates (Diamond & Platinum)', 'upgrade', 'annual', 4, 0)`).run().lastInsertRowid as number;
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, period_key) VALUES (?, '2026-07-01', 0, '2026')`).run(oldGlobal);
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, period_key) VALUES (?, '2026-07-02', 0, '2026')`).run(oldRegional);
+    db.prepare(`UPDATE app_meta SET value = '1.0.9' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    // Legacy rows removed.
+    expect(db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE title = 'Global Upgrade Certificates (Diamond only)'`).get() as { n: number }).toEqual({ n: 0 });
+    expect(db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE title = 'Regional Upgrade Certificates (Diamond & Platinum)'`).get() as { n: number }).toEqual({ n: 0 });
+
+    // Usages migrated onto the new choice-option rows.
+    const newGlobal = db.prepare(`SELECT id FROM benefits WHERE title = 'Diamond Choice - 4 Global Upgrade Certificates'`).get() as { id: number };
+    const newRegional = db.prepare(`SELECT id FROM benefits WHERE title = 'Diamond Choice - 8 Regional Upgrade Certificates'`).get() as { id: number };
+    expect(newGlobal).toBeDefined();
+    expect(newRegional).toBeDefined();
+    const globalUsage = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(newGlobal.id) as { n: number };
+    const regionalUsage = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(newRegional.id) as { n: number };
+    expect(globalUsage.n).toBe(1);
+    expect(regionalUsage.n).toBe(1);
+
+    // Version stamped.
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.10');
+  });
+
+  it('preserves user-modified value_usd during v1.0.10 upsert but refreshes description', () => {
+    // Start from a fully seeded v1.0.10 DB, mark the Diamond Choice tier gate
+    // as user-modified with custom values, roll the stamp back, and re-run.
+    const db = seededDb();
+    const rowId = db.prepare(`UPDATE benefits SET value_usd = 999, expiration_date = '2027-05-05', is_user_modified = 1 WHERE program_id = 'delta_medallion' AND title = 'Diamond Medallion Choice Benefits (3 selections)' RETURNING id`).get() as { id: number };
+    db.prepare(`UPDATE app_meta SET value = '1.0.9' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    const after = db.prepare(`SELECT value_usd, expiration_date, description FROM benefits WHERE id = ?`).get(rowId.id) as { value_usd: number; expiration_date: string; description: string };
+    // User's overridden value / expiration_date preserved.
+    expect(after.value_usd).toBe(999);
+    expect(after.expiration_date).toBe('2027-05-05');
+    // But description was refreshed from the new seed copy.
+    expect(after.description).toMatch(/Select 3 Choice Benefits/i);
   });
 });

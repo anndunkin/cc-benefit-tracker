@@ -2,6 +2,32 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.10 — 2026-07-29
+
+### Fixed
+- **Migration guard bug: user edits (expiration dates, values) no longer disappear on restart.** The v1.0.3 → v1.0.9 migration guards used `!==` instead of `<`, so the entire migration chain re-ran on every launch and the seed UPSERT loop unconditionally overwrote user-entered `expiration_date`, `value_usd`, and `reset_cadence` fields. Guards now use a proper dotted-numeric `seedVersionLt(...)` comparison, so each migration runs at most once. The v1.0.10 UPSERT pass additionally checks `is_user_modified = 1` and preserves the user's `value_usd`, `expiration_date`, `expiration_note`, `reset_cadence`, `reset_years`, `uses_per_period`, and `spend_threshold_usd` when a row has been edited — only the description, category, sort order, source URL, and notes are refreshed from seed.
+- **American Express Venue Collection deduped (Delta Reserve).** When v1.0.9 renamed the Venue row title, older migration passes couldn't find the pre-rename row and inserted a duplicate before the rename ran. v1.0.10 dedupes matching rows (keeps the lowest id, migrates any usages onto it, deletes the rest).
+- **Nightly Upgrade Awards (2025) deduped (Marriott).** Same title-rename fallout as Venue; migration now dedupes so only one 2025 NUA row remains, and any logged usages survive on the surviving row.
+- **Delta Reserve standalone "Unlimited Sky Club after $75,000 Spend" removed.** The combined Sky Club + Centurion row on Amex Platinum is the only surviving copy of this benefit; the Delta Reserve duplicate is deleted.
+- **Virgin Atlantic "1 Personal Perk after $15,000 spend" → value $0.** Removed the misleading $300 flat value; the actual perk (hotel credit, lounge pass, points bonus, etc.) is entirely user-selected.
+- **Virgin Atlantic "2nd Personal Perk after $30,000 spend" → value $0.** Same reasoning as above.
+- **Virgin Atlantic "2,500 Virgin Points per Authorized User" → value $0.** Points value depends on redemption context, so the previous $130 fixed value was misleading.
+- **British Airways Travel Together Ticket → value $0.** The certificate value depends entirely on the paid fare it accompanies; the previous $1,000 fixed value overstated the perk.
+- **IHG $100 statement credit → value $100 (was $150).** The credit is $100 flat; the 10,000 bonus points are separate and heavily redemption-dependent, so the credit's `value_usd` now matches the dollar credit only.
+
+### Added
+- **Delta Medallion Choice Benefits restructured as tier gates with option children (AA-style).** Following the same pattern as the AA Loyalty Point tier system:
+  - **"Platinum Medallion Choice Benefit (1 selection)"** is a hidden milestone row with 10 option children (4 Regional Upgrade Certificates, $250 Amex credit, 6,000 Starbucks Stars, $1,000 MQD Accelerator, gift 4 Silver Medallion, 35,000 bonus miles, $400 Delta Vacations, $250 SAF, $350 Delta voucher, $1,500 Wheels Up). Toggle *Select as choice* on the option you actually take; only selected options show in the dashboard.
+  - **"Diamond Medallion Choice Benefits (3 selections)"** is a hidden milestone row with 14 option children (including 4 Global / 8 Regional / 2 Global + 4 Regional upgrade bundles, $500 Amex credit, Sky Club Individual (2 choices) or Executive (3 choices) membership, $2,000 MQD Accelerator, gift 4 Gold Medallion, 40,000 bonus miles, $500 Delta Vacations, $250 SAF, $550 Delta voucher, $2,000 Wheels Up).
+  - Any usages logged on the legacy standalone "Global Upgrade Certificates (Diamond only)" or "Regional Upgrade Certificates (Diamond & Platinum)" rows are migrated onto the new "Diamond Choice - 4 Global Upgrade Certificates" and "Diamond Choice - 8 Regional Upgrade Certificates" children so no history is lost. Legacy rows are then removed.
+- **12 carried-over Regional Upgrade Certificates from 2026 seeded.** New one-time row "Carried-over Regional Upgrade Certificates from 2026 (12 remaining)" tracks the RUCs carried forward with an assumed expiration of 2028-01-31 (adjust the date on the row editor if your certificates carry a different terminal date).
+
+### Removed
+- **IHG Ambassador Renewal row** removed from `ihg_ambassador`. Users track the paid renewal outside the app rather than as a negative-value benefit.
+
+### Testing
+- New v1.0.10 suite covers: idempotent migration guards preserve a user-entered `expiration_date` across three back-to-back `applyDataMigrations` calls; Venue duplicate rows dedupe and their usages survive; Delta Reserve Sky Club row is absent; 2025 NUA row is unique; Virgin/BA values are 0; IHG $100 credit is $100; Ambassador row is absent; Platinum tier gate has 10 option children linked via `prerequisite_benefit_id`; Diamond tier gate has 14 option children; the 12-cert carry-over row has `uses_per_period = 12`, `reset_cadence = one_time`, and `expiration_date = 2028-01-31`; usages on legacy Delta upgrade rows migrate cleanly onto the new choice children; and a user-modified row with a custom `value_usd = 999` and `expiration_date = 2027-05-05` retains those values through the v1.0.10 UPSERT pass while still receiving the refreshed description.
+
 ## v1.0.9 — 2026-07-29
 
 ### Fixed

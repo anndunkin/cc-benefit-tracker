@@ -150,6 +150,39 @@ function metaSet(database: Database.Database, key: string, value: string): void 
     ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(key, value);
 }
 
+/**
+ * Parse a dotted-numeric version string (e.g. "1.0.9") into a tuple. Any
+ * non-numeric segment sorts as 0 so malformed values don't crash — they just
+ * behave as older than any valid version and get all migrations applied.
+ */
+function parseVersion(v: string | null | undefined): number[] {
+  if (!v) return [0, 0, 0];
+  return v.split('.').map((s) => {
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) ? n : 0;
+  });
+}
+
+/**
+ * Returns true if the stored seed_version is strictly less than `target`.
+ * Migrations should be gated on `seedVersionLt(db, 'X.Y.Z')` so they run
+ * once per install and never re-run after `seed_version` has advanced past
+ * their target. The historical `!==` check re-ran migrations on every
+ * startup and clobbered user edits (v1.0.10 fix).
+ */
+function seedVersionLt(database: Database.Database, target: string): boolean {
+  const current = parseVersion(metaGet(database, 'seed_version'));
+  const tgt = parseVersion(target);
+  const len = Math.max(current.length, tgt.length);
+  for (let i = 0; i < len; i++) {
+    const a = current[i] ?? 0;
+    const b = tgt[i] ?? 0;
+    if (a < b) return true;
+    if (a > b) return false;
+  }
+  return false;
+}
+
 // ─── Seeding ─────────────────────────────────────────────────────────────────
 
 export function seedIfFresh(database: Database.Database): void {
@@ -226,7 +259,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.9');
+  metaSet(database, 'seed_version', '1.0.10');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -244,8 +277,10 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // usages. v1.0.2 shipped with the same seed data as v1.0.1 but the migration
   // itself was missing — v1.0.3 both writes the correct seed and installs the
   // migration path so existing DBs converge.
-  const seedVersion = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion !== '1.0.3') {
+  // v1.0.10 fix: guards below use seedVersionLt so each migration runs at
+  // most once. The historical `!==` pattern re-ran the entire chain on every
+  // startup, silently wiping user edits (bug #5 in the v1.0.10 fix set).
+  if (seedVersionLt(database, '1.0.3')) {
     const tx = database.transaction(() => {
       // 1) Purge deprecated Marriott card ids. FKs cascade to benefits and usages.
       const deprecatedIds = ['marriott_bonvoy_brilliant', 'marriott_bonvoy_boundless', 'marriott_bonvoy_bevy'];
@@ -362,8 +397,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // v1.0.4 corrections (Global Entry $120 single-use, Priority Pass unlimited,
   // President's Circle unlimited, Global Lounge unlimited, Companion Certificate
   // $0, Virgin Atlantic card renamed). Also re-title Virgin Atlantic in cards.
-  const seedVersion2 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion2 !== '1.0.4') {
+  if (seedVersionLt(database, '1.0.4')) {
     const tx = database.transaction(() => {
       // 1) Add columns on existing DBs (idempotent via PRAGMA table_info).
       const cardCols = database.prepare("PRAGMA table_info('cards')").all() as Array<{ name: string }>;
@@ -496,8 +530,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // multi-year reset windows (Global Entry: 4yr Amex/Chase, 5yr Citi); delete
   // the citi_prestige 'Closed to New Applicants' informational tile; refresh
   // seed so AA Executive Global Entry moves to a 5-year reset window.
-  const seedVersion3 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion3 !== '1.0.5') {
+  if (seedVersionLt(database, '1.0.5')) {
     const tx = database.transaction(() => {
       // 1) Add reset_years column (idempotent).
       const benCols = database.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
@@ -618,8 +651,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // (which now includes the AA prereq/choice-split rewrite plus the two new
   // Amex Plat + Delta Reserve $75k spend unlocks); resolve prerequisite_benefit_title
   // → prerequisite_benefit_id by title lookup.
-  const seedVersion4 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion4 !== '1.0.6') {
+  if (seedVersionLt(database, '1.0.6')) {
     const tx = database.transaction(() => {
       // 1) Add prerequisite/choice columns idempotently.
       const benCols = database.prepare("PRAGMA table_info('benefits')").all() as Array<{ name: string }>;
@@ -792,8 +824,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // used the wrong card_id 'ba_visa'). Then re-UPSERT all seed benefits so the
   // IHG anniversary night, IHG Platinum Elite Status, and any other seed value
   // changes flow into existing databases.
-  const seedVersion5 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion5 !== '1.0.7') {
+  if (seedVersionLt(database, '1.0.7')) {
     const tx = database.transaction(() => {
       // Delete orphaned / mis-targeted legacy rows.
       const delRows: Array<{ title: string; cardId: string | null; programId: string | null }> = [
@@ -871,8 +902,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // 3M/5M that were removed from the v1.0.6 seed; (d) re-UPSERT the seed so
   // renamed and re-scoped benefits (e.g. the combined Amex Platinum benefit)
   // pick up their new descriptions/expiration notes.
-  const seedVersion6 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion6 !== '1.0.8') {
+  if (seedVersionLt(database, '1.0.8')) {
     const tx = database.transaction(() => {
       // (a) Combined Amex Platinum lounge benefit.
       // Rename the existing Sky Club row (preserves usages + spend progress).
@@ -1005,8 +1035,7 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
   // new Hyatt carry-over free-night rows and Marriott milestone/choice rows;
   // (f) re-UPSERT so value_usd, reset_cadence, expiration_date, description
   // and notes changes propagate to existing DBs.
-  const seedVersion7 = metaGet(database, 'seed_version') ?? '1.0.0';
-  if (seedVersion7 !== '1.0.9') {
+  if (seedVersionLt(database, '1.0.9')) {
     const tx = database.transaction(() => {
       // (a) Rename rows whose titles changed so title-based UPSERT can find them.
       const renameVenue = database.prepare(`
@@ -1191,6 +1220,262 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.9');
       run.push('v1_0_9_seed_refresh');
+    });
+    tx();
+  }
+
+  // v1.0.10 — cleanup pass:
+  //   #1 dedupe Amex Venue Collection on Delta Reserve
+  //   #2 delete standalone Delta Reserve Sky Club unlimited row (Platinum row keeps combined benefit)
+  //   #3 zero out Virgin Personal Perks / Authorized User value fields
+  //   #4 dedupe Marriott 2025 NUA row
+  //   #5 (root-cause fix already landed via migration guards)
+  //   #6 IHG $100 credit -> value_usd 100
+  //   #7 delete IHG Ambassador renewal row
+  //   #8 restructure Delta Medallion Choice Benefits as tier gates with option children
+  //   #9 seed 12 carried-over Regional Upgrade Certificates from 2026
+  //  #10 zero out BA Travel Together value
+  if (seedVersionLt(database, '1.0.10')) {
+    const tx = database.transaction(() => {
+      // Helper: dedupe rows matching a (card_id, program_id, title) filter.
+      // Keeps the min(id) row, migrates any usages onto it, deletes the rest.
+      const dedupe = (card_id: string | null, program_id: string | null, title: string): number => {
+        const rows = database.prepare(
+          'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ? ORDER BY id ASC'
+        ).all(card_id, program_id, title) as { id: number }[];
+        if (rows.length <= 1) return 0;
+        const keep = rows[0].id;
+        const drop = rows.slice(1).map(r => r.id);
+        const placeholders = drop.map(() => '?').join(',');
+        database.prepare(`UPDATE usages SET benefit_id = ? WHERE benefit_id IN (${placeholders})`).run(keep, ...drop);
+        database.prepare(`DELETE FROM benefits WHERE id IN (${placeholders})`).run(...drop);
+        return drop.length;
+      };
+
+      // #1 Dedupe Amex Venue Collection on Delta Reserve.
+      const dupVenue = dedupe('delta_reserve', null, 'American Express Venue Collection (10% off concessions, up to $250/yr)');
+      if (dupVenue > 0) run.push(`v1_0_10_deduped_${dupVenue}_venue_collection`);
+
+      // #2 Delete standalone Delta Reserve Sky Club unlimited row (Amex Platinum
+      // has the combined benefit; Delta Reserve’s row is redundant).
+      const delSkyClub = database.prepare(`
+        DELETE FROM benefits WHERE card_id = 'delta_reserve'
+          AND title = 'Unlimited Delta Sky Club Access after $75,000 Spend'
+      `).run();
+      if (delSkyClub.changes > 0) run.push(`v1_0_10_deleted_${delSkyClub.changes}_delta_reserve_sky_club`);
+
+      // #4 Dedupe Marriott 2025 NUA row.
+      const dupNua = dedupe(null, 'marriott_status', 'Nightly Upgrade Awards (10 earned in 2025)');
+      if (dupNua > 0) run.push(`v1_0_10_deduped_${dupNua}_nua_rows`);
+
+      // #3 + #10 Force value_usd = 0 on Virgin Personal Perks / Authorized User /
+      // BA Travel Together, regardless of is_user_modified (user explicitly
+      // asked to remove these dollar values).
+      const zeroValueTitles: { card_id: string; title: string }[] = [
+        { card_id: 'virgin_atlantic', title: '1 Personal Perk after $15,000 annual spend' },
+        { card_id: 'virgin_atlantic', title: '2nd Personal Perk after $30,000 annual spend' },
+        { card_id: 'virgin_atlantic', title: '2,500 Virgin Points per Authorized User (up to 4)' },
+        { card_id: 'ba_visa', title: 'Travel Together Ticket after $30,000 spend' },
+      ];
+      let zeroed = 0;
+      for (const t of zeroValueTitles) {
+        const r = database.prepare(`
+          UPDATE benefits SET value_usd = 0 WHERE card_id = ? AND title = ?
+        `).run(t.card_id, t.title);
+        zeroed += r.changes;
+      }
+      if (zeroed > 0) run.push(`v1_0_10_zeroed_${zeroed}_value_fields`);
+
+      // #6 IHG $100 statement credit -> value_usd = 100 (from 150).
+      const ihgCredit = database.prepare(`
+        UPDATE benefits SET value_usd = 100
+        WHERE card_id = 'ihg_premier'
+          AND title = '$100 statement credit + 10,000 bonus points after $20,000 spend'
+      `).run();
+      if (ihgCredit.changes > 0) run.push(`v1_0_10_updated_${ihgCredit.changes}_ihg_credit_value`);
+
+      // #7 Delete IHG Ambassador Renewal row.
+      const delAmbassador = database.prepare(`
+        DELETE FROM benefits WHERE program_id = 'ihg_ambassador' AND title = 'Membership Cost / Renewal'
+      `).run();
+      if (delAmbassador.changes > 0) run.push(`v1_0_10_deleted_${delAmbassador.changes}_ihg_ambassador_renewal`);
+
+      // #8 Migrate legacy standalone Delta Global / Regional upgrade certificate
+      // rows onto the new Diamond Choice option children so any user usages
+      // survive.  Same technique used for the Marriott choice migration.
+      const legacyDeltaMap: { oldTitle: string; newTitle: string }[] = [
+        { oldTitle: 'Global Upgrade Certificates (Diamond only)', newTitle: 'Diamond Choice - 4 Global Upgrade Certificates' },
+        { oldTitle: 'Regional Upgrade Certificates (Diamond & Platinum)', newTitle: 'Diamond Choice - 8 Regional Upgrade Certificates' },
+      ];
+      let deltaMigrated = 0;
+      for (const m of legacyDeltaMap) {
+        const oldRow = database.prepare(`
+          SELECT id FROM benefits WHERE program_id = 'delta_medallion' AND title = ?
+        `).get(m.oldTitle) as { id: number } | undefined;
+        if (!oldRow) continue;
+        const newRow = database.prepare(`
+          SELECT id FROM benefits WHERE program_id = 'delta_medallion' AND title = ?
+        `).get(m.newTitle) as { id: number } | undefined;
+        if (!newRow) {
+          // New row isn’t inserted yet; rename the legacy row in place so its
+          // usages survive and the INSERT pass below skips it.
+          database.prepare('UPDATE benefits SET title = ? WHERE id = ?').run(m.newTitle, oldRow.id);
+          deltaMigrated++;
+          continue;
+        }
+        const moved = database.prepare('UPDATE usages SET benefit_id = ? WHERE benefit_id = ?').run(newRow.id, oldRow.id);
+        deltaMigrated += moved.changes;
+        database.prepare('DELETE FROM benefits WHERE id = ?').run(oldRow.id);
+      }
+      if (deltaMigrated > 0) run.push(`v1_0_10_migrated_${deltaMigrated}_delta_upgrade_rows`);
+
+      // (e) INSERT any new v1.0.10 seed rows (Delta Choice options, carry-over
+      // regional upgrades) and (f) UPSERT the milestone parent rows so their
+      // updated descriptions / value_usd propagate.
+      //
+      // Older DBs (pre-v1.0.5) may not yet have the is_user_modified column at
+      // this point in the migration chain, so pick a lookup query that only
+      // references columns we know exist and probe for is_user_modified
+      // separately below.
+      const hasUserModifiedCol = (database.prepare(`PRAGMA table_info(benefits)`).all() as { name: string }[])
+        .some((c) => c.name === 'is_user_modified');
+      const findBenefit = hasUserModifiedCol
+        ? database.prepare('SELECT id, is_user_modified FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?')
+        : database.prepare('SELECT id, 0 AS is_user_modified FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?');
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+          is_choice_option, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+          @is_choice_option, @sort_order, @source_url, @notes
+        )
+      `);
+      // Fields we’re willing to overwrite even when is_user_modified = 1 for
+      // v1.0.10 upserts: description/category/sort_order/source_url/notes/
+      // is_choice_option. value_usd/uses_per_period/expiration_date/expiration_note/
+      // reset_cadence/reset_years/spend_threshold_usd are preserved on user-
+      // modified rows so we don’t clobber user edits (root-cause fix from #5).
+      const updateBenefitPreserveUserFields = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const updateBenefitFull = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          expiration_date = @expiration_date,
+          reset_years = @reset_years,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+
+      // First pass: INSERT missing seed rows (new Delta Choice options, carry-over).
+      let inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number; is_user_modified: number } | undefined;
+        if (existing) continue;
+        insertBenefit.run({
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        });
+        inserted++;
+      }
+      if (inserted > 0) run.push(`v1_0_10_inserted_${inserted}_new_seed_rows`);
+
+      // Second pass: UPSERT existing rows. For user-modified rows, only refresh
+      // metadata (description/category/notes/etc.) and preserve user’s
+      // value_usd / expiration_date / cadence edits.
+      let upsertedFull = 0;
+      let upsertedPreserve = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number; is_user_modified: number } | undefined;
+        if (!existing) continue;
+        const params = {
+          id: existing.id,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        };
+        if (existing.is_user_modified === 1) {
+          updateBenefitPreserveUserFields.run(params);
+          upsertedPreserve++;
+        } else {
+          updateBenefitFull.run(params);
+          upsertedFull++;
+        }
+      }
+      if (upsertedFull > 0) run.push(`v1_0_10_upserted_${upsertedFull}_benefits`);
+      if (upsertedPreserve > 0) run.push(`v1_0_10_preserved_${upsertedPreserve}_user_modified_rows`);
+
+      // Resolve prerequisite_benefit_id for the new Delta Choice option rows.
+      const resolvePrereq = database.prepare(`
+        UPDATE benefits SET prerequisite_benefit_id = (
+          SELECT p.id FROM benefits p
+          WHERE (p.card_id IS benefits.card_id OR (p.card_id IS NULL AND benefits.card_id IS NULL))
+            AND (p.program_id IS benefits.program_id OR (p.program_id IS NULL AND benefits.program_id IS NULL))
+            AND p.title = @prereq_title
+        )
+        WHERE title = @title
+          AND (program_id = @program_id OR (program_id IS NULL AND @program_id IS NULL))
+          AND (card_id = @card_id OR (card_id IS NULL AND @card_id IS NULL))
+      `);
+      let prereqLinks = 0;
+      for (const b of SEED_BENEFITS) {
+        const prereqTitle = (b as any).prerequisite_benefit_title;
+        if (!prereqTitle) continue;
+        const r = resolvePrereq.run({
+          prereq_title: prereqTitle,
+          title: b.title,
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+        });
+        prereqLinks += r.changes;
+      }
+      if (prereqLinks > 0) run.push(`v1_0_10_relinked_${prereqLinks}_prereq_ids`);
+
+      metaSet(database, 'seed_version', '1.0.10');
+      run.push('v1_0_10_seed_refresh');
     });
     tx();
   }
