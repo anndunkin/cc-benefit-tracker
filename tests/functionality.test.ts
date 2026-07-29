@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.7');
+    expect(row.value).toBe('1.0.8');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.7');
+    expect(stamp.value).toBe('1.0.8');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.7');
+    expect(meta.value).toBe('1.0.8');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,6 +1103,137 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.7');
+    expect(stamp.value).toBe('1.0.8');
+  });
+});
+
+// ─── v1.0.8 tests ────────────────────────────────────────────────────────────
+
+describe('v1.0.8 migration and features', () => {
+  it('#1 Amex Platinum: combined Sky Club + Centurion row exists, standalone Centurion row is gone', () => {
+    const db = seededDb();
+    const combined = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE card_id = 'amex_platinum'
+        AND title = 'Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend'
+    `).get() as { n: number };
+    expect(combined.n).toBe(1);
+    const standaloneCenturion = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE card_id = 'amex_platinum'
+        AND title = 'Complimentary Centurion Lounge Guest Access after $75,000 Spend'
+    `).get() as { n: number };
+    expect(standaloneCenturion.n).toBe(0);
+    const standaloneSkyClub = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE card_id = 'amex_platinum'
+        AND title = 'Unlimited Delta Sky Club Access after $75,000 Spend'
+    `).get() as { n: number };
+    expect(standaloneSkyClub.n).toBe(0);
+  });
+
+  it('#3/#4 no em-dash AA LP tier rows survive in a freshly seeded DB', () => {
+    const db = seededDb();
+    const emDash = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'aa_status'
+        AND title LIKE '% Loyalty Point% — %'
+    `).get() as { n: number };
+    expect(emDash.n).toBe(0);
+  });
+
+  it('#3/#4 no LP tiers above 400K remain in a freshly seeded DB', () => {
+    const db = seededDb();
+    const highTiers = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'aa_status'
+        AND (title LIKE '550,000%' OR title LIKE '750,000%' OR title LIKE '1,000,000%'
+             OR title LIKE '3,000,000%' OR title LIKE '5,000,000%')
+    `).get() as { n: number };
+    expect(highTiers.n).toBe(0);
+  });
+
+  it('#4 all AA LP tier-gate rows (15K/60K/100K/175K/250K/400K) have value_usd = 0', () => {
+    const db = seededDb();
+    const rows = db.prepare(`
+      SELECT title, value_usd FROM benefits
+      WHERE program_id = 'aa_status' AND is_choice_option = 0
+        AND title LIKE '%Loyalty Point%'
+        AND title NOT LIKE '%Choice%'
+    `).all() as Array<{ title: string; value_usd: number | null }>;
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.value_usd ?? 0).toBe(0);
+    }
+  });
+
+  it('v1.0.6 legacy DB with em-dash AA rows + separate Centurion row upgrades cleanly to v1.0.8', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        expiration_date TEXT, reset_years INTEGER, prerequisite_benefit_id INTEGER,
+        is_choice_option INTEGER NOT NULL DEFAULT 0, choice_selected INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO programs (id, name, program_type) VALUES ('aa_status', 'AA Status', 'airline_elite_status')`).run();
+    db.prepare(`INSERT INTO cards (id, name, issuer, network) VALUES ('amex_platinum', 'Amex Plat', 'Amex', 'Amex')`).run();
+
+    // Prior-version rows the migration should clean up.
+    db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd, spend_threshold_usd)
+                VALUES ('amex_platinum', 'Unlimited Delta Sky Club Access after $75,000 Spend', 'lounge_access', 'spend_threshold', 1, 0, 75000)`).run();
+    const centurionId = db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd, spend_threshold_usd)
+                VALUES ('amex_platinum', 'Complimentary Centurion Lounge Guest Access after $75,000 Spend', 'lounge_access', 'spend_threshold', 1, 0, 75000)`).run().lastInsertRowid;
+    // Insert a usage row against the standalone Centurion benefit — should be
+    // moved onto the merged row.
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd) VALUES (?, '2026-07-01', 250)`).run(centurionId);
+
+    // Legacy em-dash AA tier rows.
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '60,000 Loyalty Points — AAdvantage Gold', 'status_boost', 'annual', 0)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '175,000 Loyalty Points — Platinum Pro + 1 Loyalty Choice Reward', 'upgrade', 'annual', 250)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '550,000 Loyalty Points — 2 Loyalty Choice Rewards', 'other', 'annual', 0)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '5,000,000 Loyalty Points — 1 Loyalty Choice Reward', 'upgrade', 'annual', 0)`).run();
+
+    // Hyphen-titled counterpart for tiers that survive (needed as usage
+    // migration target for em-dash rows). Insert 60K + 175K only.
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '60,000 Loyalty Points - AAdvantage Gold', 'status_boost', 'annual', 0)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('aa_status', '175,000 Loyalty Points - Platinum Pro + 1 Loyalty Choice Reward', 'upgrade', 'annual', 0)`).run();
+
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.6')`).run();
+
+    applyDataMigrations(db);
+
+    // Combined Amex row survives + received the migrated usage.
+    const combined = db.prepare(`SELECT id FROM benefits WHERE card_id = 'amex_platinum' AND title = 'Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend'`).get() as { id: number };
+    expect(combined).toBeDefined();
+    const migratedUsage = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(combined.id) as { n: number };
+    expect(migratedUsage.n).toBe(1);
+    // Standalone Centurion is gone.
+    const centurion = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'amex_platinum' AND title = 'Complimentary Centurion Lounge Guest Access after $75,000 Spend'`).get() as { n: number };
+    expect(centurion.n).toBe(0);
+    // All em-dash rows are gone.
+    const emDash = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'aa_status' AND title LIKE '% Loyalty Point% — %'`).get() as { n: number };
+    expect(emDash.n).toBe(0);
+    // Version stamped.
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.8');
   });
 });

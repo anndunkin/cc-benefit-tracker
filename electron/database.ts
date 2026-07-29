@@ -225,7 +225,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.7');
+  metaSet(database, 'seed_version', '1.0.8');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -857,6 +857,140 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.7');
       run.push('v1_0_7_seed_refresh');
+    });
+    tx();
+  }
+
+  // v1.0.8 — (a) merge Amex Platinum "Unlimited Delta Sky Club Access after
+  // $75,000 Spend" and "Complimentary Centurion Lounge Guest Access after
+  // $75,000 Spend" into a single combined benefit (preserving usage history
+  // via a title rename + delete of the duplicate); (b) delete legacy em-dash
+  // AA Loyalty Point tier rows that were left behind when v1.0.6 rewrote the
+  // seed with plain hyphens; (c) delete obsolete AA LP levels 550K/750K/1M/
+  // 3M/5M that were removed from the v1.0.6 seed; (d) re-UPSERT the seed so
+  // renamed and re-scoped benefits (e.g. the combined Amex Platinum benefit)
+  // pick up their new descriptions/expiration notes.
+  const seedVersion6 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion6 !== '1.0.8') {
+    const tx = database.transaction(() => {
+      // (a) Combined Amex Platinum lounge benefit.
+      // Rename the existing Sky Club row (preserves usages + spend progress).
+      const renamed = database.prepare(`
+        UPDATE benefits SET title = ?
+        WHERE card_id = 'amex_platinum'
+          AND title = 'Unlimited Delta Sky Club Access after $75,000 Spend'
+      `).run('Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend');
+      if (renamed.changes > 0) run.push(`v1_0_8_renamed_${renamed.changes}_amex_lounge`);
+      // Move any usages/spend from the standalone Centurion guest row into the
+      // merged row so nothing is lost, then delete the duplicate.
+      const centurionRow = database.prepare(`
+        SELECT id FROM benefits WHERE card_id = 'amex_platinum'
+          AND title = 'Complimentary Centurion Lounge Guest Access after $75,000 Spend'
+      `).get() as { id: number } | undefined;
+      const mergedRow = database.prepare(`
+        SELECT id FROM benefits WHERE card_id = 'amex_platinum'
+          AND title = 'Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend'
+      `).get() as { id: number } | undefined;
+      if (centurionRow && mergedRow) {
+        const moved = database.prepare('UPDATE usages SET benefit_id = ? WHERE benefit_id = ?').run(mergedRow.id, centurionRow.id);
+        if (moved.changes > 0) run.push(`v1_0_8_migrated_${moved.changes}_centurion_usages`);
+      }
+      if (centurionRow) {
+        database.prepare('DELETE FROM benefits WHERE id = ?').run(centurionRow.id);
+        run.push('v1_0_8_deleted_standalone_centurion_row');
+      }
+
+      // (b) Delete legacy em-dash AA LP tier rows that survived the v1.0.6
+      // rewrite. Migrate any usages back onto the current hyphen-titled tier.
+      const emDashPairs: Array<{ oldTitle: string; newTitle: string | null }> = [
+        // Preserve history for tiers still present in the current seed.
+        { oldTitle: '60,000 Loyalty Points — AAdvantage Gold', newTitle: '60,000 Loyalty Points - AAdvantage Gold' },
+        { oldTitle: '100,000 Loyalty Points — AAdvantage Platinum', newTitle: '100,000 Loyalty Points - AAdvantage Platinum' },
+        { oldTitle: '175,000 Loyalty Points — Platinum Pro + 1 Loyalty Choice Reward', newTitle: '175,000 Loyalty Points - Platinum Pro + 1 Loyalty Choice Reward' },
+        { oldTitle: '250,000 Loyalty Points — Executive Platinum + 2 Loyalty Choice Rewards', newTitle: '250,000 Loyalty Points - Executive Platinum + 2 Loyalty Choice Rewards' },
+        { oldTitle: '400,000 Loyalty Points — 2 Loyalty Choice Rewards', newTitle: '400,000 Loyalty Points - 2 Loyalty Choice Rewards' },
+        // Tiers dropped in v1.0.6 seed — delete outright (no new home).
+        { oldTitle: '550,000 Loyalty Points — 2 Loyalty Choice Rewards', newTitle: null },
+        { oldTitle: '750,000 Loyalty Points — 2 Loyalty Choice Rewards', newTitle: null },
+        { oldTitle: '1,000,000 Loyalty Points — 1 Loyalty Choice Reward', newTitle: null },
+        { oldTitle: '3,000,000 Loyalty Points — 1 Loyalty Choice Reward', newTitle: null },
+        { oldTitle: '5,000,000 Loyalty Points — 1 Loyalty Choice Reward', newTitle: null },
+      ];
+      let migratedUsages = 0;
+      let deletedTiers = 0;
+      for (const { oldTitle, newTitle } of emDashPairs) {
+        const oldRow = database.prepare(`
+          SELECT id FROM benefits WHERE card_id IS NULL AND program_id = 'aa_status' AND title = ?
+        `).get(oldTitle) as { id: number } | undefined;
+        if (!oldRow) continue;
+        if (newTitle) {
+          const newRow = database.prepare(`
+            SELECT id FROM benefits WHERE card_id IS NULL AND program_id = 'aa_status' AND title = ?
+          `).get(newTitle) as { id: number } | undefined;
+          if (newRow) {
+            const m = database.prepare('UPDATE usages SET benefit_id = ? WHERE benefit_id = ?').run(newRow.id, oldRow.id);
+            migratedUsages += m.changes;
+          }
+        }
+        database.prepare('DELETE FROM benefits WHERE id = ?').run(oldRow.id);
+        deletedTiers++;
+      }
+      if (migratedUsages > 0) run.push(`v1_0_8_migrated_${migratedUsages}_lp_usages`);
+      if (deletedTiers > 0) run.push(`v1_0_8_deleted_${deletedTiers}_legacy_lp_tiers`);
+
+      // (c) Also delete the v1.0.0 em-dash "Systemwide Upgrades (Global
+      // Upgrades)" row if its cadence disagrees with v1.0.6+. v1.0.6 changed
+      // that row's cadence to 'unlimited' via UPSERT so the title match should
+      // have updated it; but if any stragglers exist under a slightly
+      // different title, they'd be caught only manually. Nothing to do here
+      // beyond what UPSERT already handled.
+
+      // (d) Re-UPSERT every seed benefit so the merged Amex Platinum row
+      // (description, expiration_note, notes) applies to existing DBs.
+      const findBenefit = database.prepare(
+        'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?'
+      );
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          reset_years = @reset_years,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      let upserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        if (!existing) continue;
+        updateBenefit.run({
+          id: existing.id,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        });
+        upserted++;
+      }
+      if (upserted > 0) run.push(`v1_0_8_upserted_${upserted}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.8');
+      run.push('v1_0_8_seed_refresh');
     });
     tx();
   }

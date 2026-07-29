@@ -21,10 +21,16 @@ export default function LogUsageModal({
     ]).then(([b, u]) => {
       setBenefit(b);
       setHistory(u);
-      // Only prefill the amount when this is a dollar-valued benefit.
+      // Only prefill the amount when this is a plain dollar-valued benefit.
       // Count-based benefits (SkyClub visits, upgrade certificates, etc.)
       // record no dollar amount — leave the field empty and hide it.
-      if (b && (b.value_usd ?? 0) > 0) setAmount(String(b.value_usd));
+      // Spend-threshold benefits: leave empty so each entry captures the
+      // fresh spend increment (not the total value).
+      if (b && b.reset_cadence !== 'spend_threshold' && (b.value_usd ?? 0) > 0) {
+        setAmount(String(b.value_usd));
+      } else {
+        setAmount('');
+      }
     });
   }, [benefitId]);
 
@@ -37,6 +43,10 @@ export default function LogUsageModal({
     !!benefit &&
     !isSpendThreshold &&
     (benefit.value_usd == null || benefit.value_usd === 0);
+  // The amount field is available whenever the user might want to record a
+  // dollar amount. Spend-threshold and dollar-valued benefits always show it;
+  // count-based benefits (unlimited access, visit-count) omit it by default.
+  const showAmountField = !isCountBased;
 
   async function save() {
     setSaving(true); setErr(null);
@@ -48,6 +58,11 @@ export default function LogUsageModal({
         amount_usd: isCountBased ? null : (amount === '' ? null : parseFloat(amount)),
         notes: notes.trim() || null,
       });
+      // Reset transient inputs so the next entry starts clean. onSaved() closes
+      // the modal by default, but clearing here also protects against future
+      // refactors that keep it open.
+      setAmount('');
+      setNotes('');
       onSaved();
     } catch (e) {
       setErr(String(e));
@@ -78,20 +93,27 @@ export default function LogUsageModal({
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
 
-        <div className={isCountBased ? '' : 'grid grid-cols-2 gap-3'}>
+        <div className={showAmountField ? 'grid grid-cols-2 gap-3' : ''}>
           <div>
             <label className="label">Date used</label>
             <input type="date" className="input" value={usedOn} onChange={e => setUsedOn(e.target.value)} />
           </div>
-          {!isCountBased && (
+          {showAmountField && (
             <div>
               <label className="label">Amount (USD)</label>
-              <input type="number" step="0.01" className="input" value={amount} onChange={e => setAmount(e.target.value)}
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                className="input"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
                 placeholder={
                   isSpendThreshold
                     ? 'e.g., 1500.00'
                     : (benefit.value_usd?.toString() ?? '0.00')
-                } />
+                }
+              />
               {isSpendThreshold && (
                 <div className="text-xs text-slate-500 mt-1">
                   Enter dollars spent this purchase (or a monthly total). Progress toward

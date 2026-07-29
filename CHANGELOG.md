@@ -2,6 +2,20 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.8 — 2026-07-28
+
+### Fixed
+- **Amex Platinum Sky Club + Centurion perks are now one benefit.** They unlock together at the same $75,000 calendar-year spend threshold, so tracking them as two separate rows was misleading. Combined into a single benefit; any usage/spend logged on the standalone Centurion row is migrated onto the merged row so nothing is lost.
+- **AA Loyalty Point tiers no longer duplicate.** Every LP tier (60K/100K/175K/250K/400K) was appearing twice — once with a legacy em-dash title from v1.0.0 and once with the current hyphen title from v1.0.6+. The v1.0.6 seed rewrite left the em-dash rows orphaned in existing DBs. v1.0.8 removes those legacy rows and moves any usages onto the current tier row.
+- **Removed obsolete high LP tiers.** 550K, 750K, 1M, 3M and 5M rows lingered from v1.0.0 (dropped from later seeds). The AA program only publishes rewards up through 400K in the current version.
+- **175K tier no longer shows a $250 value.** The legacy em-dash 175K row carried the old $250 marker from v1.0.0. Deleting it removes the stray dollar value alongside the duplicate.
+- **Log Usage amount field is more resilient.** Every save now clears the amount and notes state, so re-opening a benefit's modal doesn't inherit stale input. Spend-threshold benefits no longer prefill with any prior value — the field always starts empty, ready for the fresh increment.
+
+### Testing
+- New v1.0.8 suite: combined Amex Platinum row present + duplicates gone, no em-dash LP tiers surviving, no LP tiers above 400K, every LP tier-gate row has value_usd = 0, and full v1.0.6 → v1.0.8 upgrade path with usage-migration verification.
+
+---
+
 ## v1.0.7 — 2026-07-28
 
 ### Fixed
