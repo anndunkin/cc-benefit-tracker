@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import {
@@ -112,8 +112,135 @@ function createWindow(): void {
   });
 }
 
+function showAboutDialog(): void {
+  const win = activeWindow();
+  const version = app.getVersion();
+  const electronVersion = process.versions.electron;
+  const nodeVersion = process.versions.node;
+  const chromeVersion = process.versions.chrome;
+  const detail = [
+    `Version ${version}`,
+    '',
+    'Credit Card Benefit Tracker',
+    'Dunkin Global Advisors',
+    '',
+    `Electron ${electronVersion}`,
+    `Node ${nodeVersion}`,
+    `Chromium ${chromeVersion}`,
+    '',
+    'https://github.com/anndunkin/cc-benefit-tracker',
+  ].join('\n');
+  dialog.showMessageBox(win, {
+    type: 'info',
+    title: 'About Credit Card Benefit Tracker',
+    message: 'Credit Card Benefit Tracker',
+    detail,
+    buttons: ['Copy version', 'Close'],
+    defaultId: 1,
+    cancelId: 1,
+    icon: appIconPath(),
+  }).then(res => {
+    if (res.response === 0) {
+      const { clipboard } = require('electron');
+      clipboard.writeText(`Credit Card Benefit Tracker v${version}`);
+    }
+  }).catch(err => logError(`about dialog error: ${err}`));
+}
+
+function buildAppMenu(): void {
+  const isMac = process.platform === 'darwin';
+  const aboutItem: MenuItemConstructorOptions = {
+    label: `About Credit Card Benefit Tracker`,
+    click: () => showAboutDialog(),
+  };
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        aboutItem,
+        { type: 'separator' as const },
+        { role: 'services' as const },
+        { type: 'separator' as const },
+        { role: 'hide' as const },
+        { role: 'hideOthers' as const },
+        { role: 'unhide' as const },
+        { type: 'separator' as const },
+        { role: 'quit' as const },
+      ],
+    }] : []),
+    {
+      label: '&File',
+      submenu: [
+        isMac ? { role: 'close' as const } : { role: 'quit' as const },
+      ],
+    },
+    {
+      label: '&Edit',
+      submenu: [
+        { role: 'undo' as const },
+        { role: 'redo' as const },
+        { type: 'separator' as const },
+        { role: 'cut' as const },
+        { role: 'copy' as const },
+        { role: 'paste' as const },
+        { role: 'selectAll' as const },
+      ],
+    },
+    {
+      label: '&View',
+      submenu: [
+        { role: 'reload' as const },
+        { role: 'forceReload' as const },
+        { role: 'toggleDevTools' as const },
+        { type: 'separator' as const },
+        { role: 'resetZoom' as const },
+        { role: 'zoomIn' as const },
+        { role: 'zoomOut' as const },
+        { type: 'separator' as const },
+        { role: 'togglefullscreen' as const },
+      ],
+    },
+    {
+      label: '&Window',
+      submenu: [
+        { role: 'minimize' as const },
+        { role: 'zoom' as const },
+        ...(isMac ? [
+          { type: 'separator' as const },
+          { role: 'front' as const },
+        ] : [
+          { role: 'close' as const },
+        ]),
+      ],
+    },
+    {
+      label: '&Help',
+      submenu: [
+        {
+          label: 'GitHub Repository',
+          click: () => shell.openExternal('https://github.com/anndunkin/cc-benefit-tracker').catch(() => { /* ignore */ }),
+        },
+        {
+          label: 'Report an Issue',
+          click: () => shell.openExternal('https://github.com/anndunkin/cc-benefit-tracker/issues/new').catch(() => { /* ignore */ }),
+        },
+        ...(isMac ? [] : [{ type: 'separator' as const }, aboutItem]),
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(() => {
   if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID);
+  app.setAboutPanelOptions({
+    applicationName: 'Credit Card Benefit Tracker',
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    copyright: 'Dunkin Global Advisors',
+    website: 'https://github.com/anndunkin/cc-benefit-tracker',
+  });
+  buildAppMenu();
   currentDbPath = defaultDbPath();
   openDatabaseAt(currentDbPath);
   logError(`data migrations: ${JSON.stringify(applyDataMigrations(getDatabase()))}`);
@@ -251,6 +378,10 @@ ipcMain.handle('file:exportJson', async (): Promise<FileResult> => {
     return { success: true, filePath, payload };
   } catch (err) { logError(`file:exportJson ${err}`); return { success: false, error: String(err) }; }
 });
+
+// ─── App metadata / About ───────────────────────────────────────
+ipcMain.handle('app:getVersion', () => app.getVersion());
+ipcMain.handle('app:showAbout', () => { showAboutDialog(); });
 
 ipcMain.handle('file:importJson', async (): Promise<FileResult> => {
   try {

@@ -2,6 +2,20 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.11 — 2026-07-29
+
+### Fixed
+- **Sky Club "Unlimited" duplicates on Delta Reserve removed for good.** v1.0.10 deleted the exact-title row, but some databases still carried older pre-rename variants (e.g. `Unlimited Sky Club after $75k Spend`, `Unlimited Delta Sky Club Access (75,000 spend threshold)`) that the exact-title DELETE missed. v1.0.11 widens the dedupe with a LIKE-based pattern that catches any Sky Club row on `delta_reserve` whose title mentions *Unlimited*, *75,000*, *75000*, or *$75*, migrates any logged usages onto the Amex Platinum combined Sky Club + Centurion row, and then deletes the leftover. The single legitimate `15 Delta Sky Club Visits per Medallion Year` row is untouched.
+- **Marriott Bonvoy Bevy / Premier `1 Elite Night Credit per $3,000 spent (uncapped)` is now trackable.** The row previously used `reset_cadence = 'unlimited'`, which puts it in the Ongoing view with no earned-vs-cap count. It now uses `reset_cadence = 'annual'` with `uses_per_period = 999` so users can log one usage each time they cross another $3,000 in card spend and see how many Elite Night Credits they've earned this year. The 999 is a soft ceiling for trackability, not a real Marriott cap; existing usages are preserved during migration.
+- **IHG One Rewards Ambassador `Complimentary Weekend Night` value set to $0.** The certificate value depends heavily on redemption context (property, night rate, blackout dates), so the previous $300 fixed value overstated the perk. Pre-v1.0.11 databases with the legacy $300 value are migrated to $0 automatically.
+
+### Added
+- **Custom app icon.** New teal + gold credit-card-with-checkmark icon replaces the placeholder. Ships as `assets/icon.png` (512×512) and `assets/icon.ico` (multi-size 16 / 24 / 32 / 48 / 64 / 128 / 256) so the Windows taskbar, installer, and shortcut all pick up the new artwork.
+- **About dialog and full application menu.** New Help → About… entry (and macOS App menu About) shows the current app version, Electron / Node / Chromium versions, and a Copy version button. The header also now shows a `v1.0.11` badge that opens the same dialog when clicked, so the version is one click away without opening the native menus. The application now ships a full menu bar (File / Edit / View / Window / Help) on Windows and Linux with GitHub Repository and Report an Issue links.
+
+### Testing
+- New v1.0.11 suite covers: wide-pattern dedupe removes pre-rename Sky Club variants on `delta_reserve` while preserving the 15-visit row and migrating usages onto the Amex Platinum combo row; the seeded Marriott `1 EN per $3,000` row is `annual` / 999; a legacy `unlimited` Marriott EN row (with logged usages) migrates cleanly to `annual` / 999 without losing history; the seeded IHG Ambassador Weekend Night has `value_usd = 0`; a legacy `$300` value migrates to `$0`; the v1.0.11 `seed_version` stamp lands correctly.
+
 ## v1.0.10 — 2026-07-29
 
 ### Fixed

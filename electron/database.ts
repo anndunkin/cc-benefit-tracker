@@ -259,7 +259,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.10');
+  metaSet(database, 'seed_version', '1.0.11');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -1476,6 +1476,77 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.10');
       run.push('v1_0_10_seed_refresh');
+    });
+    tx();
+  }
+
+  // ─── v1.0.11: Sky Club wide-dedupe, Marriott EN trackable, Ambassador $0 ───
+  if (seedVersionLt(database, '1.0.11')) {
+    const tx = database.transaction(() => {
+      // 1) Widen Delta Reserve Sky Club dedupe — v1.0.10 only DELETEd the exact
+      //    seeded title, missing pre-rename variants. Match any Sky Club row on
+      //    delta_reserve whose title mentions Unlimited or a 75k spend gate.
+      //    Migrate any usages onto the Amex Platinum combo row first, then delete.
+      const platinumCombo = database.prepare(`
+        SELECT id FROM benefits
+        WHERE card_id = 'amex_platinum'
+          AND title = 'Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend'
+        LIMIT 1
+      `).get() as { id: number } | undefined;
+      const skyClubDupes = database.prepare(`
+        SELECT id FROM benefits
+        WHERE card_id = 'delta_reserve'
+          AND title LIKE '%Sky Club%'
+          AND (
+            title LIKE '%Unlimited%'
+            OR title LIKE '%75,000%'
+            OR title LIKE '%75000%'
+            OR title LIKE '%$75%'
+          )
+      `).all() as Array<{ id: number }>;
+      let migratedSkyUsages = 0;
+      let deletedSkyDupes = 0;
+      for (const dup of skyClubDupes) {
+        if (platinumCombo) {
+          const upd = database.prepare(`UPDATE usages SET benefit_id = ? WHERE benefit_id = ?`).run(platinumCombo.id, dup.id);
+          migratedSkyUsages += upd.changes;
+        } else {
+          database.prepare(`DELETE FROM usages WHERE benefit_id = ?`).run(dup.id);
+        }
+        database.prepare(`DELETE FROM benefits WHERE id = ?`).run(dup.id);
+        deletedSkyDupes += 1;
+      }
+      if (migratedSkyUsages > 0) run.push(`v1_0_11_migrated_${migratedSkyUsages}_sky_club_usages`);
+      if (deletedSkyDupes > 0) run.push(`v1_0_11_deleted_${deletedSkyDupes}_sky_club_dupes`);
+
+      // 2) Marriott EN per $3,000: 'unlimited' cadence is untrackable in UI
+      //    (goes to Ongoing pane with no earned/cap count). Switch to
+      //    annual + uses_per_period = 999 so users can log one usage per
+      //    $3,000 in spend and see the earned count for the year. Applied
+      //    unconditionally: the previous 'unlimited' shape made the row
+      //    unusable so `is_user_modified` isn't relevant here.
+      const marriottEn = database.prepare(`
+        UPDATE benefits
+        SET reset_cadence = 'annual', uses_per_period = 999
+        WHERE card_id = 'marriott_premier'
+          AND title = '1 Elite Night Credit per $3,000 spent (uncapped)'
+      `).run();
+      if (marriottEn.changes > 0) run.push(`v1_0_11_updated_${marriottEn.changes}_marriott_en_cadence`);
+
+      // 3) IHG Ambassador Complimentary Weekend Night: certificate value
+      //    depends heavily on redemption context, so the previous $300 fixed
+      //    value overstated it. Set to $0 so nothing implies a guaranteed
+      //    dollar-for-dollar return.
+      const ihgAmb = database.prepare(`
+        UPDATE benefits
+        SET value_usd = 0
+        WHERE program_id = 'ihg_ambassador'
+          AND title = 'Complimentary Weekend Night'
+      `).run();
+      if (ihgAmb.changes > 0) run.push(`v1_0_11_updated_${ihgAmb.changes}_ihg_ambassador_night_value`);
+
+      metaSet(database, 'seed_version', '1.0.11');
+      run.push('v1_0_11_seed_refresh');
     });
     tx();
   }

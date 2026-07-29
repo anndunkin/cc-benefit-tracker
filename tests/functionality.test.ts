@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.10');
+    expect(row.value).toBe('1.0.11');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.10');
+    expect(stamp.value).toBe('1.0.11');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.10');
+    expect(meta.value).toBe('1.0.11');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,7 +1103,7 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.10');
+    expect(stamp.value).toBe('1.0.11');
   });
 });
 
@@ -1234,7 +1234,7 @@ describe('v1.0.8 migration and features', () => {
     expect(emDash.n).toBe(0);
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.10');
+    expect(stamp.value).toBe('1.0.11');
   });
 });
 
@@ -1421,7 +1421,7 @@ describe('v1.0.9 migration and features', () => {
 
     // v1.0.9 stamp reached.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.10');
+    expect(stamp.value).toBe('1.0.11');
 
     // Lifetime Platinum removed.
     const lifetime = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'`).get() as { n: number };
@@ -1607,7 +1607,7 @@ describe('v1.0.10 migration and features', () => {
 
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.10');
+    expect(stamp.value).toBe('1.0.11');
   });
 
   it('preserves user-modified value_usd during v1.0.10 upsert but refreshes description', () => {
@@ -1625,5 +1625,102 @@ describe('v1.0.10 migration and features', () => {
     expect(after.expiration_date).toBe('2027-05-05');
     // But description was refreshed from the new seed copy.
     expect(after.description).toMatch(/Select 3 Choice Benefits/i);
+  });
+});
+
+describe('v1.0.11 migration and features', () => {
+  it('wide-dedupes leftover Delta Reserve Sky Club unlimited rows with pre-rename titles', () => {
+    const db = seededDb();
+    // Simulate a leftover pre-rename duplicate that v1.0.10's exact-title
+    // DELETE would have missed (e.g. an older `Unlimited Sky Club after $75k` variant).
+    const dup1 = db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd, spend_threshold_usd)
+      VALUES ('delta_reserve', 'Unlimited Sky Club after $75k Spend', 'lounge_access', 'spend_threshold', 1, 0, 75000)`).run().lastInsertRowid as number;
+    const dup2 = db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd, spend_threshold_usd)
+      VALUES ('delta_reserve', 'Unlimited Delta Sky Club Access (75,000 spend threshold)', 'lounge_access', 'spend_threshold', 1, 0, 75000)`).run().lastInsertRowid as number;
+    // A usage logged on the leftover row must survive by migrating onto the Amex Platinum combo row.
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, period_key) VALUES (?, '2026-06-15', 0, '2026')`).run(dup1);
+    // Roll stamp back so v1.0.11 migration runs.
+    db.prepare(`UPDATE app_meta SET value = '1.0.10' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    // Both leftover rows gone.
+    const leftover = db.prepare(`SELECT id FROM benefits WHERE card_id = 'delta_reserve' AND title LIKE '%Unlimited%Sky Club%'`).all();
+    expect(leftover.length).toBe(0);
+    // The 15-visit Sky Club row (which does NOT mention Unlimited or 75k) survives.
+    const visits = db.prepare(`SELECT id FROM benefits WHERE card_id = 'delta_reserve' AND title = '15 Delta Sky Club Visits per Medallion Year'`).get() as { id: number } | undefined;
+    expect(visits).toBeDefined();
+    // The usage migrated onto the Amex Platinum combo row.
+    const platinumRow = db.prepare(`SELECT id FROM benefits WHERE card_id = 'amex_platinum' AND title = 'Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend'`).get() as { id: number };
+    const usageCount = db.prepare(`SELECT COUNT(*) as c FROM usages WHERE benefit_id = ?`).get(platinumRow.id) as { c: number };
+    expect(usageCount.c).toBeGreaterThanOrEqual(1);
+    // Stamp updated.
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.11');
+    // Silence dup2 unused-var lint.
+    expect(dup2).toBeGreaterThan(0);
+  });
+
+  it('Marriott 1 EN per $3,000 row is trackable (annual cadence, high cap)', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, uses_per_period FROM benefits
+      WHERE card_id = 'marriott_premier' AND title = '1 Elite Night Credit per $3,000 spent (uncapped)'
+    `).get() as { reset_cadence: string; uses_per_period: number };
+    expect(row).toBeDefined();
+    expect(row.reset_cadence).toBe('annual');
+    expect(row.uses_per_period).toBe(999);
+  });
+
+  it('migrates a legacy unlimited Marriott EN row to annual/999 without dropping usages', () => {
+    // Start from a fully seeded DB, then force the Marriott row back to the
+    // pre-v1.0.11 shape (`unlimited` + null cap) to simulate an existing user
+    // DB that predated this change.
+    const db = seededDb();
+    const rowId = db.prepare(`
+      SELECT id FROM benefits
+      WHERE card_id = 'marriott_premier' AND title = '1 Elite Night Credit per $3,000 spent (uncapped)'
+    `).get() as { id: number };
+    db.prepare(`UPDATE benefits SET reset_cadence = 'unlimited', uses_per_period = NULL WHERE id = ?`).run(rowId.id);
+    // Log a usage while the row was still 'unlimited'.
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, period_key) VALUES (?, '2026-05-01', 0, 'unlimited')`).run(rowId.id);
+    db.prepare(`UPDATE app_meta SET value = '1.0.10' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    const after = db.prepare(`SELECT reset_cadence, uses_per_period FROM benefits WHERE id = ?`).get(rowId.id) as { reset_cadence: string; uses_per_period: number };
+    expect(after.reset_cadence).toBe('annual');
+    expect(after.uses_per_period).toBe(999);
+    // Usage survives (still attached to the same benefit).
+    const usages = db.prepare(`SELECT COUNT(*) as c FROM usages WHERE benefit_id = ?`).get(rowId.id) as { c: number };
+    expect(usages.c).toBe(1);
+  });
+
+  it('IHG Ambassador Complimentary Weekend Night has value_usd = 0', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT value_usd FROM benefits
+      WHERE program_id = 'ihg_ambassador' AND title = 'Complimentary Weekend Night'
+    `).get() as { value_usd: number };
+    expect(row).toBeDefined();
+    expect(row.value_usd).toBe(0);
+  });
+
+  it('legacy $300 Ambassador Weekend Night value migrates to $0 on v1.0.11', () => {
+    const db = seededDb();
+    // Simulate the pre-v1.0.11 seed where the row was stored at $300.
+    db.prepare(`UPDATE benefits SET value_usd = 300 WHERE program_id = 'ihg_ambassador' AND title = 'Complimentary Weekend Night'`).run();
+    db.prepare(`UPDATE app_meta SET value = '1.0.10' WHERE key = 'seed_version'`).run();
+
+    applyDataMigrations(db);
+
+    const row = db.prepare(`SELECT value_usd FROM benefits WHERE program_id = 'ihg_ambassador' AND title = 'Complimentary Weekend Night'`).get() as { value_usd: number };
+    expect(row.value_usd).toBe(0);
+  });
+
+  it('v1.0.11 seed_version stamp lands correctly', () => {
+    const db = seededDb();
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.11');
   });
 });

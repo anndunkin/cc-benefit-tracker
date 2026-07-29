@@ -52,6 +52,10 @@ const api: WindowApi = {
     exportJson:   ()  => ipcRenderer.invoke('file:exportJson'),
     importJson:   ()  => ipcRenderer.invoke('file:importJson'),
   },
+  app: {
+    getVersion:   ()  => ipcRenderer.invoke('app:getVersion'),
+    showAbout:    ()  => ipcRenderer.invoke('app:showAbout'),
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

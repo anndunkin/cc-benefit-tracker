@@ -317,6 +317,10 @@ export interface WindowApi {
     exportJson: () => Promise<FileResult>;
     importJson: () => Promise<FileResult>;
   };
+  app: {
+    getVersion: () => Promise<string>;
+    showAbout: () => Promise<void>;
+  };
 }
 
 declare global {

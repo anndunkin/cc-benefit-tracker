@@ -25,8 +25,10 @@ const NAV = [
 function Shell() {
   const { theme, toggle } = useTheme();
   const [dbPath, setDbPath] = useState('');
+  const [version, setVersion] = useState('');
 
   useEffect(() => { window.api.file.currentPath().then(setDbPath); }, []);
+  useEffect(() => { window.api.app.getVersion().then(setVersion).catch(() => setVersion('')); }, []);
 
   return (
     <div className="flex h-full flex-col">
@@ -55,6 +57,13 @@ function Shell() {
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <span className="hidden md:inline text-xs text-slate-400 max-w-xs truncate" title={dbPath}>{dbPath}</span>
+          <button
+            className="btn-ghost text-xs"
+            onClick={() => window.api.app.showAbout()}
+            title="About Credit Card Benefit Tracker"
+          >
+            {version ? `v${version}` : 'About'}
+          </button>
           <button className="btn-ghost" onClick={toggle} title="Toggle theme">
             {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
           </button>
