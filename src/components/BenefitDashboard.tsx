@@ -82,6 +82,55 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
   // Track which parent tier's choice picker is currently open.
   const [choicePickerParentId, setChoicePickerParentId] = useState<number | null>(null);
 
+  // Prerequisite-chain visibility gate: for benefits that form a chain
+  // (each row's prerequisite is another benefit that itself has a prerequisite),
+  // only show tiers up through the highest achieved tier, plus the immediate
+  // next tier beyond that. Non-chain benefits are unaffected.
+  //
+  // Implementation: build parent → children map among rows that participate in a
+  // chain (i.e. a benefit that has a prerequisite AND at least one other benefit
+  // uses it as a prerequisite). Starting at chain roots, walk down: allow the
+  // root; if root is achieved, allow all its children; recurse until an unmet
+  // tier is reached (that unmet tier is allowed, but nothing below it).
+  const chainVisibleIds = useMemo(() => {
+    // Identify "chain" parents (rows that are somebody's prerequisite AND that
+    // are NOT a choice option). Everything else stays visible by default.
+    const usedAsParent = new Set<number>();
+    for (const p of projections) {
+      if (p.benefit.prerequisite_benefit_id) usedAsParent.add(p.benefit.prerequisite_benefit_id);
+    }
+    const isChainNode = (b: BenefitProjection) =>
+      b.benefit.is_choice_option !== 1 &&
+      (usedAsParent.has(b.benefit.id) || (b.benefit.prerequisite_benefit_id != null && usedAsParent.has(b.benefit.prerequisite_benefit_id)));
+
+    const chainNodes = projections.filter(isChainNode);
+    if (chainNodes.length === 0) return null; // no chains → no gating needed
+
+    // Roots = chain nodes whose own prerequisite is null OR is not a chain node.
+    const chainNodeIds = new Set(chainNodes.map(n => n.benefit.id));
+    const roots = chainNodes.filter(n => n.benefit.prerequisite_benefit_id == null || !chainNodeIds.has(n.benefit.prerequisite_benefit_id));
+
+    // Children map: parentId → chain child nodes.
+    const childrenByParent = new Map<number, BenefitProjection[]>();
+    for (const n of chainNodes) {
+      const pid = n.benefit.prerequisite_benefit_id;
+      if (pid == null) continue;
+      const arr = childrenByParent.get(pid) ?? [];
+      arr.push(n);
+      childrenByParent.set(pid, arr);
+    }
+
+    // Walk each chain: emit each node; if it's achieved, recurse into its children.
+    const visible = new Set<number>();
+    const walk = (node: BenefitProjection) => {
+      visible.add(node.benefit.id);
+      if (!achievedIds.has(node.benefit.id)) return; // stop at first unmet tier
+      for (const child of childrenByParent.get(node.benefit.id) ?? []) walk(child);
+    };
+    for (const r of roots) walk(r);
+    return visible;
+  }, [projections, achievedIds]);
+
   // Split by mode: `unlimited` cadence goes to ongoing, everything else to consumable.
   // Additionally hide any benefit whose prerequisite has not been achieved, and any
   // is_choice_option row whose choice_selected flag is off.
@@ -95,10 +144,19 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
       if (p.benefit.is_choice_option === 1 && p.benefit.choice_selected !== 1) {
         return false;
       }
+      // Chain gate: for prerequisite-chained tiers (e.g. AA elite ladder), show
+      // only up through the highest achieved tier plus the immediate next tier.
+      if (chainVisibleIds && p.benefit.is_choice_option !== 1) {
+        // Only tiers *in the chain* are gated by chainVisibleIds. Non-chain
+        // benefits pass through unaffected.
+        const inChain = p.benefit.prerequisite_benefit_id != null || chainVisibleIds.has(p.benefit.id) ||
+          projections.some(q => q.benefit.prerequisite_benefit_id === p.benefit.id);
+        if (inChain && !chainVisibleIds.has(p.benefit.id)) return false;
+      }
       const isUnlimited = p.benefit.reset_cadence === 'unlimited';
       return mode === 'ongoing' ? isUnlimited : !isUnlimited;
     });
-  }, [projections, mode, achievedIds]);
+  }, [projections, mode, achievedIds, chainVisibleIds]);
 
   const filtered = useMemo(() => {
     return modeFiltered.filter(p => {
@@ -255,20 +313,24 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {g.items.map(p => {
                 const childOptions = choiceChildrenByParent.get(p.benefit.id) ?? [];
+                // "Choose rewards" is only meaningful once the tier has been achieved.
+                // Before then the button is hidden so the user doesn't pick rewards
+                // for a level they haven't earned.
+                const choicePickerActive = childOptions.length > 0 && achievedIds.has(p.benefit.id);
                 return mode === 'consumable' ? (
                   <ConsumableTile
                     key={p.benefit.id}
                     p={p}
                     onLogUsage={() => setModalBenefitId(p.benefit.id)}
                     onChanged={reload}
-                    choiceChildrenCount={childOptions.length}
+                    choiceChildrenCount={choicePickerActive ? childOptions.length : 0}
                     onOpenChoicePicker={() => setChoicePickerParentId(p.benefit.id)}
                   />
                 ) : (
                   <OngoingTile
                     key={p.benefit.id}
                     p={p}
-                    choiceChildrenCount={childOptions.length}
+                    choiceChildrenCount={choicePickerActive ? childOptions.length : 0}
                     onOpenChoicePicker={() => setChoicePickerParentId(p.benefit.id)}
                   />
                 );

@@ -28,11 +28,15 @@ export default function LogUsageModal({
     });
   }, [benefitId]);
 
-  // A benefit is "count-based" when it has no per-use dollar value. Logging
-  // one of these should not prompt for a dollar amount — it is a visit /
-  // certificate / upgrade count only. Applies to SkyClub visits, Centurion
-  // guest visits, systemwide upgrades, etc.
-  const isCountBased = !!benefit && (benefit.value_usd == null || benefit.value_usd === 0);
+  // A benefit is "spend-threshold" when its cadence is spend_threshold: the
+  // amount field IS the metric (dollars spent toward the threshold), regardless
+  // of value_usd. Otherwise a benefit is "count-based" when it has no per-use
+  // dollar value (SkyClub visits, systemwide upgrades, etc.) — no dollar field.
+  const isSpendThreshold = !!benefit && benefit.reset_cadence === 'spend_threshold';
+  const isCountBased =
+    !!benefit &&
+    !isSpendThreshold &&
+    (benefit.value_usd == null || benefit.value_usd === 0);
 
   async function save() {
     setSaving(true); setErr(null);
@@ -83,7 +87,17 @@ export default function LogUsageModal({
             <div>
               <label className="label">Amount (USD)</label>
               <input type="number" step="0.01" className="input" value={amount} onChange={e => setAmount(e.target.value)}
-                placeholder={benefit.value_usd?.toString() ?? '0.00'} />
+                placeholder={
+                  isSpendThreshold
+                    ? 'e.g., 1500.00'
+                    : (benefit.value_usd?.toString() ?? '0.00')
+                } />
+              {isSpendThreshold && (
+                <div className="text-xs text-slate-500 mt-1">
+                  Enter dollars spent this purchase (or a monthly total). Progress toward
+                  ${benefit.spend_threshold_usd?.toLocaleString() ?? '—'} accumulates across all entries.
+                </div>
+              )}
             </div>
           )}
         </div>

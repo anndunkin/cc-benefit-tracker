@@ -225,7 +225,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.6');
+  metaSet(database, 'seed_version', '1.0.7');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -780,6 +780,83 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.6');
       run.push('v1_0_6_seed_refresh');
+    });
+    tx();
+  }
+
+  // v1.0.7 — clean up rows that v1.0.6's UPSERT couldn't reach: (a) the
+  // aa_status "Admirals Club Access" reference row (removed from the v1.0.6
+  // seed but still lingering in existing DBs), and (b) the virgin_atlantic
+  // "Tier Points on Spend" no-suffix legacy row (v1.0.6 tried to delete it but
+  // used the wrong card_id 'ba_visa'). Then re-UPSERT all seed benefits so the
+  // IHG anniversary night, IHG Platinum Elite Status, and any other seed value
+  // changes flow into existing databases.
+  const seedVersion5 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion5 !== '1.0.7') {
+    const tx = database.transaction(() => {
+      // Delete orphaned / mis-targeted legacy rows.
+      const delRows: Array<{ title: string; cardId: string | null; programId: string | null }> = [
+        // Orphaned AA program reference row (dropped from v1.0.6 seed).
+        { title: 'Admirals Club Access', cardId: null, programId: 'aa_status' },
+        // Legacy Virgin Atlantic "Tier Points on Spend" (no suffix) — v1.0.6 targeted 'ba_visa' by mistake.
+        { title: 'Tier Points on Spend', cardId: 'virgin_atlantic', programId: null },
+      ];
+      const delStmt = database.prepare(
+        'DELETE FROM benefits WHERE title = ? AND card_id IS ? AND program_id IS ?'
+      );
+      let deleted = 0;
+      for (const r of delRows) {
+        const res = delStmt.run(r.title, r.cardId, r.programId);
+        deleted += res.changes;
+      }
+      if (deleted > 0) run.push(`v1_0_7_deleted_${deleted}_legacy_benefits`);
+
+      // Re-UPSERT every seed benefit so v1.0.7 seed value edits reach existing
+      // DBs (IHG anniversary night value_usd → 0, IHG Platinum Elite → unlimited).
+      const findBenefit = database.prepare(
+        'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?'
+      );
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          reset_years = @reset_years,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      let updated = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        if (!existing) continue;
+        updateBenefit.run({
+          id: existing.id,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        });
+        updated++;
+      }
+      if (updated > 0) run.push(`v1_0_7_upserted_${updated}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.7');
+      run.push('v1_0_7_seed_refresh');
     });
     tx();
   }

@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.6');
+    expect(row.value).toBe('1.0.7');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.6');
+    expect(stamp.value).toBe('1.0.7');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.6');
+    expect(meta.value).toBe('1.0.7');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -997,5 +997,112 @@ describe('v1.0.6 migration and features', () => {
     benefitUpdate(db, choice!.id, { choice_selected: 1 } as any);
     const after = db.prepare(`SELECT choice_selected FROM benefits WHERE id = ?`).get(choice!.id) as { choice_selected: number };
     expect(after.choice_selected).toBe(1);
+  });
+});
+
+// ─── v1.0.7 tests ────────────────────────────────────────────────────────────
+
+describe('v1.0.7 migration and features', () => {
+  it('#2 seeded DB has no orphan Virgin Atlantic "Tier Points on Spend" (no-suffix) row', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'
+    `).get() as { n: number };
+    expect(row.n).toBe(0);
+  });
+
+  it('#4 seeded DB has no orphan aa_status "Admirals Club Access" row', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'aa_status' AND title = 'Admirals Club Access'
+    `).get() as { n: number };
+    expect(row.n).toBe(0);
+  });
+
+  it('#4 AA Admirals Club Membership on aa_executive card is unlimited with no dollar value', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, value_usd FROM benefits
+      WHERE card_id = 'aa_executive' AND title = 'Admirals Club Membership'
+    `).get() as { reset_cadence: string; value_usd: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('unlimited');
+    expect(row!.value_usd ?? 0).toBe(0);
+  });
+
+  it('#5 IHG anniversary free night has no dollar value', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT value_usd FROM benefits
+      WHERE card_id = 'ihg_premier' AND title LIKE 'Anniversary Free Night%'
+    `).get() as { value_usd: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.value_usd ?? 0).toBe(0);
+  });
+
+  it('#6 IHG One Rewards Platinum Elite Status (program) is unlimited', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence FROM benefits
+      WHERE program_id = 'ihg_ambassador' AND title = 'IHG One Rewards Platinum Elite Status'
+    `).get() as { reset_cadence: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('unlimited');
+  });
+
+  it('#6 IHG Premier card Automatic Platinum Elite Status is unlimited', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence FROM benefits
+      WHERE card_id = 'ihg_premier' AND title = 'Automatic IHG One Rewards Platinum Elite Status'
+    `).get() as { reset_cadence: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('unlimited');
+  });
+
+  it('v1.0.6 legacy DB gets Admirals Club Access + VS Tier Points on Spend deleted by v1.0.7 migration', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        expiration_date TEXT, reset_years INTEGER, prerequisite_benefit_id INTEGER,
+        is_choice_option INTEGER NOT NULL DEFAULT 0, choice_selected INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO programs (id, name, program_type) VALUES ('aa_status', 'AA Status', 'airline_status')`).run();
+    db.prepare(`INSERT INTO cards (id, name, issuer, network) VALUES ('virgin_atlantic', 'VS', 'Synchrony', 'Mastercard')`).run();
+    // Insert the two rows that should be removed.
+    db.prepare(`
+      INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+      VALUES ('aa_status', 'Admirals Club Access', 'lounge_access', 'annual', 850)
+    `).run();
+    db.prepare(`
+      INSERT INTO benefits (card_id, title, category, reset_cadence, value_usd)
+      VALUES ('virgin_atlantic', 'Tier Points on Spend', 'status_boost', 'monthly', 0)
+    `).run();
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.6')`).run();
+
+    applyDataMigrations(db);
+
+    const admirals = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'aa_status' AND title = 'Admirals Club Access'`).get() as { n: number };
+    expect(admirals.n).toBe(0);
+    const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
+    expect(vsLegacy.n).toBe(0);
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.7');
   });
 });

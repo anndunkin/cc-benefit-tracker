@@ -2,6 +2,24 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.7 — 2026-07-28
+
+### Fixed
+- **Spend-progress benefits now let you enter dollar amounts.** The Log Usage dialog was hiding the amount field for benefits whose value is unlocked by spend (SkyClub $75k, Centurion $75k, Delta Reserve $75k spend rewards, IHG $20k / $40k unlocks, Marriott $60k Ambassador, Hyatt $15k Globalist, BA $30k Companion Voucher, VS £15k/£30k Personal Perks, and the VS monthly Tier Points on Spend). The field is now always visible for `spend_threshold` benefits with a clear helper that shows the spend goal.
+- **Legacy Virgin Atlantic “Tier Points on Spend” duplicate finally removed.** The v1.0.6 cleanup used the wrong card_id and never fired. v1.0.7's migration targets `card_id = 'virgin_atlantic'` correctly.
+- **Admirals Club Access reference row removed.** The old `aa_status` program-level “Admirals Club Access” row (dropped from the v1.0.6 seed) still lingered in existing DBs. v1.0.7 explicitly deletes it. The real Admirals Club Membership benefit lives on the `aa_executive` card as an ongoing (unlimited) benefit with no dollar value.
+- **IHG anniversary free night no longer carries a dollar value.** Because point value varies widely by property, `value_usd` for the Anniversary Free Night is now 0. Notes describe it as a point redemption up to 40,000 points.
+- **IHG One Rewards Platinum Elite moved to ongoing.** Both the card-linked automatic status (IHG Premier) and the program-tier status now use `unlimited` cadence, so they appear under the Ongoing tab rather than looking like a resetting yearly benefit.
+
+### Changed
+- **AA elite ladder shows only achieved tiers plus the next one.** The dashboard now walks each prerequisite chain and hides tiers past the immediate next unmet tier. The “Choose rewards” button appears only after the parent tier itself has been achieved.
+- **v1.0.7 migration re-runs the seed UPSERT** so IHG anniversary night and IHG Platinum Elite Status updates flow into pre-existing databases.
+
+### Testing
+- New tests cover: spend_threshold amount visibility, orphan `Admirals Club Access` deletion, VS legacy `Tier Points on Spend` deletion, IHG anniversary night value = 0, IHG Platinum Elite (card + program) cadence = unlimited, v1.0.6 → v1.0.7 upgrade path with legacy rows present.
+
+---
+
 ## v1.0.6 — 2026-07-28
 
 Data/UX iteration prompted by the user's second review pass. Fixes and refinements to how visits, spend-unlocks, cadences, and AA elite tiers are modeled; also purges a handful of legacy rows still lingering in existing databases from earlier seed versions.
