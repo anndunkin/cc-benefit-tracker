@@ -167,12 +167,12 @@ export function seedIfFresh(database: Database.Database): void {
   const insertBenefit = database.prepare(`
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
-      value_usd, spend_threshold_usd, expiration_note, reset_years, is_choice_option,
-      sort_order, source_url, notes
+      value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+      is_choice_option, sort_order, source_url, notes
     ) VALUES (
       @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
-      @value_usd, @spend_threshold_usd, @expiration_note, @reset_years, @is_choice_option,
-      @sort_order, @source_url, @notes
+      @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+      @is_choice_option, @sort_order, @source_url, @notes
     )
   `);
 
@@ -202,6 +202,7 @@ export function seedIfFresh(database: Database.Database): void {
       value_usd: b.value_usd ?? null,
       spend_threshold_usd: b.spend_threshold_usd ?? null,
       expiration_note: b.expiration_note ?? null,
+      expiration_date: (b as any).expiration_date ?? null,
       reset_years: (b as any).reset_years ?? null,
       is_choice_option: (b as any).is_choice_option ?? 0,
       sort_order: b.sort_order ?? 0,
@@ -225,7 +226,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.8');
+  metaSet(database, 'seed_version', '1.0.9');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -991,6 +992,205 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.8');
       run.push('v1_0_8_seed_refresh');
+    });
+    tx();
+  }
+
+  // v1.0.9 — (a) rename Amex Venue Collection and Marriott Nightly Upgrade
+  // Awards rows so the UPSERT loop can find and update them; (b) belt-and-
+  // suspenders delete of the standalone Amex Platinum Centurion row (idem-
+  // potent with v1.0.8); (c) migrate legacy Marriott Annual Choice Benefit
+  // rows onto the new milestone/choice-option structure, then delete the
+  // legacy rows; (d) delete Lifetime Platinum Elite entirely; (e) seed the
+  // new Hyatt carry-over free-night rows and Marriott milestone/choice rows;
+  // (f) re-UPSERT so value_usd, reset_cadence, expiration_date, description
+  // and notes changes propagate to existing DBs.
+  const seedVersion7 = metaGet(database, 'seed_version') ?? '1.0.0';
+  if (seedVersion7 !== '1.0.9') {
+    const tx = database.transaction(() => {
+      // (a) Rename rows whose titles changed so title-based UPSERT can find them.
+      const renameVenue = database.prepare(`
+        UPDATE benefits SET title = ?
+        WHERE card_id = 'delta_reserve' AND title = 'American Express Venue Collection'
+      `).run('American Express Venue Collection (10% off concessions, up to $250/yr)');
+      if (renameVenue.changes > 0) run.push(`v1_0_9_renamed_${renameVenue.changes}_venue_collection`);
+
+      const renameNua = database.prepare(`
+        UPDATE benefits SET title = ?
+        WHERE program_id = 'marriott_status' AND title = 'Nightly Upgrade Awards (formerly Suite Night Awards)'
+      `).run('Nightly Upgrade Awards (10 earned in 2025)');
+      if (renameNua.changes > 0) run.push(`v1_0_9_renamed_${renameNua.changes}_nua_row`);
+
+      // (b) Idempotent: delete the standalone Amex Platinum Centurion row if
+      // any copy survived the v1.0.8 migration (e.g. re-inserted by a manual
+      // refresh flow between versions).
+      const stragglerCenturion = database.prepare(`
+        DELETE FROM benefits WHERE card_id = 'amex_platinum'
+          AND title = 'Complimentary Centurion Lounge Guest Access after $75,000 Spend'
+      `).run();
+      if (stragglerCenturion.changes > 0) run.push(`v1_0_9_deleted_${stragglerCenturion.changes}_straggler_centurion`);
+
+      // (c) Migrate legacy Marriott Annual Choice Benefit rows. Any usage
+      // logged on the old parent rows migrates onto the new milestone row.
+      const legacyChoiceTitles = [
+        'Annual Choice Benefit at 50 Elite Nights',
+        'Annual Choice Benefit at 75 Elite Nights',
+      ];
+      // Ensure the new milestone rows exist before migrating usages onto them.
+      // If they don't yet (fresh v1.0.8 DB), the UPSERT-INSERT pass below
+      // creates them; we re-run this migration by looking them up afterwards.
+      let choiceUsagesMigrated = 0;
+      for (const oldTitle of legacyChoiceTitles) {
+        const oldRow = database.prepare(`
+          SELECT id FROM benefits WHERE program_id = 'marriott_status' AND title = ?
+        `).get(oldTitle) as { id: number } | undefined;
+        if (!oldRow) continue;
+        const newTitle = oldTitle.startsWith('Annual Choice Benefit at 50')
+          ? '50 Elite Nights - Choice Benefit unlocked'
+          : '75 Elite Nights - Additional Choice Benefit unlocked';
+        // The new row may not exist yet if we haven't inserted it. Defer usage
+        // migration until after the INSERT pass by inserting a placeholder
+        // now if missing.
+        let newRow = database.prepare(`
+          SELECT id FROM benefits WHERE program_id = 'marriott_status' AND title = ?
+        `).get(newTitle) as { id: number } | undefined;
+        if (!newRow) {
+          // Rename the old row into the new title. This preserves usage FK.
+          database.prepare('UPDATE benefits SET title = ? WHERE id = ?').run(newTitle, oldRow.id);
+          run.push(`v1_0_9_renamed_legacy_choice_${oldTitle.slice(0, 20).replace(/[^a-z0-9]/gi, '_')}`);
+          continue;
+        }
+        const moved = database.prepare('UPDATE usages SET benefit_id = ? WHERE benefit_id = ?').run(newRow.id, oldRow.id);
+        choiceUsagesMigrated += moved.changes;
+        database.prepare('DELETE FROM benefits WHERE id = ?').run(oldRow.id);
+      }
+      if (choiceUsagesMigrated > 0) run.push(`v1_0_9_migrated_${choiceUsagesMigrated}_choice_usages`);
+
+      // (d) Delete Lifetime Platinum Elite entirely.
+      const deletedLifetime = database.prepare(`
+        DELETE FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'
+      `).run();
+      if (deletedLifetime.changes > 0) run.push(`v1_0_9_deleted_${deletedLifetime.changes}_lifetime_platinum`);
+
+      // (e) INSERT any seed benefit that isn't in the DB yet (carry-over Hyatt
+      // rows, new Marriott milestone + choice-option rows), and (f) UPSERT
+      // every existing seed row so value_usd / reset_cadence / expiration_date
+      // updates propagate.
+      const findBenefit = database.prepare(
+        'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?'
+      );
+      const updateBenefit = database.prepare(`
+        UPDATE benefits SET
+          description = @description,
+          category = @category,
+          reset_cadence = @reset_cadence,
+          uses_per_period = @uses_per_period,
+          value_usd = @value_usd,
+          spend_threshold_usd = @spend_threshold_usd,
+          expiration_note = @expiration_note,
+          expiration_date = @expiration_date,
+          reset_years = @reset_years,
+          is_choice_option = @is_choice_option,
+          sort_order = @sort_order,
+          source_url = @source_url,
+          notes = @notes
+        WHERE id = @id
+      `);
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+          is_choice_option, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+          @is_choice_option, @sort_order, @source_url, @notes
+        )
+      `);
+      // First pass: INSERT missing seed rows so prerequisite-title lookups
+      // find them on the second pass.
+      let inserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        if (existing) continue;
+        insertBenefit.run({
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        });
+        inserted++;
+      }
+      if (inserted > 0) run.push(`v1_0_9_inserted_${inserted}_new_seed_rows`);
+
+      // Second pass: UPSERT existing rows so value_usd / cadence / description
+      // updates propagate. Also re-resolve prerequisite_benefit_id for choice-
+      // option rows that reference a milestone we just inserted.
+      let upserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title) as { id: number } | undefined;
+        if (!existing) continue;
+        updateBenefit.run({
+          id: existing.id,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          is_choice_option: (b as any).is_choice_option ?? 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: b.source_url ?? null,
+          notes: b.notes ?? null,
+        });
+        upserted++;
+      }
+      if (upserted > 0) run.push(`v1_0_9_upserted_${upserted}_benefits`);
+
+      // Resolve prerequisite_benefit_id for rows that reference a prerequisite
+      // by title in the seed (Marriott choice options + 75-night milestone).
+      const resolvePrereq = database.prepare(`
+        UPDATE benefits SET prerequisite_benefit_id = (
+          SELECT p.id FROM benefits p
+          WHERE (p.card_id IS benefits.card_id OR (p.card_id IS NULL AND benefits.card_id IS NULL))
+            AND (p.program_id IS benefits.program_id OR (p.program_id IS NULL AND benefits.program_id IS NULL))
+            AND p.title = @prereq_title
+        )
+        WHERE title = @title
+          AND (program_id = @program_id OR (program_id IS NULL AND @program_id IS NULL))
+          AND (card_id = @card_id OR (card_id IS NULL AND @card_id IS NULL))
+      `);
+      let prereqLinks = 0;
+      for (const b of SEED_BENEFITS) {
+        const prereqTitle = (b as any).prerequisite_benefit_title;
+        if (!prereqTitle) continue;
+        const r = resolvePrereq.run({
+          prereq_title: prereqTitle,
+          title: b.title,
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+        });
+        prereqLinks += r.changes;
+      }
+      if (prereqLinks > 0) run.push(`v1_0_9_relinked_${prereqLinks}_prereq_ids`);
+
+      metaSet(database, 'seed_version', '1.0.9');
+      run.push('v1_0_9_seed_refresh');
     });
     tx();
   }

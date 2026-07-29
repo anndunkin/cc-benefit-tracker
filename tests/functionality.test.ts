@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.8');
+    expect(row.value).toBe('1.0.9');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.8');
+    expect(stamp.value).toBe('1.0.9');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.8');
+    expect(meta.value).toBe('1.0.9');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,7 +1103,7 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.8');
+    expect(stamp.value).toBe('1.0.9');
   });
 });
 
@@ -1234,6 +1234,218 @@ describe('v1.0.8 migration and features', () => {
     expect(emDash.n).toBe(0);
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.8');
+    expect(stamp.value).toBe('1.0.9');
+  });
+});
+
+// ─── v1.0.9 tests ─────────────────────────────────────────────────────────
+
+describe('v1.0.9 migration and features', () => {
+  it('#1 Amex Venue Collection is retitled with the 10% clarification and $250 cap', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT title, value_usd, description FROM benefits
+      WHERE card_id = 'delta_reserve'
+        AND title = 'American Express Venue Collection (10% off concessions, up to $250/yr)'
+    `).get() as { title: string; value_usd: number; description: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.value_usd).toBe(250);
+    expect(row!.description.toLowerCase()).toContain('10%');
+    // Old-titled row must not exist alongside it.
+    const legacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'delta_reserve' AND title = 'American Express Venue Collection'`).get() as { n: number };
+    expect(legacy.n).toBe(0);
+  });
+
+  it('#3 Virgin third-night-free and 5,000-point anniversary bonus have value_usd = 0', () => {
+    const db = seededDb();
+    const third = db.prepare(`SELECT value_usd FROM benefits WHERE card_id = 'virgin_atlantic' AND title LIKE '%Third Night Free%'`).get() as { value_usd: number } | undefined;
+    expect(third).toBeDefined();
+    expect(third!.value_usd ?? 0).toBe(0);
+    const anniv = db.prepare(`SELECT value_usd FROM benefits WHERE card_id = 'virgin_atlantic' AND title LIKE '%5,000 Virgin Points%Anniversary%'`).get() as { value_usd: number } | undefined;
+    expect(anniv).toBeDefined();
+    expect(anniv!.value_usd ?? 0).toBe(0);
+  });
+
+  it('#4 two Hyatt Category 1-4 carry-over free-night rows are seeded with correct expiration_date', () => {
+    const db = seededDb();
+    const rows = db.prepare(`
+      SELECT title, expiration_date, reset_cadence, uses_per_period, value_usd FROM benefits
+      WHERE card_id = 'hyatt_visa' AND title LIKE '%Carried-over Category 1-4%'
+      ORDER BY expiration_date ASC
+    `).all() as Array<{ title: string; expiration_date: string; reset_cadence: string; uses_per_period: number; value_usd: number }>;
+    expect(rows.length).toBe(2);
+    expect(rows[0].expiration_date).toBe('2026-11-26');
+    expect(rows[1].expiration_date).toBe('2027-03-27');
+    for (const r of rows) {
+      expect(r.reset_cadence).toBe('one_time');
+      expect(r.uses_per_period).toBe(1);
+      expect(r.value_usd ?? 0).toBe(0);
+    }
+  });
+
+  it('#5 both Hyatt free-night rows (annual + spend threshold) have value_usd = 0', () => {
+    const db = seededDb();
+    const rows = db.prepare(`
+      SELECT title, value_usd FROM benefits
+      WHERE card_id = 'hyatt_visa'
+        AND (title LIKE '%Free Night%')
+        AND title NOT LIKE '%Carr%'
+    `).all() as Array<{ title: string; value_usd: number | null }>;
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.value_usd ?? 0).toBe(0);
+    }
+  });
+
+  it('#6 Hyatt Discoverist status is ongoing (unlimited cadence)', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT reset_cadence, uses_per_period FROM benefits
+      WHERE card_id = 'hyatt_visa' AND title LIKE '%Discoverist%'
+    `).get() as { reset_cadence: string; uses_per_period: number | null } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('unlimited');
+    expect(row!.uses_per_period).toBeNull();
+  });
+
+  it('#7 Bonvoy 50/75-night milestones exist as gate rows with choice options chained behind them', () => {
+    const db = seededDb();
+    const milestone50 = db.prepare(`
+      SELECT id, is_choice_option FROM benefits
+      WHERE program_id = 'marriott_status' AND title = '50 Elite Nights - Choice Benefit unlocked'
+    `).get() as { id: number; is_choice_option: number } | undefined;
+    expect(milestone50).toBeDefined();
+    expect(milestone50!.is_choice_option).toBe(0);
+
+    const milestone75 = db.prepare(`
+      SELECT id, prerequisite_benefit_id FROM benefits
+      WHERE program_id = 'marriott_status' AND title = '75 Elite Nights - Additional Choice Benefit unlocked'
+    `).get() as { id: number; prerequisite_benefit_id: number | null } | undefined;
+    expect(milestone75).toBeDefined();
+    expect(milestone75!.prerequisite_benefit_id).toBe(milestone50!.id);
+
+    // Choice options attached to 50-night milestone.
+    const opts50 = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'marriott_status' AND is_choice_option = 1
+        AND prerequisite_benefit_id = ?
+    `).get(milestone50!.id) as { n: number };
+    expect(opts50.n).toBe(5);
+
+    // Choice options attached to 75-night milestone.
+    const opts75 = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'marriott_status' AND is_choice_option = 1
+        AND prerequisite_benefit_id = ?
+    `).get(milestone75!.id) as { n: number };
+    expect(opts75.n).toBe(6);
+
+    // Legacy flat rows must be gone.
+    const legacy = db.prepare(`
+      SELECT COUNT(*) AS n FROM benefits
+      WHERE program_id = 'marriott_status'
+        AND title IN ('Annual Choice Benefit at 50 Elite Nights', 'Annual Choice Benefit at 75 Elite Nights')
+    `).get() as { n: number };
+    expect(legacy.n).toBe(0);
+  });
+
+  it('#8 Nightly Upgrade Awards row is a one-time earn ledger with 10 uses and 2026-12-31 expiration', () => {
+    const db = seededDb();
+    const row = db.prepare(`
+      SELECT title, reset_cadence, uses_per_period, expiration_date FROM benefits
+      WHERE program_id = 'marriott_status'
+        AND title = 'Nightly Upgrade Awards (10 earned in 2025)'
+    `).get() as { title: string; reset_cadence: string; uses_per_period: number; expiration_date: string } | undefined;
+    expect(row).toBeDefined();
+    expect(row!.reset_cadence).toBe('one_time');
+    expect(row!.uses_per_period).toBe(10);
+    expect(row!.expiration_date).toBe('2026-12-31');
+    // Old renamed row absent.
+    const old = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Nightly Upgrade Awards (formerly Suite Night Awards)'`).get() as { n: number };
+    expect(old.n).toBe(0);
+  });
+
+  it('#9 Lifetime Platinum Elite row is removed entirely', () => {
+    const db = seededDb();
+    const row = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title LIKE '%Lifetime Platinum%'`).get() as { n: number };
+    expect(row.n).toBe(0);
+  });
+
+  it('v1.0.8 legacy DB upgrades cleanly to v1.0.9: choice-benefit usages migrate, Lifetime Platinum gone, Nightly Upgrade rewritten', () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE cards (id TEXT PRIMARY KEY, name TEXT NOT NULL, issuer TEXT NOT NULL,
+        network TEXT NOT NULL, annual_fee_usd REAL, is_active INTEGER NOT NULL DEFAULT 1,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        color_hex TEXT, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE programs (id TEXT PRIMARY KEY, name TEXT NOT NULL, program_type TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1, notes TEXT, source_url TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE benefits (id INTEGER PRIMARY KEY, card_id TEXT, program_id TEXT,
+        title TEXT NOT NULL, description TEXT, category TEXT NOT NULL, reset_cadence TEXT NOT NULL,
+        uses_per_period INTEGER, value_usd REAL, spend_threshold_usd REAL, expiration_note TEXT,
+        expiration_date TEXT, reset_years INTEGER, prerequisite_benefit_id INTEGER,
+        is_choice_option INTEGER NOT NULL DEFAULT 0, choice_selected INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0,
+        source_url TEXT, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE usages (id INTEGER PRIMARY KEY, benefit_id INTEGER NOT NULL, used_on TEXT NOT NULL,
+        amount_usd REAL, notes TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    db.prepare(`INSERT INTO programs (id, name, program_type) VALUES ('marriott_status', 'Marriott', 'hotel_elite_status')`).run();
+    db.prepare(`INSERT INTO cards (id, name, issuer, network) VALUES ('hyatt_visa', 'Hyatt Card', 'Chase', 'Visa')`).run();
+    db.prepare(`INSERT INTO cards (id, name, issuer, network) VALUES ('delta_reserve', 'Delta Reserve', 'Amex', 'Amex')`).run();
+    db.prepare(`INSERT INTO cards (id, name, issuer, network) VALUES ('virgin_atlantic', 'Virgin', 'Synchrony', 'Mastercard')`).run();
+
+    // Legacy v1.0.8 rows.
+    const legacy50Id = db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+                VALUES ('marriott_status', 'Annual Choice Benefit at 50 Elite Nights', 'upgrade', 'annual', 1, 0)`).run().lastInsertRowid;
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+                VALUES ('marriott_status', 'Annual Choice Benefit at 75 Elite Nights', 'upgrade', 'annual', 1, 0)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, uses_per_period, value_usd)
+                VALUES ('marriott_status', 'Nightly Upgrade Awards (formerly Suite Night Awards)', 'upgrade', 'annual', 5, 0)`).run();
+    db.prepare(`INSERT INTO benefits (program_id, title, category, reset_cadence, value_usd)
+                VALUES ('marriott_status', 'Lifetime Platinum Elite', 'status_boost', 'annual', 0)`).run();
+
+    // A usage row on the 50-night choice benefit that must migrate.
+    db.prepare(`INSERT INTO usages (benefit_id, used_on, amount_usd, notes) VALUES (?, '2026-05-15', 0, 'Chose 5 SNAs')`).run(legacy50Id);
+
+    // Legacy Amex Venue row with old title + $25 value.
+    db.prepare(`INSERT INTO benefits (card_id, title, category, reset_cadence, uses_per_period, value_usd)
+                VALUES ('delta_reserve', 'American Express Venue Collection', 'entertainment_credit', 'annual', 1, 25)`).run();
+
+    // Stamp as v1.0.8 so v1.0.9 migration runs.
+    db.prepare(`INSERT INTO app_meta (key, value) VALUES ('seed_version', '1.0.8')`).run();
+
+    applyDataMigrations(db);
+
+    // v1.0.9 stamp reached.
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.9');
+
+    // Lifetime Platinum removed.
+    const lifetime = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'`).get() as { n: number };
+    expect(lifetime.n).toBe(0);
+
+    // Old Nightly Upgrade row gone, new one exists.
+    const oldNua = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Nightly Upgrade Awards (formerly Suite Night Awards)'`).get() as { n: number };
+    expect(oldNua.n).toBe(0);
+    const newNua = db.prepare(`SELECT reset_cadence, uses_per_period, expiration_date FROM benefits WHERE program_id = 'marriott_status' AND title = 'Nightly Upgrade Awards (10 earned in 2025)'`).get() as { reset_cadence: string; uses_per_period: number; expiration_date: string };
+    expect(newNua.reset_cadence).toBe('one_time');
+    expect(newNua.uses_per_period).toBe(10);
+    expect(newNua.expiration_date).toBe('2026-12-31');
+
+    // Amex Venue retitled and value set to $250 cap.
+    const venue = db.prepare(`SELECT value_usd FROM benefits WHERE card_id = 'delta_reserve' AND title = 'American Express Venue Collection (10% off concessions, up to $250/yr)'`).get() as { value_usd: number } | undefined;
+    expect(venue).toBeDefined();
+    expect(venue!.value_usd).toBe(250);
+
+    // Legacy Annual Choice rows are gone; usage migrated to the new milestone parent.
+    const legacyChoice = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title IN ('Annual Choice Benefit at 50 Elite Nights','Annual Choice Benefit at 75 Elite Nights')`).get() as { n: number };
+    expect(legacyChoice.n).toBe(0);
+    const newMilestone = db.prepare(`SELECT id FROM benefits WHERE program_id = 'marriott_status' AND title = '50 Elite Nights - Choice Benefit unlocked'`).get() as { id: number };
+    expect(newMilestone).toBeDefined();
+    const migratedUsage = db.prepare(`SELECT COUNT(*) AS n FROM usages WHERE benefit_id = ?`).get(newMilestone.id) as { n: number };
+    expect(migratedUsage.n).toBe(1);
   });
 });

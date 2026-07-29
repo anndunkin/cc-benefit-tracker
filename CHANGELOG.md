@@ -2,6 +2,32 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.9 — 2026-07-29
+
+### Fixed
+- **Amex Venue Collection is clarified as 10% off concessions.** The benefit was previously logged as a flat $25 credit. Retitled to "American Express Venue Collection (10% off concessions, up to $250/yr)" with the correct $250 annual cap and a description explaining the 10% cash-back mechanic on eligible ticketed events.
+- **Standalone Amex Platinum Centurion row cleaned up (belt-and-suspenders).** Any lingering copy of the standalone Centurion Guest Access row is deleted idempotently on the v1.0.8 → v1.0.9 path so the combined Sky Club + Centurion row is the only survivor.
+- **Virgin third-night-free and 5,000-point anniversary bonus no longer show a dollar value.** Both rows have their `value_usd` reset to 0 since these perks are heavily context-dependent and the previous fixed dollar values were misleading.
+- **Hyatt free-night awards no longer show a dollar value.** Both the annual free night and the spend-threshold free night are set to `value_usd = 0`; the point value depends on category and cash rate at redemption, so a fixed number was misleading.
+
+### Added
+- **Carry-over benefit support.** Benefits can now be seeded with a fixed `expiration_date` and `reset_cadence = one_time`, letting rewards earned in a prior year carry forward with their real expiration. The base seed insert and the v1.0.9 UPSERT loop both write `expiration_date` so existing DBs pick up the new column values.
+- **Two Hyatt Category 1-4 carry-over rows** are now seeded: one expiring 2026-11-26 and one expiring 2027-03-27. Both are one-time, single-use benefits.
+- **Marriott Bonvoy Annual Choice Benefits are gated by achievement.** Modeled like the AA Loyalty Point tier system:
+  - A hidden "50 Elite Nights - Choice Benefit unlocked" milestone row becomes visible once the user logs the qualification.
+  - Five choice options at the 50-night milestone (5 Nightly Upgrade Awards, 5 Elite Night Credits, $1,000 bed/mattress, gift Silver status, $100 charity) are hidden until the milestone is achieved, and once achieved the user selects a single option per benefit.
+  - A chained "75 Elite Nights - Additional Choice Benefit unlocked" row (prerequisite = 50-night milestone) exposes six 75-night choice options (Free Night up to 40k, 5 Elite Night Credits, gift Gold status, 5 more Nightly Upgrade Awards, $1,000 bed/mattress, $100 charity).
+  - Any usages logged on the legacy "Annual Choice Benefit at 50/75 Elite Nights" rows migrate onto the new milestone row so no history is lost.
+- **Nightly Upgrade Awards restructured to a real earn ledger.** Replaces the annual reset row with a `one_time` benefit "Nightly Upgrade Awards (10 earned in 2025)" with 10 uses and an explicit expiration date of 2026-12-31 (matches Marriott's "expire December 31 of the year after they were earned" rule).
+- **Hyatt Discoverist status is now an ongoing benefit.** Reset cadence changed from `annual` to `unlimited` so it shows up as an always-available status perk rather than a benefit that resets each year.
+
+### Removed
+- **Marriott Lifetime Platinum Elite** row removed entirely. It was a lifetime-earned status, not a benefit to track annually.
+- **Legacy flat "Annual Choice Benefit at 50 Elite Nights" and "Annual Choice Benefit at 75 Elite Nights" rows** superseded by the gated milestone + choice-option structure above. Any usage rows are migrated onto the new milestone parents.
+
+### Testing
+- New v1.0.9 suite covers: Hyatt carry-over rows exist with correct `expiration_date`; Marriott milestone parents exist and are hidden until achieved; Lifetime Platinum row is absent; the old "Nightly Upgrade Awards (formerly Suite Night Awards)" row is absent and the new "10 earned in 2025" row has `uses_per_period = 10` and `expiration_date = 2026-12-31`; Discoverist is `unlimited` cadence; Virgin/Hyatt values are 0; Venue Collection is retitled with the 10% description; and the full v1.0.6 → v1.0.9 upgrade path correctly rewrites Bonvoy rows without dropping user usage history.
+
 ## v1.0.8 — 2026-07-28
 
 ### Fixed
