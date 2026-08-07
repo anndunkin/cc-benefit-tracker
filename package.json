@@ -41,5 +41,6 @@
   "overrides": {
     "keyv": "4.5.4",
     "cacheable-request": "7.0.4"
-  }
+  },
+  "_securityNote": "SECURITY: keyv and cacheable-request are pinned via `overrides` above due to the August 2026 Keyv/Cacheable npm supply chain attack (compromised keyv@6.0.0, cacheable-request@13.0.20 and 400+ other packages; see https://www.wiz.io/blog/keyv-and-cacheable-npm-supply-chain-attack). Do not remove these overrides or let `npm update`/a dependency bump move them past 4.5.4 / 7.0.4 without first checking npm advisories to confirm the ecosystem has fully recovered and newer versions are verified clean."
 }
