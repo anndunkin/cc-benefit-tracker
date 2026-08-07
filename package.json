@@ -1,7 +1,7 @@
 {
   "name": "cc-benefit-tracker",
   "version": "1.0.11",
-  "description": "Credit Card & Loyalty Benefit Tracker — desktop app for tracking credit card and status benefits, credits, and usage",
+  "description": "Credit Card & Loyalty Benefit Tracker \u2014 desktop app for tracking credit card and status benefits, credits, and usage",
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
@@ -37,5 +37,9 @@
     "vitest": "^1.3.1",
     "wait-on": "^7.2.0"
   },
-  "author": "Ann Dunkin"
+  "author": "Ann Dunkin",
+  "overrides": {
+    "keyv": "4.5.4",
+    "cacheable-request": "7.0.4"
+  }
 }
