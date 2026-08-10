@@ -261,7 +261,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.13');
+  metaSet(database, 'seed_version', '1.0.14');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -1572,6 +1572,24 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     const tx = database.transaction(() => {
       metaSet(database, 'seed_version', '1.0.13');
       run.push('v1_0_13_seed_refresh');
+    });
+    tx();
+  }
+
+  // ─── v1.0.14: installer preInit path fix + runtime icon path fix ───────
+  // No data changes. Ships two runtime/installer fixes:
+  //   1) installer.nsh preInit forces $INSTDIR to $LOCALAPPDATA\Programs so
+  //      the wizard no longer targets an unwritable C:\Program Files path
+  //      when a stale empty folder or ghost registry value exists.
+  //   2) iconPath.ts now correctly resolves the icon from
+  //      process.resourcesPath (extraResources location) instead of
+  //      app.getAppPath() (which points into app.asar and misses the icon),
+  //      so the app taskbar / window icon is the credit-card icon instead
+  //      of the default Electron logo.
+  if (seedVersionLt(database, '1.0.14')) {
+    const tx = database.transaction(() => {
+      metaSet(database, 'seed_version', '1.0.14');
+      run.push('v1_0_14_seed_refresh');
     });
     tx();
   }

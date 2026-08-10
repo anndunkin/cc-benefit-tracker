@@ -2,6 +2,29 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.14 — 2026-08-10
+
+### Fixed
+- **Installer picking `C:\Program Files\Benefits Tracker\Credit Card Benefit Tracker\` on machines with a stale empty folder there.** The v1.0.13 installer’s `customInit` set `$INSTDIR` only when the HKCU `InstallLocation` value was empty, and even then only to `$EXEDIR\Credit Card Benefit Tracker`. On machines where an old machine-wide install had left an empty `C:\Program Files\Benefits Tracker\Credit Card Benefit Tracker\` folder behind, electron-builder’s NSIS default noticed that folder and targeted it — which then failed mid-install with `Error opening file for writing: ...Uninstall Credit Card Benefit Tracker.exe` because Program Files needs admin write and this build ships as `perMachine:false + asInvoker`.
+- **App window and taskbar showing the default Electron icon in packaged builds.** `resolveIconPath` was reading `app.getAppPath()` (which returns `<install>/resources/app.asar`) but the icon lives at `<install>/resources/assets/icon.ico` as an `extraResources` sibling, not inside the asar. Every packaged candidate path failed `fs.existsSync`, so `BrowserWindow({ icon })` fell back to Electron's default logo.
+
+### Changed
+- `scripts/installer.nsh` moves the path decision from `customInit` to `preInit` (which runs before electron-builder's own `$INSTDIR` defaulting), and unconditionally forces `$INSTDIR` to `$LOCALAPPDATA\Programs\Credit Card Benefit Tracker` on a fresh install. A prior `InstallLocation` in the registry is honored only when it points at a per-user writable location — any `$PROGRAMFILES` / `$PROGRAMFILES64` path (including the `Benefits Tracker\...` layout) is rejected as an unwritable ghost.
+- `electron/iconPath.ts` now prefers `process.resourcesPath` in packaged mode and looks for `icon.ico` before `icon.png` on Windows so `BrowserWindow` receives a multi-resolution ICO (16 / 24 / 32 / 48 / 128 / 256). The path-traversal guard was extended to accept both the dev tree and the packaged `resourcesPath/assets` root instead of rejecting the packaged path.
+
+### Testing
+- +4 tests (139 total, up from 135):
+  - `v1.0.14 packaging release > migrates an existing v1.0.13 database forward without touching data` — rolling `seed_version` back to `1.0.13` and re-running migrations records `v1_0_14_seed_refresh`, stamps forward, and leaves benefit / usage counts untouched.
+  - `v1.0.14 packaging release > does not re-run the v1.0.14 migration on an up-to-date database`.
+  - `installer.nsh preInit forces $LOCALAPPDATA install path` — asserts the NSH source contains the `preInit` macro, hard-codes `$LOCALAPPDATA\Programs\Credit Card Benefit Tracker`, and rejects `PROGRAMFILES\Benefits Tracker` as a prior-install candidate.
+  - `iconPath resolves via process.resourcesPath in packaged mode` — simulates a packaged install layout under a tempdir and asserts `resolveIconPath` returns a path anchored on `resourcesPath/assets/`, not a dev-tree fallback.
+
+### Notes
+- v1.0.14 remains a packaging-only release. Data model, seed data, and UI are unchanged from v1.0.13. All benefit rows, usages, and user overrides are preserved.
+- The `repair-uninstall-admin.cmd` (shipped separately on 2026-08-10) targets a related but distinct failure mode: cleaning up per-machine residue under `C:\Program Files\Benefits Tracker\...` from a much older install lineage. Users who already have a working v1.0.13 install do not need to re-run it — the v1.0.14 installer’s `preInit` change means the same trap cannot happen again.
+
+---
+
 ## v1.0.13 — 2026-08-09
 
 ### Fixed

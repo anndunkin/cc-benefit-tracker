@@ -29,7 +29,12 @@ module.exports = {
     icon: "assets/icon.ico",
     requestedExecutionLevel: "asInvoker",
     forceCodeSigning: false,
-    signAndEditExecutable: false
+    // signAndEditExecutable must be true so electron-builder rewrites the
+    // Credit Card Benefit Tracker.exe icon resource with assets/icon.ico.
+    // We still handle Authenticode signing ourselves via osslsigncode after
+    // the build, so we disable only the code-signing part via signExecutable.
+    signAndEditExecutable: true,
+    signExecutable: false
   },
   nsis: {
     oneClick: false,

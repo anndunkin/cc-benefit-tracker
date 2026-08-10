@@ -43,19 +43,50 @@
 ; electron-builder template implements a smart atomicRMDir path used during
 ; updates that we don't want to lose.
 
+; preInit runs BEFORE electron-builder's own $INSTDIR defaulting, so this is
+; the correct hook to force a per-user install path. customInit runs later
+; and its $INSTDIR writes can be silently overwritten by electron-builder's
+; template — so we deliberately do the path decision here in preInit.
+;
+; Historical bug: previous versions set $INSTDIR from $EXEDIR ("install next
+; to wherever the user double-clicked the setup .exe") or let
+; electron-builder pick. On machines with a stale empty
+; C:\Program Files\Benefits Tracker\Credit Card Benefit Tracker\ folder,
+; electron-builder's NSIS default treats that folder as a prior install and
+; targets it — which then fails with "Error opening file for writing: ...
+; Uninstall Credit Card Benefit Tracker.exe" because Program Files needs
+; admin write. This install is configured perMachine:false + asInvoker, so
+; the correct home is always $LOCALAPPDATA\Programs\<productName>.
 !macro preInit
-  ; intentionally empty — path decisions happen in customInit
+  Push $0
+
+  ; Prefer a prior install location IF (a) we recorded one, and (b) it is
+  ; a per-user path we can actually write to as the current user. We reject
+  ; any "Program Files" style path — an unwritable prior location is a bug,
+  ; not a preference to honor.
+  ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $0 != ""
+    ${AndIf} $0 != "$PROGRAMFILES\Benefits Tracker\Credit Card Benefit Tracker"
+    ${AndIf} $0 != "$PROGRAMFILES\Credit Card Benefit Tracker"
+    ${AndIf} $0 != "$PROGRAMFILES64\Benefits Tracker\Credit Card Benefit Tracker"
+    ${AndIf} $0 != "$PROGRAMFILES64\Credit Card Benefit Tracker"
+    SetRegView 64
+    StrCpy $INSTDIR "$0"
+  ${Else}
+    ; Fresh install (or the prior location was rejected as unwritable):
+    ; always land under $LOCALAPPDATA\Programs, which is per-user and
+    ; requires no elevation. This is the same directory electron-builder
+    ; itself defaults to when perMachine:false is set correctly.
+    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\Credit Card Benefit Tracker"
+  ${EndIf}
+
+  Pop $0
 !macroend
 
 !macro customInit
-  Push $0
-  ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-  ${If} $0 == ""
-    ; Truly fresh install: default next to the setup .exe, matching the
-    ; historical layout users are used to.
-    StrCpy $INSTDIR "$EXEDIR\Credit Card Benefit Tracker"
-  ${EndIf}
-  Pop $0
+  ; No-op. Path decisions happen in preInit (see comment above). We keep
+  ; this macro defined so electron-builder's template does not fall back to
+  ; its own default behavior for this hook.
 !macroend
 
 !macro customInstall

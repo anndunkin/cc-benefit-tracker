@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.13');
+    expect(row.value).toBe('1.0.14');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.13');
+    expect(meta.value).toBe('1.0.14');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,7 +1103,7 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 });
 
@@ -1234,7 +1234,7 @@ describe('v1.0.8 migration and features', () => {
     expect(emDash.n).toBe(0);
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 });
 
@@ -1421,7 +1421,7 @@ describe('v1.0.9 migration and features', () => {
 
     // v1.0.9 stamp reached.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
 
     // Lifetime Platinum removed.
     const lifetime = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'`).get() as { n: number };
@@ -1607,7 +1607,7 @@ describe('v1.0.10 migration and features', () => {
 
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 
   it('preserves user-modified value_usd during v1.0.10 upsert but refreshes description', () => {
@@ -1656,7 +1656,7 @@ describe('v1.0.11 migration and features', () => {
     expect(usageCount.c).toBeGreaterThanOrEqual(1);
     // Stamp updated.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
     // Silence dup2 unused-var lint.
     expect(dup2).toBeGreaterThan(0);
   });
@@ -1721,15 +1721,15 @@ describe('v1.0.11 migration and features', () => {
   it('v1.0.11 seed_version stamp lands correctly', () => {
     const db = seededDb();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 });
 
 describe('v1.0.12 packaging release', () => {
-  it('stamps seed_version = 1.0.13 on fresh install', () => {
+  it('stamps seed_version = 1.0.14 on fresh install', () => {
     const db = seededDb();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 
   it('migrates an existing v1.0.11 database forward without touching data', () => {
@@ -1746,7 +1746,7 @@ describe('v1.0.12 packaging release', () => {
     expect(afterBenefits.n).toBe(beforeBenefits.n);
     expect(afterUsages.n).toBe(beforeUsages.n);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 });
 
@@ -1765,14 +1765,83 @@ describe('v1.0.13 packaging release', () => {
     expect(afterUsages.n).toBe(beforeUsages.n);
     expect(result.migrations_run).toContain('v1_0_13_seed_refresh');
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.13');
+    expect(stamp.value).toBe('1.0.14');
   });
 
   it('does not re-run the v1.0.13 migration on an up-to-date database', () => {
     const db = seededDb();
-    // Fresh seed already stamps 1.0.13; another migration pass must not
+    // Fresh seed already stamps 1.0.14; another migration pass must not
     // record the block a second time.
     const result = applyDataMigrations(db);
     expect(result.migrations_run).not.toContain('v1_0_13_seed_refresh');
+  });
+});
+
+describe('v1.0.14 packaging release', () => {
+  it('migrates an existing v1.0.13 database forward without touching data', () => {
+    const db = seededDb();
+    const beforeBenefits = db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number };
+    const beforeUsages = db.prepare(`SELECT COUNT(*) AS n FROM usages`).get() as { n: number };
+    db.prepare(`UPDATE app_meta SET value = '1.0.13' WHERE key = 'seed_version'`).run();
+
+    const result = applyDataMigrations(db);
+
+    const afterBenefits = db.prepare(`SELECT COUNT(*) AS n FROM benefits`).get() as { n: number };
+    const afterUsages = db.prepare(`SELECT COUNT(*) AS n FROM usages`).get() as { n: number };
+    expect(afterBenefits.n).toBe(beforeBenefits.n);
+    expect(afterUsages.n).toBe(beforeUsages.n);
+    expect(result.migrations_run).toContain('v1_0_14_seed_refresh');
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.14');
+  });
+
+  it('does not re-run the v1.0.14 migration on an up-to-date database', () => {
+    const db = seededDb();
+    const result = applyDataMigrations(db);
+    expect(result.migrations_run).not.toContain('v1_0_14_seed_refresh');
+  });
+
+  it('installer.nsh preInit forces $LOCALAPPDATA install path', async () => {
+    // The v1.0.14 installer must land under $LOCALAPPDATA\Programs on a fresh
+    // install rather than $EXEDIR or $PROGRAMFILES. Verify the NSH source
+    // contains the preInit block that enforces this.
+    const fs = await import('fs');
+    const path = await import('path');
+    const nsh = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'installer.nsh'), 'utf8');
+    expect(nsh).toMatch(/!macro preInit/);
+    expect(nsh).toContain('$LOCALAPPDATA\\Programs\\Credit Card Benefit Tracker');
+    // Must reject Program Files paths as prior-install candidates.
+    expect(nsh).toMatch(/PROGRAMFILES\\Benefits Tracker/);
+  });
+
+  it('iconPath resolves via process.resourcesPath in packaged mode', async () => {
+    // v1.0.14 fixes the packaged-app icon regression: resolveIconPath must
+    // look under the extraResources folder (process.resourcesPath/assets/),
+    // not inside app.asar. Simulate a packaged environment and verify the
+    // returned path is anchored on resourcesPath.
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+    const { resolveIconPath } = await import('../electron/iconPath');
+
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-icon-'));
+    const assetsDir = path.join(tmp, 'assets');
+    fs.mkdirSync(assetsDir);
+    // Create a stub icon file so existsSync returns true.
+    fs.writeFileSync(path.join(assetsDir, 'icon.ico'), 'stub');
+
+    const resolved = resolveIconPath({
+      isPackaged: true,
+      resourcesPath: tmp,
+      dirname: __dirname,
+    });
+
+    // Must resolve to the packaged resources path we passed in, not to a
+    // dev-tree fallback path.
+    expect(resolved.startsWith(tmp)).toBe(true);
+    expect(resolved.endsWith('icon.ico')).toBe(true);
+
+    // Cleanup
+    fs.rmSync(tmp, { recursive: true, force: true });
   });
 });
