@@ -1,7 +1,7 @@
 {
   "name": "cc-benefit-tracker",
-  "version": "1.0.11",
-  "description": "Credit Card & Loyalty Benefit Tracker \u2014 desktop app for tracking credit card and status benefits, credits, and usage",
+  "version": "1.0.12",
+  "description": "Credit Card & Loyalty Benefit Tracker — desktop app for tracking credit card and status benefits, credits, and usage",
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",

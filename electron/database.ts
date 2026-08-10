@@ -185,6 +185,8 @@ function seedVersionLt(database: Database.Database, target: string): boolean {
 
 // ─── Seeding ─────────────────────────────────────────────────────────────────
 
+// v1.0.12: seedIfFresh currently stamps the newest version. Any per-version
+// data migration lives in applyDataMigrations below.
 export function seedIfFresh(database: Database.Database): void {
   const cardCount = (database.prepare('SELECT COUNT(*) AS n FROM cards').get() as { n: number }).n;
   if (cardCount > 0) return;
@@ -259,7 +261,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.11');
+  metaSet(database, 'seed_version', '1.0.12');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -1547,6 +1549,17 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
 
       metaSet(database, 'seed_version', '1.0.11');
       run.push('v1_0_11_seed_refresh');
+    });
+    tx();
+  }
+
+  // ─── v1.0.12: installer / uninstaller hardening only, no data changes ───
+  // Data model is unchanged. Bump the stamp so both new and existing users
+  // land on the same seed_version after upgrading.
+  if (seedVersionLt(database, '1.0.12')) {
+    const tx = database.transaction(() => {
+      metaSet(database, 'seed_version', '1.0.12');
+      run.push('v1_0_12_seed_refresh');
     });
     tx();
   }

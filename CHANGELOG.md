@@ -2,6 +2,21 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.12 — 2026-08-09
+
+### Fixed
+- **Uninstaller / reinstall repair.** Users who ran the v1.0.11 uninstaller before it had a chance to finish (for example, to force the new taskbar icon to refresh) could end up in a state where re-running the installer failed with `unable to find the .exe` and `the app is open`. The custom NSIS `customInit` macro was clobbering `$INSTDIR` on every launch, so the installer's built-in `ALLOW_ONLY_ONE_INSTALLER_INSTANCE` check pointed at a folder that no longer existed while the registry still advertised the app as installed. v1.0.12 changes `customInit` to only override `$INSTDIR` when there is no `InstallLocation` recorded in the registry — truly-fresh installs still land next to the setup .exe, but updates and reinstalls now correctly follow the registry back to the real install directory.
+- **Uninstall now leaves the machine in a clean state.** A new `customUnInit` macro runs `taskkill /F /IM "Credit Card Benefit Tracker.exe" /T` before the uninstaller starts deleting files, so lingering app or helper processes can no longer hold file locks that stall the uninstall. A new `customUnInstall` macro then removes the `InstallLocation` value and (if present) the secondary per-GUID Uninstall registry key that electron-builder writes, so the next installer treats the machine as fresh instead of trying to reuse stale metadata.
+
+### Added
+- **Repair scripts for users who are already stuck.** `scripts/repair-uninstall.cmd` (Batch) and `scripts/repair-uninstall.ps1` (PowerShell) ship in the repo and in the release artifacts. Either script kills any lingering `Credit Card Benefit Tracker.exe` / `Uninstall Credit Card Benefit Tracker.exe` process, deletes both registry keys electron-builder writes for this app (`HKCU\Software\0cad1474-5477-5366-bb89-f2f01e551ded` and the matching `Uninstall` entry), removes leftover install folders from the common electron-builder locations, and clears leftover Start Menu / Desktop shortcuts. User data at `%APPDATA%\Credit Card Benefit Tracker` (the SQLite database with logged usage history) is deliberately left untouched.
+
+### Testing
+- New v1.0.12 suite covers: the fresh-install seed stamp lands at `1.0.12`, and rolling an existing DB back to `1.0.11` and re-running `applyDataMigrations` leaves benefit / usage counts unchanged while stamping forward to `1.0.12`.
+
+### Notes
+- v1.0.12 is a packaging-only release. No data-model changes, no seed edits, no UI changes. All benefit rows, usages, and user overrides are preserved unchanged from v1.0.11.
+
 ## v1.0.11 — 2026-07-29
 
 ### Fixed
