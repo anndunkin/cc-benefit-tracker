@@ -261,7 +261,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.12');
+  metaSet(database, 'seed_version', '1.0.13');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -1560,6 +1560,18 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     const tx = database.transaction(() => {
       metaSet(database, 'seed_version', '1.0.12');
       run.push('v1_0_12_seed_refresh');
+    });
+    tx();
+  }
+
+  // ─── v1.0.13: customCheckAppRunning override, no data changes ──────────
+  // Replaces electron-builder's fragile _CHECK_APP_RUNNING probe with a
+  // deterministic tasklist-only check to stop the "cannot be closed" loop
+  // on reinstall. No schema, seed, or user-data changes.
+  if (seedVersionLt(database, '1.0.13')) {
+    const tx = database.transaction(() => {
+      metaSet(database, 'seed_version', '1.0.13');
+      run.push('v1_0_13_seed_refresh');
     });
     tx();
   }

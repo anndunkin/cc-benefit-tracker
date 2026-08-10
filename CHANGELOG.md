@@ -2,6 +2,28 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.13 — 2026-08-09
+
+### Fixed
+- **The "Credit Card Benefit Tracker cannot be closed. Please close it manually and click Retry to continue" install loop.** v1.0.12 fixed the pre-install `$INSTDIR` / registry residue problems, but a separate failure mode remained: mid-install, electron-builder's default `_CHECK_APP_RUNNING` NSIS macro (in `node_modules/app-builder-lib/templates/nsis/include/allowOnlyOneInstallerInstance.nsh`) prefers a PowerShell + `Get-CimInstance Win32_Process` probe that filters by `$_.Path.StartsWith('$INSTDIR', ...)`. On some Windows configurations that query throws, exits with an unexpected code, or false-positives against ghost process records, and the template's own retry loop then pops the "cannot be closed" dialog with no way for the user to escape — even after a full reboot. Tracked upstream as electron-builder issue #8131 and follow-ups.
+
+### Changed
+- v1.0.13 defines a `customCheckAppRunning` macro in `scripts/installer.nsh`. The electron-builder template honors this via `!ifmacrodef customCheckAppRunning` and skips its own `_CHECK_APP_RUNNING` entirely. The replacement is intentionally simple:
+  1. `tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq Credit Card Benefit Tracker.exe"` piped through `findstr` — no PowerShell path, no CIM query.
+  2. If found, `taskkill /F` once and re-check.
+  3. If still found, show a single actionable dialog (`Open Task Manager, end every process...`) and exit. No retry loop.
+
+### Added
+- Repair scripts (`scripts/repair-uninstall.cmd` and `.ps1`) now start with a diagnostic step that lists every `Credit Card Benefit Tracker.exe` / `Uninstall Credit Card Benefit Tracker.exe` process the OS reports — the same signal the installer uses — so users can see exactly what (if anything) is being detected. The PowerShell version also prints the executable path for each match, which makes stray helper processes obvious.
+- Repair scripts now also clear `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\<APP_GUID>` in case an older machine-wide install left an entry there.
+
+### Testing
+- New v1.0.13 suite covers: rolling an existing DB from `1.0.12` to `1.0.13` records `v1_0_13_seed_refresh` and stamps forward without changing benefit / usage counts; a fresh DB that is already stamped `1.0.13` does not re-run the v1.0.13 block on a subsequent migration pass.
+
+### Notes
+- v1.0.13 remains a packaging-only release. Data model, seed data, and UI are unchanged from v1.0.12. All benefit rows, usages, and user overrides are preserved.
+- Updating Electron itself would not have fixed this; the failure lives in electron-builder's NSIS template, not in the Electron runtime.
+
 ## v1.0.12 — 2026-08-09
 
 ### Fixed
