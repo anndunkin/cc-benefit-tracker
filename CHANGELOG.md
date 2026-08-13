@@ -2,6 +2,39 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.15 — 2026-08-13
+
+### Changed
+- Modernized the full application stack: Electron 43.4.0, electron-builder
+  26.15.3, React 19.2.8, React Router 7.18.2, Vite 8.2.1, Vitest 4.1.10,
+  Tailwind CSS 4.3.3, and TypeScript 7.0.2.
+- Migrated Tailwind from the v3 PostCSS directives/configuration path to the
+  v4 first-party Vite plugin, CSS-first theme tokens, and explicit dark-mode
+  custom variant.
+- Updated TypeScript paths, module resolution, and Vite client type
+  declarations for TypeScript 7 compatibility.
+- Updated test, typing, CSS, and developer-support dependencies. `jsdom`,
+  `@testing-library/jest-dom`, and `concurrently` use their latest compatible
+  releases for the supported Node 20 runtime.
+
+### Security
+- Updated React Router past the affected versions for the previously reported
+  moderate audit findings. `npm audit --omit=dev` now reports zero
+  vulnerabilities.
+- Retained the required `keyv@4.5.4` and `cacheable-request@7.0.4` overrides.
+- Kept `better-sqlite3` on the latest stable 12.x release (12.11.1); the 13.x
+  line is intentionally excluded because it segfaults in the supported Node 20
+  sandbox.
+
+### Testing
+- 139/139 Vitest tests pass across the security, validation, boundary, and
+  functionality suites, including the security test path that launches the
+  Electron binary.
+- Client and Electron TypeScript checks pass.
+- `npm run build` and `npm run electron:build` pass.
+
+---
+
 ## v1.0.14 — 2026-08-10
 
 ### Fixed

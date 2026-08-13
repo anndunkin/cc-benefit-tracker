@@ -25,10 +25,18 @@ Delta SkyMiles Medallion · American AAdvantage · IHG One Rewards Ambassador ·
 ```bash
 npm install
 npm run dev          # Vite + Electron in dev mode
-npm run test         # 46 vitest tests across security / validation / boundary / functionality
+npm run test         # 139 Vitest tests across security / validation / boundary / functionality
 npm run electron:build  # Build the Windows installer into dist-installer/
 bash build/sign.sh   # Sign the installer with build/signing.crt (Windows only, requires osslsigncode)
 ```
+
+## Platform modernization (v1.0.15)
+
+The application now runs on **Electron 43**, React 19, React Router 7, Vite 8,
+Vitest 4, Tailwind CSS 4, and TypeScript 7. The Tailwind integration now uses
+the first-party Vite plugin and CSS-first theme configuration. `better-sqlite3`
+is updated to the latest stable 12.x release; it intentionally does not use
+13.x because that release line crashes in the supported Node 20 build sandbox.
 
 ## Data model
 
@@ -55,7 +63,7 @@ tests/boundary.test.ts      · Period math, unicode, extreme values, 100+ benefi
 tests/functionality.test.ts · CRUD, seed idempotence, refresh workflow, export/import round-trip
 ```
 
-Run `npm run test` to see the full suite. All 46 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 139 tests pass on a clean checkout.
 
 ## License
 
@@ -72,4 +80,3 @@ the August 2026 Keyv/Cacheable npm supply chain attack, which compromised
 These are transitive dependencies pulled in via `got` → `@electron/get` → `electron`.
 **Before removing or updating these overrides**, verify that newer versions of
 `keyv`/`cacheable-request` are confirmed clean against current npm security advisories.
-
