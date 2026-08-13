@@ -33,7 +33,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ── 4. Refresh the vendored prebuilt better-sqlite3 binary ────────────────
+      # ── 4. Run test suite ─────────────────────────────────────────────────────
+      # Runs against the plain npm-installed better-sqlite3 build (host Node
+      # ABI), before any Electron-ABI rebuild happens below.
+      - name: Run tests
+        run: npx vitest run
+
+      # ── 5. Build renderer + Electron main/preload ─────────────────────────────
+      - name: Build
+        run: npm run build
+
+      # ── 6. Refresh the vendored prebuilt better-sqlite3 binary ────────────────
       # This repo's electron-builder config sets npmRebuild: false and its
       # afterPack.js hook copies prebuilt-win32-x64/better_sqlite3.node into the
       # packaged app instead of letting electron-builder rebuild it. That vendored
@@ -41,6 +51,7 @@ jobs:
       # stale for Electron 43.4.0 (ABI 148). better-sqlite3's official prebuilds
       # only cover up to ABI 146 (Electron 42), so we compile it fresh here on a
       # real Windows runner and overwrite the vendored copy before packaging.
+      # Done after tests above, which ran against the host-ABI build instead.
       - name: Rebuild better-sqlite3 for Electron and refresh vendored binary
         shell: bash
         run: |
@@ -48,14 +59,6 @@ jobs:
           mkdir -p prebuilt-win32-x64
           cp node_modules/better-sqlite3/build/Release/better_sqlite3.node prebuilt-win32-x64/better_sqlite3.node
           echo "Refreshed prebuilt-win32-x64/better_sqlite3.node for Electron 43 (ABI 148)"
-
-      # ── 5. Run test suite ─────────────────────────────────────────────────────
-      - name: Run tests
-        run: npx vitest run
-
-      # ── 6. Build renderer + Electron main/preload ─────────────────────────────
-      - name: Build
-        run: npm run build
 
       # ── 7. Package with electron-builder (zip + nsis) ────────────────────────
       - name: Package Windows installers
