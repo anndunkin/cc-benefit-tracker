@@ -1,6 +1,25 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+  --color-primary-950: #022c22;
+  --font-sans: Inter, system-ui, sans-serif;
+}
+
+@utility btn {
+  @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors;
+}
 
 @layer base {
   html, body, #root { height: 100%; }
@@ -15,9 +34,6 @@
 @layer components {
   .card {
     @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm;
-  }
-  .btn {
-    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors;
   }
   .btn-primary {
     @apply btn bg-primary-600 text-white hover:bg-primary-700;
