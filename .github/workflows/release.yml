@@ -1,0 +1,110 @@
+name: Build & Release
+
+# Triggers on any tag matching v* (e.g. v1.0.0, v1.0.15)
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create releases and upload assets
+
+jobs:
+  build-and-release:
+    name: Build Windows x64 and publish release
+    runs-on: windows-latest   # must be Windows to compile better-sqlite3 for the Electron ABI and build the NSIS installer
+
+    steps:
+      # ── 1. Checkout full history so the tag commit is available ──────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Set up Node.js ────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install dependencies ─────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Refresh the vendored prebuilt better-sqlite3 binary ────────────────
+      # This repo's electron-builder config sets npmRebuild: false and its
+      # afterPack.js hook copies prebuilt-win32-x64/better_sqlite3.node into the
+      # packaged app instead of letting electron-builder rebuild it. That vendored
+      # file was previously built for Electron ABI 145 (Electron 41) and is now
+      # stale for Electron 43.4.0 (ABI 148). better-sqlite3's official prebuilds
+      # only cover up to ABI 146 (Electron 42), so we compile it fresh here on a
+      # real Windows runner and overwrite the vendored copy before packaging.
+      - name: Rebuild better-sqlite3 for Electron and refresh vendored binary
+        shell: bash
+        run: |
+          npx electron-rebuild -f -w better-sqlite3
+          mkdir -p prebuilt-win32-x64
+          cp node_modules/better-sqlite3/build/Release/better_sqlite3.node prebuilt-win32-x64/better_sqlite3.node
+          echo "Refreshed prebuilt-win32-x64/better_sqlite3.node for Electron 43 (ABI 148)"
+
+      # ── 5. Run test suite ─────────────────────────────────────────────────────
+      - name: Run tests
+        run: npx vitest run
+
+      # ── 6. Build renderer + Electron main/preload ─────────────────────────────
+      - name: Build
+        run: npm run build
+
+      # ── 7. Package with electron-builder (zip + nsis) ────────────────────────
+      - name: Package Windows installers
+        run: npx electron-builder --config electron-builder.config.js --win --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # ── 8. Extract version from tag (strips leading 'v') ─────────────────────
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      # ── 9. Locate build artifacts ─────────────────────────────────────────────
+      - name: Locate artifacts
+        id: artifacts
+        shell: bash
+        run: |
+          ZIP=$(ls dist-installer/*.zip 2>/dev/null | head -1)
+          EXE=$(ls dist-installer/*.exe 2>/dev/null | head -1)
+          echo "ZIP=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "EXE=$EXE" >> "$GITHUB_OUTPUT"
+          echo "Found ZIP: $ZIP"
+          echo "Found EXE: $EXE"
+
+      # ── 10. Extract release notes for this version from CHANGELOG.md ──────────
+      - name: Extract release notes
+        id: release_notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          NOTES=$(awk "/^## v$VERSION /{found=1; next} found && /^## v/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="Credit Card Benefit Tracker v$VERSION"
+          fi
+          echo "$NOTES" > release_notes.txt
+          cat release_notes.txt
+
+      # ── 11. Create GitHub Release and upload assets ───────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Credit Card Benefit Tracker v${{ steps.version.outputs.VERSION }}"
+          tag_name: ${{ github.ref_name }}
+          body_path: release_notes.txt
+          draft: false
+          prerelease: false
+          files: |
+            ${{ steps.artifacts.outputs.ZIP }}
+            ${{ steps.artifacts.outputs.EXE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
