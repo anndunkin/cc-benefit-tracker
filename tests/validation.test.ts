@@ -6,6 +6,7 @@ import {
   benefitCreate, benefitUpdate, benefitsGetAll,
   usageCreate,
   refreshStartRun, refreshGetStatus,
+  pointsCurrencyCreate, pointsCurrencyUpdate, pointsCurrencyGetById, pointsCurrenciesGetAll,
 } from '../electron/database';
 
 describe('Card validation', () => {
@@ -104,5 +105,35 @@ describe('Refresh flow validation', () => {
     const s = refreshGetStatus(db);
     expect(s.last_run_at).toBeNull();
     expect(typeof s.next_due).toBe('string');
+  });
+});
+
+describe('Points currency validation (v1.0.16)', () => {
+  it('rejects a points currency without a name', () => {
+    const db = seededDb();
+    expect(() => pointsCurrencyCreate(db, { name: '  ', currency_type: 'airline', value_cents_per_point: 1.5 })).toThrow(/name/i);
+  });
+  it('enforces the currency_type CHECK constraint', () => {
+    const db = seededDb();
+    expect(() => pointsCurrencyCreate(db, { name: 'X', currency_type: 'crypto' as any, value_cents_per_point: 1 })).toThrow();
+  });
+  it('rejects a points currency with a non-numeric value', () => {
+    const db = seededDb();
+    expect(() => pointsCurrencyCreate(db, { name: 'X', currency_type: 'airline', value_cents_per_point: NaN })).toThrow(/value_cents_per_point/i);
+  });
+  it('throws when updating a non-existent points currency', () => {
+    const db = seededDb();
+    expect(() => pointsCurrencyUpdate(db, 'nope', { value_cents_per_point: 2 })).toThrow(/not found/i);
+  });
+  it('seeds all 10 relevant points currencies on a fresh install', () => {
+    const db = seededDb();
+    const all = pointsCurrenciesGetAll(db);
+    expect(all.length).toBe(10);
+    const amex = all.find(c => c.id === 'amex_membership_rewards');
+    expect(amex).toBeDefined();
+    expect(amex!.value_cents_per_point).toBe(1.7);
+    expect(amex!.currency_type).toBe('transferable');
+    expect(amex!.source_name).toBe('One Mile at a Time');
+    expect(amex!.source_url).toBe('https://onemileatatime.com/guides/value-miles-points/');
   });
 });

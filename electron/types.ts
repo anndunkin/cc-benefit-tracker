@@ -35,6 +35,20 @@ export type BenefitCategory =
 /** Networks / issuers — free-form but common values documented. */
 export type CardNetwork = 'Amex' | 'Visa' | 'Mastercard' | 'Other';
 
+/** Standing spend-bonus-category buckets used to group earning multipliers
+ *  across all cards on the Bonus Categories tab. */
+export type SpendCategory =
+  | 'airfare'
+  | 'hotels'
+  | 'car_rentals'
+  | 'dining'
+  | 'groceries'
+  | 'gas'
+  | 'rideshare_transit'
+  | 'streaming_entertainment'
+  | 'online_shopping'
+  | 'everyday_everything_else';
+
 // ─── Cards ────────────────────────────────────────────────────────────────────
 
 export interface Card {
@@ -104,6 +118,14 @@ export interface Benefit {
   expiration_note: string | null;
   expiration_date: string | null;   // YYYY-MM-DD, user-set expiry for time-bound rewards
   reset_years: number | null;       // for one_time benefits: years between resets (4 for Amex/Chase GE, 5 for Citi GE)
+  // v1.0.16 additions — structured earning-multiplier fields. Only populated
+  // when category = 'earning_multiplier'. Kept alongside the free-text title
+  // (e.g. "5x Membership Rewards points on airfare") so the Bonus Categories
+  // tab can group/sort/filter without parsing prose.
+  multiplier_rate: number | null;        // e.g. 5 for "5x"
+  multiplier_currency: string | null;    // points currency earned, e.g. "Membership Rewards", "Delta SkyMiles"
+  spend_category: SpendCategory | null;  // bucket used for grouping, e.g. 'airfare'
+  spend_category_note: string | null;    // free-text qualifier, e.g. "Delta purchases only" or "up to $150,000/year, then 1x"
   // v1.0.6 additions:
   // prerequisite_benefit_id: if set, this benefit is only shown once the
   //   prerequisite has been marked as achieved (uses_count >= uses_max). Used
@@ -140,6 +162,10 @@ export interface BenefitInput {
   expiration_note?: string | null;
   expiration_date?: string | null;
   reset_years?: number | null;
+  multiplier_rate?: number | null;
+  multiplier_currency?: string | null;
+  spend_category?: SpendCategory | null;
+  spend_category_note?: string | null;
   // v1.0.6 additions — see Benefit for semantics. When seeding by title, use
   // prerequisite_benefit_title (resolved to prerequisite_benefit_id at seed
   // time) so the seed file stays human-readable and stable across ids.
@@ -147,6 +173,39 @@ export interface BenefitInput {
   is_choice_option?: number;
   choice_selected?: number;
   sort_order?: number;
+  source_url?: string | null;
+  notes?: string | null;
+  is_active?: number;
+}
+
+// ─── Points currency valuations ───────────────────────────────────────────────
+// Standalone reference table of what each points/miles currency is worth,
+// independent of any single card or program. Sourced from One Mile at a Time's
+// published valuations (https://onemileatatime.com/guides/value-miles-points/)
+// and refreshed on the same quarterly cadence as benefit data.
+
+export type PointsCurrencyType = 'transferable' | 'airline' | 'hotel';
+
+export interface PointsCurrency {
+  id: string;
+  name: string;                    // e.g. "Amex Membership Rewards", "Delta SkyMiles"
+  currency_type: PointsCurrencyType;
+  value_cents_per_point: number;   // e.g. 1.7 means 1.7 cents/point
+  source_name: string;             // e.g. "One Mile at a Time"
+  source_url: string | null;
+  notes: string | null;
+  is_active: number;
+  is_user_modified: number;        // 1 if user edited — quarterly refresh preserves
+  updated_at: string;
+  created_at: string;
+}
+
+export interface PointsCurrencyInput {
+  id?: string;
+  name: string;
+  currency_type: PointsCurrencyType;
+  value_cents_per_point: number;
+  source_name?: string | null;
   source_url?: string | null;
   notes?: string | null;
   is_active?: number;
@@ -236,6 +295,11 @@ export interface RefreshChange {
   card_id: string | null;
   program_id: string | null;
   benefit_id: number | null;        // null for 'added' until applied
+  // v1.0.16: points-currency valuation changes proposed by a refresh run
+  // (e.g. a new quarterly cent-per-point figure from One Mile at a Time).
+  // Null for card/program/benefit changes; set instead of benefit_id when
+  // change_type targets a PointsCurrency row.
+  points_currency_id: string | null;
   before_json: string | null;
   after_json: string | null;
   review_status: RefreshStatus;
@@ -254,6 +318,7 @@ export interface AppFilePayload {
   usages: Usage[];
   refresh_runs: RefreshRun[];
   refresh_changes: RefreshChange[];
+  points_currencies: PointsCurrency[];
 }
 
 export interface FileResult {
@@ -308,6 +373,13 @@ export interface WindowApi {
     rejectChange: (changeId: number, notes?: string) => Promise<RefreshChange>;
     applyRun: (runId: number) => Promise<{ applied: number; skipped: number }>;
     discardRun: (runId: number) => Promise<{ ok: true }>;
+  };
+  pointsCurrencies: {
+    getAll: () => Promise<PointsCurrency[]>;
+    getById: (id: string) => Promise<PointsCurrency | null>;
+    create: (data: PointsCurrencyInput) => Promise<PointsCurrency>;
+    update: (id: string, data: Partial<PointsCurrencyInput>) => Promise<PointsCurrency>;
+    delete: (id: string) => Promise<{ ok: true }>;
   };
   file: {
     currentPath: () => Promise<string>;

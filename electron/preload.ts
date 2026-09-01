@@ -44,6 +44,13 @@ const api: WindowApi = {
     applyRun:          (runId)          => ipcRenderer.invoke('refresh:applyRun', runId),
     discardRun:        (runId)          => ipcRenderer.invoke('refresh:discardRun', runId),
   },
+  pointsCurrencies: {
+    getAll:   ()               => ipcRenderer.invoke('pointsCurrencies:getAll'),
+    getById:  (id)             => ipcRenderer.invoke('pointsCurrencies:getById', id),
+    create:   (data)           => ipcRenderer.invoke('pointsCurrencies:create', data),
+    update:   (id, data)       => ipcRenderer.invoke('pointsCurrencies:update', id, data),
+    delete:   (id)             => ipcRenderer.invoke('pointsCurrencies:delete', id),
+  },
   file: {
     currentPath:  ()  => ipcRenderer.invoke('file:currentPath'),
     newDb:        ()  => ipcRenderer.invoke('file:newDb'),

@@ -8,18 +8,22 @@ import CardDetail from './pages/CardDetail';
 import Programs from './pages/Programs';
 import ProgramDetail from './pages/ProgramDetail';
 import ManageBenefits from './pages/ManageBenefits';
+import BonusCategories from './pages/BonusCategories';
+import PointsCurrencies from './pages/PointsCurrencies';
 import Refresh from './pages/Refresh';
 import Settings from './pages/Settings';
 import RefreshBanner from './components/RefreshBanner';
 
 const NAV = [
-  { to: '/',          label: 'Credits & Usages', end: true },
-  { to: '/ongoing',   label: 'Ongoing Benefits' },
-  { to: '/cards',     label: 'Cards' },
-  { to: '/programs',  label: 'Programs' },
-  { to: '/benefits',  label: 'Manage Benefits' },
-  { to: '/refresh',   label: 'Refresh' },
-  { to: '/settings',  label: 'Settings' },
+  { to: '/',                  label: 'Credits & Usages', end: true },
+  { to: '/ongoing',           label: 'Ongoing Benefits' },
+  { to: '/cards',             label: 'Cards' },
+  { to: '/programs',          label: 'Programs' },
+  { to: '/bonus-categories',  label: 'Bonus Categories' },
+  { to: '/points-currencies', label: 'Points Values' },
+  { to: '/benefits',          label: 'Manage Benefits' },
+  { to: '/refresh',           label: 'Refresh' },
+  { to: '/settings',          label: 'Settings' },
 ];
 
 function Shell() {
@@ -80,6 +84,8 @@ function Shell() {
           <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/programs/:id" element={<ProgramDetail />} />
+          <Route path="/bonus-categories" element={<BonusCategories />} />
+          <Route path="/points-currencies" element={<PointsCurrencies />} />
           <Route path="/benefits" element={<ManageBenefits />} />
           <Route path="/refresh" element={<Refresh />} />
           <Route path="/settings" element={<Settings />} />

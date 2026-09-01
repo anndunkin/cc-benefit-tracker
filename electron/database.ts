@@ -5,10 +5,11 @@ import type {
   Benefit, BenefitInput, Usage, UsageInput,
   BenefitProjection, RefreshChange, RefreshRun, RefreshChangeType,
   AppFilePayload, ResetCadence, CardNetwork,
+  PointsCurrency, PointsCurrencyInput,
 } from './types';
 import { APP_FILE_VERSION } from './types';
 import { periodKeyFor, periodLabelFor, nextResetIso, uses_max_for } from './periods';
-import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS } from './benefitsSeed';
+import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS, SEED_POINTS_CURRENCIES } from './benefitsSeed';
 
 let db: Database.Database | null = null;
 
@@ -82,6 +83,10 @@ export function initSchema(database: Database.Database): void {
       expiration_note TEXT,
       expiration_date TEXT,
       reset_years INTEGER,
+      multiplier_rate REAL,
+      multiplier_currency TEXT,
+      spend_category TEXT,
+      spend_category_note TEXT,
       prerequisite_benefit_id INTEGER REFERENCES benefits(id) ON DELETE SET NULL,
       is_choice_option INTEGER NOT NULL DEFAULT 0,
       choice_selected INTEGER NOT NULL DEFAULT 0,
@@ -127,6 +132,7 @@ export function initSchema(database: Database.Database): void {
       card_id TEXT,
       program_id TEXT,
       benefit_id INTEGER,
+      points_currency_id TEXT,
       before_json TEXT,
       after_json TEXT,
       review_status TEXT NOT NULL DEFAULT 'pending' CHECK(review_status IN ('pending','approved','rejected')),
@@ -137,6 +143,20 @@ export function initSchema(database: Database.Database): void {
     CREATE TABLE IF NOT EXISTS app_meta (
       key TEXT PRIMARY KEY,
       value TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS points_currencies (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      currency_type TEXT NOT NULL CHECK(currency_type IN ('transferable','airline','hotel')),
+      value_cents_per_point REAL NOT NULL,
+      source_name TEXT NOT NULL DEFAULT 'One Mile at a Time',
+      source_url TEXT,
+      notes TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      is_user_modified INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
 }
@@ -203,12 +223,18 @@ export function seedIfFresh(database: Database.Database): void {
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
       value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+      multiplier_rate, multiplier_currency, spend_category, spend_category_note,
       is_choice_option, sort_order, source_url, notes
     ) VALUES (
       @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
       @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+      @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
       @is_choice_option, @sort_order, @source_url, @notes
     )
+  `);
+  const insertPointsCurrency = database.prepare(`
+    INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name, source_url, notes, is_active)
+    VALUES (@id, @name, @currency_type, @value_cents_per_point, @source_name, @source_url, @notes, 1)
   `);
 
   const tx = database.transaction(() => {
@@ -239,6 +265,10 @@ export function seedIfFresh(database: Database.Database): void {
       expiration_note: b.expiration_note ?? null,
       expiration_date: (b as any).expiration_date ?? null,
       reset_years: (b as any).reset_years ?? null,
+      multiplier_rate: b.multiplier_rate ?? null,
+      multiplier_currency: b.multiplier_currency ?? null,
+      spend_category: b.spend_category ?? null,
+      spend_category_note: b.spend_category_note ?? null,
       is_choice_option: (b as any).is_choice_option ?? 0,
       sort_order: b.sort_order ?? 0,
       source_url: b.source_url ?? null,
@@ -246,6 +276,15 @@ export function seedIfFresh(database: Database.Database): void {
       title: b.title,
       category: b.category,
       reset_cadence: b.reset_cadence,
+    });
+    for (const pc of SEED_POINTS_CURRENCIES) insertPointsCurrency.run({
+      id: pc.id,
+      name: pc.name,
+      currency_type: pc.currency_type,
+      value_cents_per_point: pc.value_cents_per_point,
+      source_name: pc.source_name ?? 'One Mile at a Time',
+      source_url: pc.source_url ?? null,
+      notes: pc.notes ?? null,
     });
 
     // Resolve prerequisite_benefit_title → prerequisite_benefit_id for fresh DBs.
@@ -261,7 +300,7 @@ export function seedIfFresh(database: Database.Database): void {
   });
   tx();
 
-  metaSet(database, 'seed_version', '1.0.14');
+  metaSet(database, 'seed_version', '1.0.16');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
 }
 
@@ -1594,6 +1633,130 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  // ─── v1.0.16: Bonus Categories tab + Points Currency Values tab + base ───
+  // program benefits (Marriott 5th-night-free). Ships three pieces of data
+  // migration for DBs that were created before this version:
+  //   1) ALTER TABLE benefits to add the 4 structured earning-multiplier
+  //      columns (multiplier_rate, multiplier_currency, spend_category,
+  //      spend_category_note). initSchema() already creates these columns
+  //      for brand-new DBs, so ALTER TABLE ADD COLUMN would fail with
+  //      "duplicate column name" on a fresh DB that goes straight from
+  //      initSchema → seedIfFresh → applyDataMigrations. We check
+  //      pragma table_info first and only ALTER columns that are missing.
+  //   2) Insert SEED_POINTS_CURRENCIES rows for any currency id not already
+  //      present, so pre-existing installs get the new reference table
+  //      populated too (fresh installs already get this via seedIfFresh).
+  //      Rows with is_user_modified = 1 are left untouched (never overwritten).
+  //   3) No benefit/program backfill needed here — the new
+  //      marriott_bonvoy_base program + benefit and the new structured
+  //      multiplier rows only ship via SEED_BENEFITS/SEED_PROGRAMS, which
+  //      only apply to fresh installs. Existing installs keep their current
+  //      benefit rows untouched (consistent with how this app has always
+  //      treated card/program/benefit seed data — see v1.0.9-1.0.12 blocks
+  //      above, which only touch data via explicit UPSERT passes when the
+  //      research pipeline regenerates seed content). Users on existing
+  //      installs can pull the new bonus-category and base-program data via
+  //      the in-app Quarterly Refresh flow once a refresh run is prepared.
+  if (seedVersionLt(database, '1.0.16')) {
+    const tx = database.transaction(() => {
+      // Defensive table creation: some legacy/hand-rolled DBs in tests (and
+      // potentially very old real installs) predate the refresh_changes and
+      // points_currencies tables and never ran through initSchema()'s
+      // CREATE TABLE IF NOT EXISTS. Ensure both exist before altering/seeding
+      // them below so this migration is safe to run standalone.
+      database.exec(`
+        CREATE TABLE IF NOT EXISTS refresh_runs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          started_at   TEXT NOT NULL DEFAULT (datetime('now')),
+          completed_at TEXT,
+          source_notes TEXT,
+          status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','applied','discarded'))
+        );
+        CREATE TABLE IF NOT EXISTS refresh_changes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          refresh_run_id INTEGER NOT NULL REFERENCES refresh_runs(id) ON DELETE CASCADE,
+          change_type TEXT NOT NULL CHECK(change_type IN ('added','modified','removed')),
+          card_id TEXT,
+          program_id TEXT,
+          benefit_id INTEGER,
+          points_currency_id TEXT,
+          before_json TEXT,
+          after_json TEXT,
+          review_status TEXT NOT NULL DEFAULT 'pending' CHECK(review_status IN ('pending','approved','rejected')),
+          review_notes TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS points_currencies (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          currency_type TEXT NOT NULL CHECK(currency_type IN ('transferable','airline','hotel')),
+          value_cents_per_point REAL NOT NULL,
+          source_name TEXT NOT NULL DEFAULT 'One Mile at a Time',
+          source_url TEXT,
+          notes TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          is_user_modified INTEGER NOT NULL DEFAULT 0,
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+
+      const benefitCols = new Set(
+        (database.prepare(`PRAGMA table_info(benefits)`).all() as { name: string }[]).map(c => c.name),
+      );
+      const newBenefitCols: [string, string][] = [
+        ['multiplier_rate', 'REAL'],
+        ['multiplier_currency', 'TEXT'],
+        ['spend_category', 'TEXT'],
+        ['spend_category_note', 'TEXT'],
+      ];
+      for (const [col, type] of newBenefitCols) {
+        if (benefitCols.has(col)) continue;
+        try {
+          database.exec(`ALTER TABLE benefits ADD COLUMN ${col} ${type}`);
+        } catch { /* column already exists (race with initSchema) — ignore */ }
+      }
+
+      // refresh_changes.points_currency_id — lets the quarterly refresh diff
+      // mechanism propose points-currency valuation updates (see RefreshChange
+      // in types.ts). Same guarded ALTER pattern as the benefit columns above.
+      const refreshChangeCols = new Set(
+        (database.prepare(`PRAGMA table_info(refresh_changes)`).all() as { name: string }[]).map(c => c.name),
+      );
+      if (!refreshChangeCols.has('points_currency_id')) {
+        try {
+          database.exec(`ALTER TABLE refresh_changes ADD COLUMN points_currency_id TEXT`);
+        } catch { /* column already exists — ignore */ }
+      }
+
+      const existingCurrencyIds = new Set(
+        (database.prepare(`SELECT id FROM points_currencies`).all() as { id: string }[]).map(r => r.id),
+      );
+      const insertPointsCurrency = database.prepare(`
+        INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name, source_url, notes, is_active)
+        VALUES (@id, @name, @currency_type, @value_cents_per_point, @source_name, @source_url, @notes, 1)
+      `);
+      for (const pc of SEED_POINTS_CURRENCIES) {
+        // Preserve any row a user may have already created/edited with this id
+        // (e.g. via a prior partial migration or manual entry); never overwrite.
+        if (existingCurrencyIds.has(pc.id)) continue;
+        insertPointsCurrency.run({
+          id: pc.id,
+          name: pc.name,
+          currency_type: pc.currency_type,
+          value_cents_per_point: pc.value_cents_per_point,
+          source_name: pc.source_name ?? 'One Mile at a Time',
+          source_url: pc.source_url ?? null,
+          notes: pc.notes ?? null,
+        });
+      }
+
+      metaSet(database, 'seed_version', '1.0.16');
+      run.push('v1_0_16_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 
@@ -1623,7 +1786,7 @@ function slugify(name: string): string {
     .slice(0, 50);
 }
 
-function ensureUniqueId(database: Database.Database, table: 'cards' | 'programs', base: string): string {
+function ensureUniqueId(database: Database.Database, table: 'cards' | 'programs' | 'points_currencies', base: string): string {
   const exists = (id: string) => !!database.prepare(`SELECT 1 FROM ${table} WHERE id = ?`).get(id);
   if (!exists(base)) return base;
   for (let i = 2; i < 1000; i++) {
@@ -1745,10 +1908,73 @@ export function programDelete(database: Database.Database, id: string): void {
   database.prepare('DELETE FROM programs WHERE id = ?').run(id);
 }
 
+// ─── Points currency valuations CRUD ──────────────────────────────────────────
+// Mirrors the programCreate/programUpdate COALESCE-based partial-update
+// pattern above, with a slugify-based id (same as cards/programs) so ids
+// stay human-readable (e.g. "amex_membership_rewards").
+
+const PC_COLS = 'id, name, currency_type, value_cents_per_point, source_name, source_url, notes, is_active, is_user_modified, updated_at, created_at';
+
+export function pointsCurrenciesGetAll(database: Database.Database): PointsCurrency[] {
+  return database.prepare(`SELECT ${PC_COLS} FROM points_currencies ORDER BY currency_type ASC, name ASC`).all() as PointsCurrency[];
+}
+export function pointsCurrencyGetById(database: Database.Database, id: string): PointsCurrency | null {
+  return (database.prepare(`SELECT ${PC_COLS} FROM points_currencies WHERE id = ?`).get(id) as PointsCurrency | undefined) ?? null;
+}
+export function pointsCurrencyCreate(database: Database.Database, input: PointsCurrencyInput): PointsCurrency {
+  requireStr('name', input.name);
+  if (typeof input.value_cents_per_point !== 'number' || Number.isNaN(input.value_cents_per_point)) {
+    throw new Error('value_cents_per_point is required');
+  }
+  const id = input.id ?? ensureUniqueId(database, 'points_currencies', slugify(input.name) || 'currency');
+  database.prepare(`
+    INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name, source_url, notes, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, input.name, input.currency_type, input.value_cents_per_point,
+    input.source_name ?? 'One Mile at a Time',
+    input.source_url ?? null,
+    input.notes ?? null,
+    input.is_active ?? 1,
+  );
+  return pointsCurrencyGetById(database, id)!;
+}
+export function pointsCurrencyUpdate(database: Database.Database, id: string, patch: Partial<PointsCurrencyInput>): PointsCurrency {
+  const current = pointsCurrencyGetById(database, id);
+  if (!current) throw new Error(`Points currency ${id} not found`);
+  database.prepare(`
+    UPDATE points_currencies SET
+      name = COALESCE(@name, name),
+      currency_type = COALESCE(@currency_type, currency_type),
+      value_cents_per_point = COALESCE(@value_cents_per_point, value_cents_per_point),
+      source_name = COALESCE(@source_name, source_name),
+      source_url = @source_url,
+      notes = @notes,
+      is_active = COALESCE(@is_active, is_active),
+      is_user_modified = 1,
+      updated_at = datetime('now')
+    WHERE id = @id
+  `).run({
+    id,
+    name: patch.name ?? null,
+    currency_type: patch.currency_type ?? null,
+    value_cents_per_point: patch.value_cents_per_point ?? null,
+    source_name: patch.source_name ?? null,
+    source_url: patch.source_url ?? current.source_url,
+    notes: patch.notes ?? current.notes,
+    is_active: patch.is_active ?? null,
+  });
+  return pointsCurrencyGetById(database, id)!;
+}
+export function pointsCurrencyDelete(database: Database.Database, id: string): void {
+  database.prepare('DELETE FROM points_currencies WHERE id = ?').run(id);
+}
+
 // ─── Benefits CRUD ───────────────────────────────────────────────────────────
 
 const BEN_COLS = `id, card_id, program_id, title, description, category, reset_cadence,
   uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+  multiplier_rate, multiplier_currency, spend_category, spend_category_note,
   prerequisite_benefit_id, is_choice_option, choice_selected,
   is_active, sort_order, source_url, notes, is_user_modified, created_at, updated_at`;
 
@@ -1773,10 +1999,11 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     INSERT INTO benefits (
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
       value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+      multiplier_rate, multiplier_currency, spend_category, spend_category_note,
       is_choice_option, choice_selected,
       is_active, sort_order, source_url,
       notes, is_user_modified
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     input.card_id ?? null,
     input.program_id ?? null,
@@ -1790,6 +2017,10 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.expiration_note ?? null,
     input.expiration_date ?? null,
     input.reset_years ?? null,
+    input.multiplier_rate ?? null,
+    input.multiplier_currency ?? null,
+    input.spend_category ?? null,
+    input.spend_category_note ?? null,
     input.is_choice_option ?? 0,
     input.choice_selected ?? 0,
     input.is_active ?? 1,
@@ -1815,6 +2046,10 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       expiration_note = @expiration_note,
       expiration_date = @expiration_date,
       reset_years = @reset_years,
+      multiplier_rate = @multiplier_rate,
+      multiplier_currency = @multiplier_currency,
+      spend_category = @spend_category,
+      spend_category_note = @spend_category_note,
       is_choice_option = COALESCE(@is_choice_option, is_choice_option),
       choice_selected = COALESCE(@choice_selected, choice_selected),
       is_active = COALESCE(@is_active, is_active),
@@ -1836,6 +2071,10 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     expiration_note: patch.expiration_note ?? current.expiration_note,
     expiration_date: patch.expiration_date ?? current.expiration_date,
     reset_years: patch.reset_years ?? current.reset_years,
+    multiplier_rate: patch.multiplier_rate ?? current.multiplier_rate,
+    multiplier_currency: patch.multiplier_currency ?? current.multiplier_currency,
+    spend_category: patch.spend_category ?? current.spend_category,
+    spend_category_note: patch.spend_category_note ?? current.spend_category_note,
     is_choice_option: patch.is_choice_option ?? null,
     choice_selected: patch.choice_selected ?? null,
     is_active: patch.is_active ?? null,
@@ -2169,12 +2408,12 @@ export function refreshStartRun(database: Database.Database, sourceNotes: string
   const info = database.prepare(`INSERT INTO refresh_runs (source_notes, status) VALUES (?, 'draft')`).run(sourceNotes);
   const runId = Number(info.lastInsertRowid);
   const ins = database.prepare(`
-    INSERT INTO refresh_changes (refresh_run_id, change_type, card_id, program_id, benefit_id, before_json, after_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO refresh_changes (refresh_run_id, change_type, card_id, program_id, benefit_id, points_currency_id, before_json, after_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const tx = database.transaction((rows: ChangeInput[]) => {
     for (const c of rows) {
-      ins.run(runId, c.change_type, c.card_id, c.program_id, c.benefit_id, c.before_json, c.after_json);
+      ins.run(runId, c.change_type, c.card_id, c.program_id, c.benefit_id, c.points_currency_id ?? null, c.before_json, c.after_json);
     }
   });
   tx(changes);
@@ -2183,7 +2422,7 @@ export function refreshStartRun(database: Database.Database, sourceNotes: string
 
 export function refreshPendingChanges(database: Database.Database, runId: number): RefreshChange[] {
   return database.prepare(`
-    SELECT id, refresh_run_id, change_type, card_id, program_id, benefit_id,
+    SELECT id, refresh_run_id, change_type, card_id, program_id, benefit_id, points_currency_id,
            before_json, after_json, review_status, review_notes, created_at
     FROM refresh_changes WHERE refresh_run_id = ? ORDER BY id ASC
   `).all(runId) as RefreshChange[];
@@ -2253,6 +2492,39 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
         // Removed benefits are deactivated (soft-delete). Preserves usage history.
         database.prepare(`UPDATE benefits SET is_active = 0, updated_at = datetime('now') WHERE id = ?`).run(c.benefit_id);
         applied++;
+      } else if (c.change_type === 'added' && c.points_currency_id && c.after_json) {
+        // New points currency proposed by a refresh run (rare — the seed list
+        // already covers all currencies relevant to the tracked cards/programs).
+        const payload = JSON.parse(c.after_json) as PointsCurrencyInput;
+        if (!pointsCurrencyGetById(database, c.points_currency_id)) {
+          pointsCurrencyCreate(database, { ...payload, id: c.points_currency_id });
+        }
+        applied++;
+      } else if (c.change_type === 'modified' && c.points_currency_id && c.after_json) {
+        // Quarterly points-value update (e.g. new One Mile at a Time cent
+        // figures). NEVER overwrite a currency the user has manually edited —
+        // same is_user_modified guard used for benefits above.
+        const cur = pointsCurrencyGetById(database, c.points_currency_id);
+        if (!cur) { skipped++; continue; }
+        if (cur.is_user_modified === 1) { skipped++; continue; }
+        const payload = JSON.parse(c.after_json) as Partial<PointsCurrencyInput>;
+        database.prepare(`
+          UPDATE points_currencies SET
+            value_cents_per_point = COALESCE(?, value_cents_per_point),
+            source_name = COALESCE(?, source_name),
+            source_url = ?,
+            notes = ?,
+            is_user_modified = 0,
+            updated_at = datetime('now')
+          WHERE id = ?
+        `).run(
+          payload.value_cents_per_point ?? null,
+          payload.source_name ?? null,
+          payload.source_url ?? cur.source_url,
+          payload.notes ?? cur.notes,
+          c.points_currency_id,
+        );
+        applied++;
       } else {
         skipped++;
       }
@@ -2273,12 +2545,13 @@ export function buildFilePayload(database: Database.Database): AppFilePayload {
   return {
     version: APP_FILE_VERSION,
     exported_at: new Date().toISOString(),
-    cards:           cardsGetAll(database),
-    programs:        programsGetAll(database),
-    benefits:        benefitsGetAll(database),
-    usages:          database.prepare(`SELECT ${USE_COLS} FROM usages ORDER BY used_on`).all() as Usage[],
-    refresh_runs:    database.prepare(`SELECT id, started_at, completed_at, source_notes, status FROM refresh_runs`).all() as RefreshRun[],
-    refresh_changes: database.prepare(`SELECT * FROM refresh_changes`).all() as RefreshChange[],
+    cards:            cardsGetAll(database),
+    programs:         programsGetAll(database),
+    benefits:         benefitsGetAll(database),
+    usages:           database.prepare(`SELECT ${USE_COLS} FROM usages ORDER BY used_on`).all() as Usage[],
+    refresh_runs:     database.prepare(`SELECT id, started_at, completed_at, source_notes, status FROM refresh_runs`).all() as RefreshRun[],
+    refresh_changes:  database.prepare(`SELECT * FROM refresh_changes`).all() as RefreshChange[],
+    points_currencies: pointsCurrenciesGetAll(database),
   };
 }
 
@@ -2290,7 +2563,7 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
     database.exec(`
       DELETE FROM refresh_changes; DELETE FROM refresh_runs;
       DELETE FROM usages; DELETE FROM benefits;
-      DELETE FROM programs; DELETE FROM cards;
+      DELETE FROM programs; DELETE FROM cards; DELETE FROM points_currencies;
     `);
     const insCard = database.prepare(`
       INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url, created_at)
@@ -2304,13 +2577,26 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
     for (const p of payload.programs) insProg.run(p);
     const insBen = database.prepare(`
       INSERT INTO benefits (id, card_id, program_id, title, description, category, reset_cadence,
-        uses_per_period, value_usd, spend_threshold_usd, expiration_note, is_active, sort_order,
+        uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+        multiplier_rate, multiplier_currency, spend_category, spend_category_note,
+        prerequisite_benefit_id, is_choice_option, choice_selected, is_active, sort_order,
         source_url, notes, is_user_modified, created_at, updated_at)
       VALUES (@id, @card_id, @program_id, @title, @description, @category, @reset_cadence,
-        @uses_per_period, @value_usd, @spend_threshold_usd, @expiration_note, @is_active, @sort_order,
+        @uses_per_period, @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+        @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
+        @prerequisite_benefit_id, @is_choice_option, @choice_selected, @is_active, @sort_order,
         @source_url, @notes, @is_user_modified, @created_at, @updated_at)
     `);
-    for (const b of payload.benefits) insBen.run(b);
+    for (const b of payload.benefits) insBen.run({
+      ...b,
+      expiration_date: b.expiration_date ?? null,
+      reset_years: b.reset_years ?? null,
+      multiplier_rate: b.multiplier_rate ?? null,
+      multiplier_currency: b.multiplier_currency ?? null,
+      spend_category: b.spend_category ?? null,
+      spend_category_note: b.spend_category_note ?? null,
+      prerequisite_benefit_id: b.prerequisite_benefit_id ?? null,
+    });
     const insUse = database.prepare(`
       INSERT INTO usages (id, benefit_id, used_on, amount_usd, period_key, notes, created_at)
       VALUES (@id, @benefit_id, @used_on, @amount_usd, @period_key, @notes, @created_at)
@@ -2328,6 +2614,13 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
         @before_json, @after_json, @review_status, @review_notes, @created_at)
     `);
     for (const c of payload.refresh_changes) insCh.run(c);
+    const insPc = database.prepare(`
+      INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name,
+        source_url, notes, is_active, is_user_modified, updated_at, created_at)
+      VALUES (@id, @name, @currency_type, @value_cents_per_point, @source_name,
+        @source_url, @notes, @is_active, @is_user_modified, @updated_at, @created_at)
+    `);
+    for (const pc of (payload.points_currencies ?? [])) insPc.run(pc);
   });
   tx();
 }

@@ -6,6 +6,7 @@ import {
   cardCreate, cardGetById, cardsGetAll,
   benefitCreate, benefitsGetAll,
   usageCreate, usagesForBenefit,
+  pointsCurrencyCreate, pointsCurrencyGetById, pointsCurrenciesGetAll,
 } from '../electron/database';
 import { resolveIconPath, iconPathWithinAssets, ICON_FILE } from '../electron/iconPath';
 
@@ -43,6 +44,24 @@ describe('SQL injection resistance (parameterized queries)', () => {
     // Usages table survives
     expect(() => db.prepare('SELECT COUNT(*) FROM usages').get()).not.toThrow();
     expect(usagesForBenefit(db, anyBenefit.id).length).toBeGreaterThan(0);
+  });
+});
+
+describe('Points currency SQL injection resistance (v1.0.16)', () => {
+  it('treats a malicious currency name as literal data, not SQL', () => {
+    const db = seededDb();
+    const evil = "Evil Points'); DROP TABLE points_currencies;--";
+    const before = pointsCurrenciesGetAll(db).length;
+    const created = pointsCurrencyCreate(db, { name: evil, currency_type: 'hotel', value_cents_per_point: 1 });
+    const after = pointsCurrenciesGetAll(db).length;
+    expect(after).toBe(before + 1);
+    expect(created.name).toBe(evil);
+    expect(() => db.prepare('SELECT COUNT(*) FROM points_currencies').get()).not.toThrow();
+  });
+
+  it('does not interpolate points currency ids into SQL when fetching by id', () => {
+    const db = seededDb();
+    expect(pointsCurrencyGetById(db, "amex_membership_rewards' OR '1'='1")).toBeNull();
   });
 });
 

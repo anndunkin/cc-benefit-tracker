@@ -13,9 +13,12 @@ import {
   refreshApproveChange, refreshRejectChange, refreshApplyRun, refreshDiscardRun,
   buildFilePayload, importFilePayload,
   applyDataMigrations,
+  pointsCurrenciesGetAll, pointsCurrencyGetById, pointsCurrencyCreate,
+  pointsCurrencyUpdate, pointsCurrencyDelete,
 } from './database';
 import type {
   CardInput, ProgramInput, BenefitInput, UsageInput, AppFilePayload, FileResult,
+  PointsCurrencyInput,
 } from './types';
 import { resolveIconPath } from './iconPath';
 
@@ -297,6 +300,13 @@ ipcMain.handle('refresh:approveChange', (_e, id: number, notes?: string) => refr
 ipcMain.handle('refresh:rejectChange',  (_e, id: number, notes?: string) => refreshRejectChange(getDatabase(), id, notes));
 ipcMain.handle('refresh:applyRun',      (_e, runId: number) => refreshApplyRun(getDatabase(), runId));
 ipcMain.handle('refresh:discardRun',    (_e, runId: number) => { refreshDiscardRun(getDatabase(), runId); return { ok: true }; });
+
+// ─── Points currencies ───────────────────────────────────────────────────────
+ipcMain.handle('pointsCurrencies:getAll', () => pointsCurrenciesGetAll(getDatabase()));
+ipcMain.handle('pointsCurrencies:getById', (_e, id: string) => pointsCurrencyGetById(getDatabase(), id));
+ipcMain.handle('pointsCurrencies:create', (_e, data: PointsCurrencyInput) => pointsCurrencyCreate(getDatabase(), data));
+ipcMain.handle('pointsCurrencies:update', (_e, id: string, data: Partial<PointsCurrencyInput>) => pointsCurrencyUpdate(getDatabase(), id, data));
+ipcMain.handle('pointsCurrencies:delete', (_e, id: string) => { pointsCurrencyDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── File management ─────────────────────────────────────────────────────────
 
