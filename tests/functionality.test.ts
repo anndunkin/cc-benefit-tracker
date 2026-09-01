@@ -542,7 +542,7 @@ describe('v1.0.3 seed-refresh migration', () => {
     const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // The v1.0.3 migration chain now runs through v1.0.4, v1.0.5, and v1.0.6
     // sequentially; the final stamp is whatever the latest release is.
-    expect(row.value).toBe('1.0.16');
+    expect(row.value).toBe('1.0.17');
   });
 });
 
@@ -560,7 +560,7 @@ describe('v1.0.4 migration and features', () => {
     expect(db.prepare(`SELECT 1 FROM cards WHERE id = 'marriott_premier'`).get()).toBeDefined();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     // Migrations run through the whole chain; final stamp is the latest release.
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 
   it('adds is_visible column to cards and expiration_date column to benefits on legacy DBs', () => {
@@ -983,7 +983,7 @@ describe('v1.0.6 migration and features', () => {
     expect(benCols.some((c) => c.name === 'is_choice_option')).toBe(true);
     expect(benCols.some((c) => c.name === 'choice_selected')).toBe(true);
     const meta = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(meta.value).toBe('1.0.16');
+    expect(meta.value).toBe('1.0.17');
   });
 
   it('choice_selected toggle survives via benefitUpdate', () => {
@@ -1103,7 +1103,7 @@ describe('v1.0.7 migration and features', () => {
     const vsLegacy = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE card_id = 'virgin_atlantic' AND title = 'Tier Points on Spend'`).get() as { n: number };
     expect(vsLegacy.n).toBe(0);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 });
 
@@ -1234,7 +1234,7 @@ describe('v1.0.8 migration and features', () => {
     expect(emDash.n).toBe(0);
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 });
 
@@ -1421,7 +1421,7 @@ describe('v1.0.9 migration and features', () => {
 
     // v1.0.9 stamp reached.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
 
     // Lifetime Platinum removed.
     const lifetime = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE program_id = 'marriott_status' AND title = 'Lifetime Platinum Elite'`).get() as { n: number };
@@ -1607,7 +1607,7 @@ describe('v1.0.10 migration and features', () => {
 
     // Version stamped.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 
   it('preserves user-modified value_usd during v1.0.10 upsert but refreshes description', () => {
@@ -1656,7 +1656,7 @@ describe('v1.0.11 migration and features', () => {
     expect(usageCount.c).toBeGreaterThanOrEqual(1);
     // Stamp updated.
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
     // Silence dup2 unused-var lint.
     expect(dup2).toBeGreaterThan(0);
   });
@@ -1719,6 +1719,12 @@ describe('v1.0.11 migration and features', () => {
   });
 
   it('v1.0.11 seed_version stamp lands correctly', () => {
+    // seededDb() only runs initSchema + seedIfFresh (no applyDataMigrations),
+    // so it reflects the literal stamp seedIfFresh() writes, not the final
+    // post-migration version. The real app (openDatabaseAt) always runs
+    // migrations right after seeding, so real fresh installs do land on the
+    // latest version — see the 'fresh install applies all migrations'
+    // coverage below for that full-chain assertion.
     const db = seededDb();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     expect(stamp.value).toBe('1.0.16');
@@ -1727,6 +1733,8 @@ describe('v1.0.11 migration and features', () => {
 
 describe('v1.0.12 packaging release', () => {
   it('stamps seed_version = latest release on fresh install', () => {
+    // Same seededDb() caveat as above: this checks seedIfFresh()'s literal
+    // stamp in isolation, not the post-migration version.
     const db = seededDb();
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
     expect(stamp.value).toBe('1.0.16');
@@ -1746,7 +1754,7 @@ describe('v1.0.12 packaging release', () => {
     expect(afterBenefits.n).toBe(beforeBenefits.n);
     expect(afterUsages.n).toBe(beforeUsages.n);
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 });
 
@@ -1765,7 +1773,7 @@ describe('v1.0.13 packaging release', () => {
     expect(afterUsages.n).toBe(beforeUsages.n);
     expect(result.migrations_run).toContain('v1_0_13_seed_refresh');
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 
   it('does not re-run the v1.0.13 migration on an up-to-date database', () => {
@@ -1792,7 +1800,7 @@ describe('v1.0.14 packaging release', () => {
     expect(afterUsages.n).toBe(beforeUsages.n);
     expect(result.migrations_run).toContain('v1_0_14_seed_refresh');
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.16');
+    expect(stamp.value).toBe('1.0.17');
   });
 
   it('does not re-run the v1.0.14 migration on an up-to-date database', () => {

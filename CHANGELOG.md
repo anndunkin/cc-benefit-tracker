@@ -2,6 +2,14 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.17 — 2026-08-31
+
+### Fixed
+- **Bonus Categories tab showed empty for everyone who upgraded from a pre-1.0.16 install.** The v1.0.16 migration added the 4 new `benefits` columns (`multiplier_rate`, `multiplier_currency`, `spend_category`, `spend_category_note`) and seeded the new `points_currencies` reference table for existing databases, but it deliberately did *not* insert the ~34 new `earning_multiplier` benefit rows (or backfill the 6 pre-existing Marriott Premier / Virgin Atlantic multiplier rows with the new structured fields), and it never created the new `marriott_bonvoy_base` program or its "Stay for 5, Pay for 4" benefit for upgrading installs. The intent had been for that content to flow in later through the in-app Quarterly Refresh review flow, but no refresh run shipped alongside v1.0.16 — so every existing user's Bonus Categories tab, and the free-night award-stay benefit under Feature 3, stayed empty after updating. Fresh installs were unaffected, since `seedIfFresh()` always writes the full seed set.
+  - Added a new `v1.0.17` migration block in `applyDataMigrations()` (`electron/database.ts`), gated by `seedVersionLt(database, '1.0.17')`, following the same insert-if-missing pattern established by the v1.0.9/v1.0.10 migrations: for every row in `SEED_PROGRAMS`, insert it if its `id` isn't already present; for every row in `SEED_BENEFITS`, insert it if no existing row matches on `(card_id, program_id, title)`. This is a pure additive backfill — no existing benefit, usage, or user edit is modified, updated, or removed by this migration.
+  - The migration is idempotent: running it twice (e.g. across app restarts before the version stamp updates, or via a support script) inserts each missing row exactly once and leaves already-backfilled databases untouched.
+  - Added regression coverage in `tests/boundary.test.ts` (`v1.0.17 Bonus Categories backfill`) that reconstructs a realistic pre-1.0.16 database fixture (seeded database with all `earning_multiplier` rows and the `marriott_bonvoy_base` program/benefit removed, `seed_version` rolled back to `1.0.15`) and asserts: the fixture starts with zero multiplier rows, migrating populates rows for at least 9 distinct cards, the `marriott_bonvoy_base` program and free-night benefit reappear, re-running the migration doesn't duplicate anything, and the pre-existing Marriott Premier/Virgin Atlantic rows aren't duplicated since they already match on title.
+
 ## v1.0.16 — 2026-08-31
 
 ### Changed

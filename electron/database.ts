@@ -1757,6 +1757,103 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  // ─── v1.0.17: backfill Bonus Categories + base-program seed rows on ────
+  // existing installs. v1.0.16 added the schema (columns/table) and the
+  // points-currency reference rows for existing DBs, but explicitly skipped
+  // backfilling the new SEED_BENEFITS/SEED_PROGRAMS content itself (see the
+  // v1.0.16 block's comment above) — the assumption was that users would
+  // pull new bonus-category rows through the Quarterly Refresh flow. In
+  // practice this left the new Bonus Categories tab empty for every
+  // pre-1.0.16 install, since a fresh install is the only path that runs
+  // seedIfFresh(). This migration follows the same insert-if-missing
+  // pattern used by the v1.0.9/v1.0.10 blocks above: match existing rows by
+  // (card_id, program_id, title) and only INSERT what's missing, so no
+  // existing user data or edits are touched.
+  if (seedVersionLt(database, '1.0.17')) {
+    const tx = database.transaction(() => {
+      // (1) Backfill the new marriott_bonvoy_base program (and any other
+      // SEED_PROGRAMS row not yet present).
+      const findProgram = database.prepare('SELECT id FROM programs WHERE id = ?');
+      const insertProgram = database.prepare(`
+        INSERT INTO programs (id, name, program_type, notes, source_url)
+        VALUES (@id, @name, @program_type, @notes, @source_url)
+      `);
+      let programsInserted = 0;
+      for (const p of SEED_PROGRAMS) {
+        if (findProgram.get(p.id)) continue;
+        insertProgram.run({
+          id: p.id,
+          name: p.name,
+          program_type: p.program_type,
+          notes: (p as any).notes ?? null,
+          source_url: (p as any).source_url ?? null,
+        });
+        programsInserted++;
+      }
+      if (programsInserted > 0) run.push(`v1_0_17_inserted_${programsInserted}_programs`);
+
+      // (2) Backfill missing SEED_BENEFITS rows — this covers both the new
+      // marriott_bonvoy_base benefit and the ~34 new structured
+      // earning-multiplier rows across the 9 cards that previously had no
+      // Bonus Categories data. Existing rows (matched by card_id/program_id/
+      // title) are left completely untouched, so the pre-existing
+      // marriott_premier/virgin_atlantic multiplier rows are NOT
+      // duplicated — those already had multiplier_rate/multiplier_currency/
+      // spend_category populated directly on their existing rows via the
+      // v1.0.16 code change to benefitsSeedData.ts, and this pass will
+      // simply skip them since a title match already exists.
+      const findBenefit = database.prepare(
+        'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?'
+      );
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+          multiplier_rate, multiplier_currency, spend_category, spend_category_note,
+          is_choice_option, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+          @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
+          @is_choice_option, @sort_order, @source_url, @notes
+        )
+      `);
+      let benefitsInserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title);
+        if (existing) continue;
+        insertBenefit.run({
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          multiplier_rate: b.multiplier_rate ?? null,
+          multiplier_currency: b.multiplier_currency ?? null,
+          spend_category: b.spend_category ?? null,
+          spend_category_note: b.spend_category_note ?? null,
+          is_choice_option: (b as any).is_choice_option ? 1 : 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: (b as any).source_url ?? null,
+          notes: (b as any).notes ?? null,
+        });
+        benefitsInserted++;
+      }
+      if (benefitsInserted > 0) run.push(`v1_0_17_inserted_${benefitsInserted}_benefits`);
+
+      metaSet(database, 'seed_version', '1.0.17');
+      run.push('v1_0_17_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 

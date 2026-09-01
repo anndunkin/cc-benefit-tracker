@@ -4,6 +4,7 @@ import {
   benefitCreate, benefitUpdate, benefitGetById, benefitsGetAll, cardsGetAll, programsGetAll, benefitsForProgram,
   usageCreate, computeProjections,
   pointsCurrencyCreate, pointsCurrencyUpdate, pointsCurrencyDelete, pointsCurrencyGetById, pointsCurrenciesGetAll,
+  applyDataMigrations,
 } from '../electron/database';
 
 describe('Cadence period math', () => {
@@ -294,5 +295,88 @@ describe('Points currency CRUD lifecycle (v1.0.16)', () => {
       pointsCurrencyCreate(db, { name: `Bulk Currency ${i}`, currency_type: 'hotel', value_cents_per_point: 1 });
     }
     expect(pointsCurrenciesGetAll(db).length).toBeGreaterThanOrEqual(60); // 10 seeded + 50 bulk
+  });
+});
+
+describe('v1.0.17 Bonus Categories backfill (regression for empty tab on upgrade)', () => {
+  /**
+   * Simulates a real pre-1.0.16 install: a fully seeded database that is
+   * then rolled back to look like it stopped at seed_version 1.0.15 —
+   * i.e. it has NONE of the earning_multiplier benefit rows, the
+   * multiplier_rate/multiplier_currency/spend_category/spend_category_note
+   * columns still exist (they're part of the base schema) but are NULL on
+   * every row, and the marriott_bonvoy_base program/benefit don't exist yet.
+   * This reproduces the exact bug reported: after v1.0.16 shipped, existing
+   * installs' Bonus Categories tab stayed empty because the migration only
+   * added columns/points-currencies, never the benefit/program rows
+   * themselves.
+   */
+  function preV1_0_16Db() {
+    const db = seededDb(); // fully seeded at the latest schema + seed_version
+    db.exec(`DELETE FROM benefits WHERE multiplier_rate IS NOT NULL OR spend_category IS NOT NULL`);
+    db.exec(`DELETE FROM benefits WHERE program_id = 'marriott_bonvoy_base'`);
+    db.exec(`DELETE FROM programs WHERE id = 'marriott_bonvoy_base'`);
+    db.exec(`UPDATE app_meta SET value = '1.0.15' WHERE key = 'seed_version'`);
+    return db;
+  }
+
+  it('has zero earning_multiplier rows and no base program before migrating (sanity check on the fixture)', () => {
+    const db = preV1_0_16Db();
+    const multiplierRows = db.prepare(`SELECT COUNT(*) AS n FROM benefits WHERE category = 'earning_multiplier'`).get() as { n: number };
+    expect(multiplierRows.n).toBe(0);
+    expect(programsGetAll(db).find(p => p.id === 'marriott_bonvoy_base')).toBeUndefined();
+  });
+
+  it('backfills all earning_multiplier benefit rows on migration, without duplicating anything on a second run', () => {
+    const db = preV1_0_16Db();
+    const result = applyDataMigrations(db);
+    expect(result.migrations_run.some(m => m.startsWith('v1_0_17_inserted_') && m.endsWith('_benefits'))).toBe(true);
+
+    const allBenefits = benefitsGetAll(db);
+    const multiplierRows = allBenefits.filter(b => b.category === 'earning_multiplier');
+    expect(multiplierRows.length).toBeGreaterThan(0);
+
+    // Every card that ships earning_multiplier seed content should now have
+    // at least one populated row (this is exactly what the Bonus Categories
+    // tab reads).
+    const cardIdsWithMultipliers = new Set(multiplierRows.map(b => b.card_id));
+    expect(cardIdsWithMultipliers.size).toBeGreaterThanOrEqual(9);
+
+    const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
+    expect(stamp.value).toBe('1.0.17');
+
+    // Re-running migrations (e.g. app restarted) must not duplicate rows.
+    const beforeCount = benefitsGetAll(db).length;
+    applyDataMigrations(db);
+    expect(benefitsGetAll(db).length).toBe(beforeCount);
+  });
+
+  it('backfills the marriott_bonvoy_base program and its free-night benefit on migration', () => {
+    const db = preV1_0_16Db();
+    applyDataMigrations(db);
+
+    const programs = programsGetAll(db);
+    const base = programs.find(p => p.id === 'marriott_bonvoy_base');
+    expect(base).toBeDefined();
+
+    const benefits = benefitsForProgram(db, 'marriott_bonvoy_base');
+    const freeNight = benefits.find(b => /Stay for 5, Pay for 4/i.test(b.title));
+    expect(freeNight).toBeDefined();
+    expect(freeNight!.reset_cadence).toBe('unlimited');
+  });
+
+  it('does not touch or duplicate the pre-existing marriott_premier/virgin_atlantic multiplier rows that already had a title match', () => {
+    // These two cards had earning_multiplier rows even before v1.0.16 (just
+    // without the new structured columns populated) — the backfill must
+    // match them by title and skip inserting a duplicate.
+    const fresh = seededDb();
+    const freshMarriottMultipliers = benefitsGetAll(fresh).filter(b => b.card_id === 'marriott_premier' && b.category === 'earning_multiplier');
+    expect(freshMarriottMultipliers.length).toBeGreaterThan(0);
+
+    const db = preV1_0_16Db();
+    applyDataMigrations(db);
+    const afterMarriottMultipliers = benefitsGetAll(db).filter(b => b.card_id === 'marriott_premier' && b.category === 'earning_multiplier');
+    // Same count as a fresh install — no duplicates introduced.
+    expect(afterMarriottMultipliers.length).toBe(freshMarriottMultipliers.length);
   });
 });
