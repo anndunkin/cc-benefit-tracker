@@ -154,6 +154,12 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
         if (inChain && !chainVisibleIds.has(p.benefit.id)) return false;
       }
       const isUnlimited = p.benefit.reset_cadence === 'unlimited';
+      // v1.0.19: earning-multiplier rows now live exclusively on the dedicated
+      // Bonus Categories tab, so exclude them from the Ongoing tab even though
+      // they carry reset_cadence: 'unlimited'. No other ongoing category is
+      // affected (no-FTF, insurance, complimentary status, lounge access, etc.
+      // all remain on Ongoing).
+      if (mode === 'ongoing' && p.benefit.category === 'earning_multiplier') return false;
       return mode === 'ongoing' ? isUnlimited : !isUnlimited;
     });
   }, [projections, mode, achievedIds, chainVisibleIds]);

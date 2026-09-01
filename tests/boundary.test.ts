@@ -4,7 +4,7 @@ import {
   benefitCreate, benefitUpdate, benefitGetById, benefitsGetAll, cardsGetAll, programsGetAll, benefitsForProgram,
   usageCreate, computeProjections,
   pointsCurrencyCreate, pointsCurrencyUpdate, pointsCurrencyDelete, pointsCurrencyGetById, pointsCurrenciesGetAll,
-  applyDataMigrations,
+  applyDataMigrations, refreshGetStatus,
 } from '../electron/database';
 
 describe('Cadence period math', () => {
@@ -343,7 +343,7 @@ describe('v1.0.17 Bonus Categories backfill (regression for empty tab on upgrade
     expect(cardIdsWithMultipliers.size).toBeGreaterThanOrEqual(9);
 
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.17');
+    expect(stamp.value).toBe('1.0.19');
 
     // Re-running migrations (e.g. app restarted) must not duplicate rows.
     const beforeCount = benefitsGetAll(db).length;
@@ -378,5 +378,141 @@ describe('v1.0.17 Bonus Categories backfill (regression for empty tab on upgrade
     const afterMarriottMultipliers = benefitsGetAll(db).filter(b => b.card_id === 'marriott_premier' && b.category === 'earning_multiplier');
     // Same count as a fresh install — no duplicates introduced.
     expect(afterMarriottMultipliers.length).toBe(freshMarriottMultipliers.length);
+  });
+});
+
+describe('v1.0.19 quarterly-refresh due-date epoch bug fix', () => {
+  /**
+   * Reproduces the reported bug: a never-refreshed database (no completed
+   * refresh_runs row) used to anchor "next due" at new Date(0) — the Unix
+   * epoch — making every fresh install show "Next due: 1970-04-01" from the
+   * very first launch. The fix anchors on `installed_at` instead.
+   */
+  it('does not anchor next_due at the Unix epoch for a never-refreshed database', () => {
+    const db = seededDb(); // seedIfFresh stamps installed_at at seed time
+    const status = refreshGetStatus(db);
+    expect(status.last_run_at).toBeNull();
+    expect(status.next_due.startsWith('1970')).toBe(false);
+    // next_due should be ~3 months after installed_at (seeded to "now" by seedIfFresh).
+    const installedAt = db.prepare(`SELECT value FROM app_meta WHERE key = 'installed_at'`).get() as { value: string } | undefined;
+    expect(installedAt).toBeDefined();
+    const expected = new Date(installedAt!.value);
+    expected.setUTCMonth(expected.getUTCMonth() + 3);
+    expect(status.next_due).toBe(expected.toISOString().slice(0, 10));
+  });
+
+  it('backfills installed_at via migration for a pre-v1.0.19 install that never had it stamped, anchoring next_due at migration time rather than the epoch', () => {
+    const db = seededDb();
+    // Simulate an old install that predates the installed_at stamp entirely.
+    db.exec(`DELETE FROM app_meta WHERE key = 'installed_at'`);
+    db.exec(`UPDATE app_meta SET value = '1.0.17' WHERE key = 'seed_version'`);
+
+    // Before migration, with no installed_at and no completed refresh, the
+    // pre-fix code path would have fallen back to the epoch. Confirm the
+    // fixture actually reproduces "no installed_at" so the migration has
+    // something real to backfill.
+    expect(db.prepare(`SELECT value FROM app_meta WHERE key = 'installed_at'`).get()).toBeUndefined();
+
+    const result = applyDataMigrations(db);
+    expect(result.migrations_run).toContain('v1_0_19_backfilled_installed_at');
+
+    const after = refreshGetStatus(db);
+    expect(after.next_due.startsWith('1970')).toBe(false);
+    // before (pre-migration, no installed_at) already falls back to
+    // Date.now() at call time too, so just confirm the migration actually
+    // persisted a real installed_at value going forward.
+    const backfilled = db.prepare(`SELECT value FROM app_meta WHERE key = 'installed_at'`).get() as { value: string } | undefined;
+    expect(backfilled).toBeDefined();
+    expect(new Date(backfilled!.value).getUTCFullYear()).toBeGreaterThan(2000);
+  });
+});
+
+describe('v1.0.19 Hilton Honors Diamond status program', () => {
+  it('adds hilton_status as its own program, independent of the hilton_aspire card', () => {
+    const db = seededDb();
+    const programs = programsGetAll(db);
+    const hiltonStatus = programs.find(p => p.id === 'hilton_status');
+    expect(hiltonStatus).toBeDefined();
+    expect(hiltonStatus!.program_type).toBe('hotel_elite_status');
+
+    const benefits = benefitsForProgram(db, 'hilton_status');
+    expect(benefits.length).toBeGreaterThanOrEqual(9);
+    for (const b of benefits) {
+      expect(b.card_id).toBeNull();
+      expect(b.program_id).toBe('hilton_status');
+    }
+  });
+
+  it('includes the 5th-night-free Diamond benefit with no annual usage cap', () => {
+    const db = seededDb();
+    const benefits = benefitsForProgram(db, 'hilton_status');
+    const fifthNight = benefits.find(b => /5th Night Free/i.test(b.title));
+    expect(fifthNight).toBeDefined();
+    expect(fifthNight!.reset_cadence).toBe('unlimited');
+    expect(fifthNight!.category).toBe('free_night');
+  });
+
+  it('keeps the hilton_aspire card\'s own Diamond-status row pointing to the program rather than duplicating the perk list', () => {
+    const db = seededDb();
+    const aspireBenefits = benefitsGetAll(db).filter(b => b.card_id === 'hilton_aspire');
+    const grantRow = aspireBenefits.find(b => /Complimentary Hilton Honors Diamond Status/i.test(b.title));
+    expect(grantRow).toBeDefined();
+    expect(grantRow!.program_id).toBeNull();
+    // The detailed perks (5th night free etc.) should NOT also appear as
+    // separate rows under the card — they live only under hilton_status.
+    expect(aspireBenefits.find(b => /5th Night Free/i.test(b.title))).toBeUndefined();
+  });
+
+  it('backfills the hilton_status program and its benefits on migration for a pre-v1.0.19 install', () => {
+    const db = seededDb();
+    db.exec(`DELETE FROM benefits WHERE program_id = 'hilton_status'`);
+    db.exec(`DELETE FROM programs WHERE id = 'hilton_status'`);
+    db.exec(`UPDATE app_meta SET value = '1.0.17' WHERE key = 'seed_version'`);
+    expect(programsGetAll(db).find(p => p.id === 'hilton_status')).toBeUndefined();
+
+    const result = applyDataMigrations(db);
+    expect(result.migrations_run.some(m => m.startsWith('v1_0_19_inserted_') && m.endsWith('_programs'))).toBe(true);
+    expect(result.migrations_run.some(m => m.startsWith('v1_0_19_inserted_') && m.endsWith('_benefits'))).toBe(true);
+
+    expect(programsGetAll(db).find(p => p.id === 'hilton_status')).toBeDefined();
+    expect(benefitsForProgram(db, 'hilton_status').length).toBeGreaterThanOrEqual(9);
+
+    // Re-running migrations must not duplicate rows.
+    const beforeCount = benefitsGetAll(db).length;
+    applyDataMigrations(db);
+    expect(benefitsGetAll(db).length).toBe(beforeCount);
+  });
+});
+
+describe('v1.0.19 Ongoing tab excludes earning multipliers', () => {
+  it('seed data still carries earning_multiplier rows for the dedicated Bonus Categories tab', () => {
+    // This is a data-layer sanity check; the actual tab-visibility filter
+    // lives in the UI (src/components/BenefitDashboard.tsx modeFiltered) and
+    // is exercised by component tests, but we confirm here that the
+    // underlying rows the UI filters over still exist and are unaffected by
+    // this round's other seed-data changes.
+    const db = seededDb();
+    const multiplierRows = benefitsGetAll(db).filter(b => b.category === 'earning_multiplier');
+    expect(multiplierRows.length).toBeGreaterThan(0);
+    // Unlimited cadence is what previously made these show up on Ongoing.
+    expect(multiplierRows.every(b => b.reset_cadence === 'unlimited')).toBe(true);
+  });
+});
+
+describe('v1.0.19 Virgin Atlantic single-card cleanup', () => {
+  it('has exactly one Virgin Atlantic card, referencing only the current Synchrony Virgin Red Rewards Mastercard', () => {
+    const db = seededDb();
+    const vaCards = cardsGetAll(db).filter(c => c.id === 'virgin_atlantic' || /virgin atlantic/i.test(c.name));
+    expect(vaCards.length).toBe(1);
+    expect(vaCards[0].issuer).toBe('Synchrony Bank');
+    expect(vaCards[0].name).not.toMatch(/Bank of America/i);
+  });
+
+  it('has no lingering discontinued Bank of America Virgin Atlantic benefit rows after migration', () => {
+    const db = seededDb();
+    db.exec(`UPDATE app_meta SET value = '1.0.17' WHERE key = 'seed_version'`);
+    applyDataMigrations(db);
+    const vaBenefits = benefitsGetAll(db).filter(b => b.card_id === 'virgin_atlantic');
+    expect(vaBenefits.some(b => /Bank of America/i.test(b.title) || /Bank of America/i.test(b.description ?? ''))).toBe(false);
   });
 });

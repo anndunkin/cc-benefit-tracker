@@ -2,6 +2,23 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.19 — 2026-09-01
+
+### Fixed
+- **Quarterly-refresh banner showed "Next due: 1970-04-01" forever.** `refreshGetStatus()` anchored the due date on `new Date(0)` (the Unix epoch) whenever a database had never had a completed refresh run, so every fresh install showed an overdue reminder dated 1970 from the very first launch. Now anchors on a new `installed_at` app-meta timestamp (stamped by `seedIfFresh()` on fresh installs, backfilled to "now" for existing installs via the v1.0.19 migration below) — a never-refreshed install is correctly due 3 months after it was actually installed.
+- **Virgin Atlantic card double-checked against the discontinued Bank of America card.** Confirmed the app has used a single stable `virgin_atlantic` card id since v1.0.4 (renamed in place from the old Bank of America World Elite Mastercard to the current Synchrony Virgin Red Rewards Mastercard, never re-issued under a separate id), and added a defensive migration cleanup step plus a regression test so no install can end up with stray Bank-of-America-era benefit rows.
+- **Broken Hilton Aspire source link.** `electron/benefitsSeed.ts`'s fallback card/benefit data pointed at `americanexpress.com/us/credit-cards/card/hilton-aspire/`, which 404s — corrected to the live `hilton-honors-aspire/` URL already used by the primary seed data.
+
+### Added
+- **Hilton Honors Diamond elite status as its own trackable program.** Previously the only Diamond-status content was a single vague, unquantified row on the Hilton Aspire card. Added a new `hilton_status` program (independent of any card, since elite status — including Lifetime Diamond — persists whether or not the Aspire card is open) with 10 individually trackable Diamond-tier benefit rows: 5th Night Free on reward stays (unlimited use, no annual cap), 100% bonus points on stays, daily food & beverage credit or breakfast for member + 1 guest, executive lounge access, space-available upgrades up to a 1-bedroom suite, 48-hour room guarantee, premium Wi-Fi, elite status gifting, and a one-time Diamond status extension — sourced from the official [Hilton Honors tier benefits page](https://www.hilton.com/en/help-center/hilton-honors-benefits/tiers-and-benefits/) and the [Hilton Honors Fact Sheet](https://stories.hilton.com/hilton-honors-fact-sheet). The Aspire card's own "Complimentary Hilton Honors Diamond Status" row now reads as a pointer to the new program instead of duplicating the perk list.
+
+### Changed
+- **Ongoing tab no longer shows earning-multiplier rows.** Earning multipliers (e.g. "3x points on airfare") carry `reset_cadence: 'unlimited'`, which previously also qualified them for the Ongoing tab even though they already have a dedicated home on the Bonus Categories tab (added in v1.0.16). `src/components/BenefitDashboard.tsx`'s `modeFiltered` filter now explicitly excludes `category === 'earning_multiplier'` from Ongoing mode; every other ongoing category (no foreign transaction fees, insurance, complimentary elite status, lounge access, etc.) is unaffected.
+
+### Migration
+- Added a new `v1.0.19`-gated migration block in `applyDataMigrations()` (`electron/database.ts`) that: backfills `installed_at` to "now" for any existing install that never had it stamped; inserts the new `hilton_status` program and its Diamond benefit rows using the same insert-if-missing-by-`(card_id, program_id, title)` pattern established in v1.0.17; runs the defensive Virgin Atlantic legacy-row cleanup; and stamps `seed_version = '1.0.19'`. Purely additive/idempotent — no existing benefit, usage, or user edit is modified.
+- Added regression coverage in `tests/boundary.test.ts`: the epoch-anchoring fix (fresh install and pre-v1.0.19 backfill scenarios), the new Hilton Diamond program and its benefits (including migration backfill and no-duplication-on-rerun), the Virgin Atlantic single-card/no-legacy-rows checks, and a sanity check that `earning_multiplier` rows still exist for the Bonus Categories tab. Updated pre-existing tests that hardcoded the final post-migration `seed_version` (`1.0.17` → `1.0.19`) and the total seeded program count (`5` → `6`).
+
 ## v1.0.18 — 2026-09-01
 
 ### Added

@@ -302,6 +302,7 @@ export function seedIfFresh(database: Database.Database): void {
 
   metaSet(database, 'seed_version', '1.0.16');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
+  metaSet(database, 'installed_at', new Date().toISOString());
 }
 
 export function applyDataMigrations(database: Database.Database): { migrations_run: string[] } {
@@ -1854,6 +1855,126 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  // v1.0.19: (1) backfill `installed_at` for installs that predate the
+  // meta stamp, anchored to "now" so their quarterly-refresh due date is
+  // 3 months out from today rather than reusing the 1970 epoch bug; (2)
+  // insert the new hilton_status program and its Diamond elite-tier
+  // benefit rows (card_id: null — independent of hilton_aspire, since the
+  // user holds Lifetime Diamond separate from any card); (3) generic
+  // insert-if-missing backfill for any other new SEED_PROGRAMS/SEED_BENEFITS
+  // rows, matching the v1.0.17 pattern; (4) defensive Virgin Atlantic
+  // cleanup in case any pre-v1.0.4 install still carries a stray legacy
+  // duplicate row under the same card_id from before the rename/upsert
+  // migrations landed.
+  if (seedVersionLt(database, '1.0.19')) {
+    const tx = database.transaction(() => {
+      // (1) installed_at backfill — only if never stamped. Anchoring on "now"
+      // for pre-existing installs means their first quarterly-refresh
+      // reminder lands 3 months from today, matching the user's approved
+      // fallback design for the epoch-due-date bug.
+      if (!metaGet(database, 'installed_at')) {
+        metaSet(database, 'installed_at', new Date().toISOString());
+        run.push('v1_0_19_backfilled_installed_at');
+      }
+
+      // (2)+(3) Insert any SEED_PROGRAMS row not yet present (covers the new
+      // hilton_status program).
+      const findProgram = database.prepare('SELECT id FROM programs WHERE id = ?');
+      const insertProgram = database.prepare(`
+        INSERT INTO programs (id, name, program_type, notes, source_url)
+        VALUES (@id, @name, @program_type, @notes, @source_url)
+      `);
+      let programsInserted = 0;
+      for (const p of SEED_PROGRAMS) {
+        if (findProgram.get(p.id)) continue;
+        insertProgram.run({
+          id: p.id,
+          name: p.name,
+          program_type: p.program_type,
+          notes: (p as any).notes ?? null,
+          source_url: (p as any).source_url ?? null,
+        });
+        programsInserted++;
+      }
+      if (programsInserted > 0) run.push(`v1_0_19_inserted_${programsInserted}_programs`);
+
+      // Insert any SEED_BENEFITS row not yet present, matched by
+      // (card_id, program_id, title) — covers the new Hilton Diamond rows
+      // and leaves every existing row (including the rewritten
+      // hilton_aspire Diamond-status description) completely untouched,
+      // since that row's title didn't change.
+      const findBenefit = database.prepare(
+        'SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ?'
+      );
+      const insertBenefit = database.prepare(`
+        INSERT INTO benefits (
+          card_id, program_id, title, description, category, reset_cadence, uses_per_period,
+          value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
+          multiplier_rate, multiplier_currency, spend_category, spend_category_note,
+          is_choice_option, sort_order, source_url, notes
+        ) VALUES (
+          @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
+          @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
+          @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
+          @is_choice_option, @sort_order, @source_url, @notes
+        )
+      `);
+      let benefitsInserted = 0;
+      for (const b of SEED_BENEFITS) {
+        const existing = findBenefit.get(b.card_id ?? null, b.program_id ?? null, b.title);
+        if (existing) continue;
+        insertBenefit.run({
+          card_id: b.card_id ?? null,
+          program_id: b.program_id ?? null,
+          title: b.title,
+          description: b.description ?? null,
+          category: b.category,
+          reset_cadence: b.reset_cadence,
+          uses_per_period: b.uses_per_period ?? null,
+          value_usd: b.value_usd ?? null,
+          spend_threshold_usd: b.spend_threshold_usd ?? null,
+          expiration_note: b.expiration_note ?? null,
+          expiration_date: (b as any).expiration_date ?? null,
+          reset_years: (b as any).reset_years ?? null,
+          multiplier_rate: b.multiplier_rate ?? null,
+          multiplier_currency: b.multiplier_currency ?? null,
+          spend_category: b.spend_category ?? null,
+          spend_category_note: b.spend_category_note ?? null,
+          is_choice_option: (b as any).is_choice_option ? 1 : 0,
+          sort_order: b.sort_order ?? 0,
+          source_url: (b as any).source_url ?? null,
+          notes: (b as any).notes ?? null,
+        });
+        benefitsInserted++;
+      }
+      if (benefitsInserted > 0) run.push(`v1_0_19_inserted_${benefitsInserted}_benefits`);
+
+      // (4) Defensive Virgin Atlantic cleanup: the card has used the single
+      // stable id 'virgin_atlantic' since v1.0.4 (renamed in place, never
+      // re-issued under a new id), so there should be no separate
+      // discontinued-card row to remove. As a safety net, delete any
+      // leftover pre-rename duplicate benefit titles that reference the old
+      // Bank of America-era wording, in case an install somehow missed the
+      // earlier dedup migrations.
+      const legacyVaTitles = [
+        'BofA Preferred Rewards travel bonus',
+        'Bank of America Preferred Rewards bonus',
+      ];
+      const delLegacyVa = database.prepare(
+        "DELETE FROM benefits WHERE card_id = 'virgin_atlantic' AND title = ?"
+      );
+      let vaCleaned = 0;
+      for (const t of legacyVaTitles) {
+        vaCleaned += delLegacyVa.run(t).changes;
+      }
+      if (vaCleaned > 0) run.push(`v1_0_19_cleaned_${vaCleaned}_legacy_virgin_atlantic_rows`);
+
+      metaSet(database, 'seed_version', '1.0.19');
+      run.push('v1_0_19_seed_refresh');
+    });
+    tx();
+  }
+
   return { migrations_run: run };
 }
 
@@ -2488,8 +2609,16 @@ export function refreshGetStatus(database: Database.Database): { last_run_at: st
   const pending = database.prepare(`SELECT id FROM refresh_runs WHERE status = 'draft' ORDER BY started_at DESC LIMIT 1`)
     .get() as { id: number } | undefined;
 
-  const lastDate = last ? new Date(last.completed_at) : new Date(0);
-  const nextDue = new Date(lastDate);
+  // v1.0.19 fix: a database that has never had a completed refresh run used to
+  // anchor "next due" at the Unix epoch (new Date(0) = 1970-01-01), which made
+  // every fresh/never-refreshed install show "Next due: 1970-04-01" — always
+  // overdue, from the very first launch. Anchor instead on `installed_at`
+  // (stamped once at first seed / first migration to this version), so a
+  // never-refreshed install is due 3 months after the app was actually
+  // installed, not 3 months after the epoch.
+  const installedAtRaw = metaGet(database, 'installed_at');
+  const anchor = last ? new Date(last.completed_at) : new Date(installedAtRaw ?? Date.now());
+  const nextDue = new Date(anchor);
   nextDue.setUTCMonth(nextDue.getUTCMonth() + 3);
   return {
     last_run_at: last?.completed_at ?? null,
