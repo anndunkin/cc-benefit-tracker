@@ -2,6 +2,14 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.18 — 2026-09-01
+
+### Added
+- **Per-dollar cash value on the Bonus Categories tab.** Each earning-multiplier row now shows its real spending value — `multiplier_rate × the currency's cents-per-point value` (sourced from the Points Currency Values tab, [One Mile at a Time](https://onemileatatime.com/guides/value-miles-points/)) — formatted as e.g. "3.5¢ back per $1". Worked example: Hilton Aspire's 7x Hilton Honors points on airfare, at ¢0.5 per Hilton point, is 7 × 0.5 = 3.5¢ back per dollar spent.
+  - Within each spend-category bucket, rows are now ranked by this per-dollar value (most valuable first) rather than by the raw points multiplier, since a lower multiplier on a more valuable currency can beat a higher multiplier on a cheaper one — e.g. 3x Delta SkyMiles (¢1.1/pt → 3.3¢/$1) outranks 5x IHG One Rewards points (¢0.5/pt → 2.5¢/$1) despite the lower multiplier.
+  - Added `MULTIPLIER_CURRENCY_TO_POINTS_CURRENCY_ID` in `src/lib/format.ts`: an explicit, audited mapping from every benefit's free-text `multiplier_currency` label (e.g. "Avios", "Hilton Honors Points") to the matching `points_currencies` row id, since the two lists use independently-authored display names that don't always match verbatim. New `perDollarValue()` and `fmtPerDollarValue()` helpers compute and format the value; rows with no resolvable currency value show "Value unknown" instead of a misleading $0.00 and sort to the bottom of their bucket.
+  - Added `tests/bonusCategoryValue.test.ts` (8 tests): verifies the worked Hilton example exactly, verifies the Delta-vs-IHG ranking example, verifies null/unknown handling doesn't silently become zero, and — most importantly — exhaustively checks that every single `earning_multiplier` benefit row across all 11 cards in the seed data resolves to a known per-point value, so a future new card or currency can't silently ship an unpriced bonus category.
+
 ## v1.0.17 — 2026-08-31
 
 ### Fixed

@@ -96,3 +96,50 @@ export function fmtCentsPerPoint(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return '—';
   return `¢${cents.toFixed(1)} per point`;
 }
+
+// ─── v1.0.18 addition: per-dollar earning value on the Bonus Categories tab ──
+
+/**
+ * Maps a benefit's free-text `multiplier_currency` label (e.g. "Hilton Honors
+ * Points", "Avios") to the matching `points_currencies.id` used on the Points
+ * Currency Values tab. The two lists were authored independently (one is a
+ * human-readable label baked into each benefit row, the other is a stable id
+ * on the currency-values reference table), so the strings don't always match
+ * verbatim ("Avios" vs. "British Airways Club (Avios)", "Virgin Points" vs.
+ * "Virgin Atlantic Flying Club", etc.) — this is the explicit, audited join
+ * between them covering every `multiplier_currency` string that appears in
+ * the seed data as of v1.0.16/v1.0.17.
+ */
+export const MULTIPLIER_CURRENCY_TO_POINTS_CURRENCY_ID: Record<string, string> = {
+  'Amex Membership Rewards': 'amex_membership_rewards',
+  'Citi ThankYou Points': 'citi_thankyou',
+  'Delta SkyMiles': 'delta_skymiles',
+  'American AAdvantage Miles': 'american_aadvantage',
+  'Avios': 'british_airways_avios',
+  'Virgin Points': 'virgin_atlantic_flying_club',
+  'Marriott Bonvoy Points': 'marriott_bonvoy_points',
+  'Hilton Honors Points': 'hilton_honors_points',
+  'World of Hyatt Points': 'world_of_hyatt_points',
+  'IHG One Rewards Points': 'ihg_one_rewards_points',
+};
+
+/**
+ * Computes the per-dollar-spent cash value of an earning multiplier: rate x
+ * cents-per-point, converted to dollars. E.g. 7x Hilton Honors points at
+ * ¢0.5/point = 7 x 0.5 = 3.5 cents = $0.035 back per dollar spent.
+ * Returns null when either input is unknown (no currency match found, or no
+ * multiplier rate recorded) so callers can render a clear "value unknown"
+ * state instead of a misleading $0.00.
+ */
+export function perDollarValue(multiplierRate: number | null | undefined, centsPerPoint: number | null | undefined): number | null {
+  if (multiplierRate === null || multiplierRate === undefined) return null;
+  if (centsPerPoint === null || centsPerPoint === undefined) return null;
+  return (multiplierRate * centsPerPoint) / 100;
+}
+
+/** Formats a per-dollar-spent value as "X.X¢ back per $1" (e.g. 0.035 -> "3.5¢ back per $1"). */
+export function fmtPerDollarValue(value: number | null | undefined): string {
+  if (value === null || value === undefined) return 'Value unknown';
+  const cents = value * 100;
+  return `${cents.toFixed(1)}¢ back per $1`;
+}
