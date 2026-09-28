@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-and-release:
     name: Build Windows x64 and publish release
+    timeout-minutes: 20
     runs-on: windows-latest   # must be Windows to compile better-sqlite3 for the Electron ABI and build the NSIS installer
 
     steps:
@@ -28,6 +29,11 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+
+      - name: Prepare release-specific self-signed certificate
+        timeout-minutes: 2
+        shell: pwsh
+        run: ./scripts/prepare-signing.ps1
 
       # ── 3. Install dependencies ─────────────────────────────────────────────
       - name: Install dependencies
@@ -65,27 +71,6 @@ jobs:
           cp node_modules/better-sqlite3/build/Release/better_sqlite3.node prebuilt-win32-x64/better_sqlite3.node
           echo "Refreshed prebuilt-win32-x64/better_sqlite3.node for Electron 43 (ABI 148)"
 
-      - name: Prepare release-specific self-signed certificate
-        timeout-minutes: 2
-        shell: pwsh
-        run: |
-          Write-Host "Creating exportable software-only signing certificate"
-          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Ann Dunkin, O=Dunkin Global Advisors, OU=Software, C=US" -CertStoreLocation Cert:\CurrentUser\My -Provider "Microsoft Software Key Storage Provider" -KeyExportPolicy Exportable -KeyProtection None -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -NotAfter (Get-Date).AddYears(3)
-          Write-Host "Exporting signing certificate"
-          $password = [guid]::NewGuid().ToString()
-          Write-Output "::add-mask::$password"
-          $pfx = Join-Path $env:RUNNER_TEMP "release-signing.pfx"
-          Export-PfxCertificate -Cert $cert -FilePath $pfx -Password (ConvertTo-SecureString $password -AsPlainText -Force) | Out-Null
-          Export-Certificate -Cert $cert -FilePath "build/release-signing.cer" | Out-Null
-          # Trust only on this disposable test runner so Windows can verify
-          # integrity. Users' trust stores are never changed by the installer.
-          # certutil -f avoids the interactive Root-store confirmation dialog
-          # raised by Import-Certificate on hosted Windows runners.
-          certutil -user -f -addstore Root "build/release-signing.cer"
-          if ($LASTEXITCODE -ne 0) { throw "Could not trust the release certificate on the test runner" }
-          "CSC_LINK=$pfx" >> $env:GITHUB_ENV
-          "CSC_KEY_PASSWORD=$password" >> $env:GITHUB_ENV
-
       # ── 7. Package with electron-builder (zip + nsis) ────────────────────────
       - name: Package Windows installers
         run: npx electron-builder --config electron-builder.config.js --win --x64 --publish never
@@ -93,6 +78,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Test signed installer, upgrade, runtime, reinstall, uninstall and repair
+        timeout-minutes: 8
         shell: pwsh
         run: ./scripts/test-windows-release.ps1
 
