@@ -2,6 +2,31 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.20 - 2026-09-28
+
+### Credits and usages
+- Hide individual credits without deleting benefit definitions or history. Use **Show hidden** and **Unhide** to restore them. Hidden credits are excluded from dashboard totals.
+- Merge duplicate Platinum unlimited Sky Club variants into the combined Sky Club/Centurion benefit, retaining logs and notes.
+- Marriott Premier earned-night entries accept a whole-number quantity. Dashboard totals count nights rather than entries and display no artificial cap.
+- World of Hyatt annual Category 1-4 and Marriott Business annual free nights now expose an expiration-date field in the entry dialog. **Save expiration only** does not consume the certificate; **Save usage** saves both together.
+- Citi/AAdvantage Executive Lyft credit changed at the user's request to $15/month effective September 1, 2026. Earlier periods remain $10; 2026 scheduled credit totals $140, later full years $180. This release implements the supplied benefit correction, not a general issuer-term refresh.
+- AA Loyalty Point/status milestones, Marriott Choice milestones, and Delta Choice milestones use **Mark achieved** / **Achieved**, separate from using individual rewards.
+- Diamond has one achievement toggle and three reward-selection inputs, saved per year. Repeated choices accumulate quantities; membership options consume their labeled two or three selection slots.
+- Retire the Delta Medallion Tier MQD Requirements reference tile without deleting its historical records.
+
+### Data safety and validation
+- Additive database migration with one-time content fixes; logged amounts/dates, manual certificate dates, and usage history are retained.
+- Export/import carries hidden flags, quantities, effective-date pricing, card visibility, and Diamond selections. Older JSON files receive compatible defaults.
+- Validate date-only inputs and positive whole-number quantities at the database boundary. Confirm before undoing/deleting usage.
+- Entry and choice dialogs scroll on short displays; save actions remain accessible.
+- Add database and React regression tests covering the requested changes, invalid inputs, historical pricing, and round-trip persistence.
+- Update vulnerable development-tool dependencies without removing existing supply-chain pins.
+
+### Windows delivery
+- Build native SQLite for the packaged Electron ABI on Windows with Node 22.
+- Release pipeline signs the application, uninstaller and installer with a new release-specific self-signed Dunkin Global Advisors certificate. It is not a publicly trusted certificate and does not remove Windows trust/SmartScreen warnings. The unavailable older private key is not reused.
+- Publication is gated on tests for installed runtime, upgrade from 1.0.19, same-version reinstall while running, uninstall/data preservation, repair and reinstall. Windows validation transcript and the public signing certificate accompany the installer; private signing material is deleted from the disposable runner.
+
 ## v1.0.19 — 2026-09-01
 
 ### Fixed

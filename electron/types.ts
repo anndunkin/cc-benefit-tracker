@@ -106,6 +106,9 @@ export interface ProgramInput {
 
 export interface Benefit {
   id: number;
+  is_hidden: number;
+  previous_value_usd: number | null;
+  value_effective_date: string | null;
   card_id: string | null;
   program_id: string | null;
   title: string;
@@ -150,6 +153,9 @@ export interface Benefit {
 }
 
 export interface BenefitInput {
+  is_hidden?: number;
+  previous_value_usd?: number | null;
+  value_effective_date?: string | null;
   card_id?: string | null;
   program_id?: string | null;
   title: string;
@@ -215,6 +221,7 @@ export interface PointsCurrencyInput {
 
 export interface Usage {
   id: number;
+  quantity: number;
   benefit_id: number;
   used_on: string;                 // YYYY-MM-DD
   amount_usd: number | null;
@@ -224,6 +231,8 @@ export interface Usage {
 }
 
 export interface UsageInput {
+  expiration_date?: string | null; // optionally save certificate expiry atomically with usage
+  quantity?: number;
   benefit_id: number;
   used_on: string;
   amount_usd?: number | null;
@@ -310,6 +319,8 @@ export interface RefreshChange {
 // ─── File management ─────────────────────────────────────────────────────────
 
 export interface AppFilePayload {
+  seed_version?: string;
+  benefit_choices?: { parent_id: number; ref_year: number; selections_json: string }[];
   version: number;
   exported_at: string;
   cards: Card[];
@@ -347,6 +358,8 @@ export interface WindowApi {
     delete: (id: string) => Promise<{ ok: true }>;
   };
   benefits: {
+    getChoices: (parentId: number, year: number) => Promise<number[]>;
+    setChoices: (parentId: number, year: number, choices: number[]) => Promise<void>;
     getAll: () => Promise<Benefit[]>;
     getForCard: (cardId: string) => Promise<Benefit[]>;
     getForProgram: (programId: string) => Promise<Benefit[]>;

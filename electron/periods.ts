@@ -3,6 +3,7 @@
 // queries never have to reason about calendar math.
 
 import type { Benefit, ResetCadence } from './types';
+import { isMilestone, tracksEarnedNights } from './benefitRules';
 
 /** Compute the period bucket that `iso_date` (YYYY-MM-DD) falls into. */
 export function periodKeyFor(cadence: ResetCadence, iso_date: string): string {
@@ -81,6 +82,8 @@ export function nextResetIso(cadence: ResetCadence, iso_date: string): string | 
 
 /** Maximum uses per period for this benefit (null when uncapped). */
 export function uses_max_for(b: Benefit): number | null {
+  if (isMilestone(b)) return 1;
+  if (tracksEarnedNights(b)) return null;
   if (b.reset_cadence === 'unlimited') return null;
   if (b.uses_per_period !== null && b.uses_per_period !== undefined) return b.uses_per_period;
   // Default caps for cadences when uses_per_period wasn't set

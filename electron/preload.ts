@@ -18,6 +18,8 @@ const api: WindowApi = {
     delete:   (id)             => ipcRenderer.invoke('programs:delete', id),
   },
   benefits: {
+    getChoices: (id, year) => ipcRenderer.invoke('benefits:getChoices', id, year),
+    setChoices: (id, year, choices) => ipcRenderer.invoke('benefits:setChoices', id, year, choices),
     getAll:       ()           => ipcRenderer.invoke('benefits:getAll'),
     getForCard:   (id)         => ipcRenderer.invoke('benefits:forCard', id),
     getForProgram:(id)         => ipcRenderer.invoke('benefits:forProgram', id),

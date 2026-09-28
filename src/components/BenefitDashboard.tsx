@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { BenefitProjection, Card, Program } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../lib/format';
 import LogUsageModal from './LogUsageModal';
+import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
 
 type SectionKey = 'all' | 'cards' | 'programs';
 type CadenceFilter = 'all' | 'annual' | 'semiannual' | 'quarterly' | 'monthly' | 'other';
@@ -36,6 +37,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
   const [section, setSection] = useState<SectionKey>('all');
   const [cadence, setCadence] = useState<CadenceFilter>('all');
   const [showExhausted, setShowExhausted] = useState(true);
+  const [showHidden, setShowHidden] = useState(false);
   const [modalBenefitId, setModalBenefitId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -136,6 +138,9 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
   // is_choice_option row whose choice_selected flag is off.
   const modeFiltered = useMemo(() => {
     return projections.filter(p => {
+      if (p.benefit.is_hidden === 1 && showHidden && mode === 'consumable') {
+        return p.benefit.reset_cadence !== 'unlimited';
+      }
       // Prerequisite gate: hide the row until its parent tier has been achieved.
       if (p.benefit.prerequisite_benefit_id && !achievedIds.has(p.benefit.prerequisite_benefit_id)) {
         return false;
@@ -162,10 +167,11 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
       if (mode === 'ongoing' && p.benefit.category === 'earning_multiplier') return false;
       return mode === 'ongoing' ? isUnlimited : !isUnlimited;
     });
-  }, [projections, mode, achievedIds, chainVisibleIds]);
+  }, [projections, mode, achievedIds, chainVisibleIds, showHidden]);
 
   const filtered = useMemo(() => {
     return modeFiltered.filter(p => {
+      if (p.benefit.is_hidden === 1 && !showHidden) return false;
       if (section === 'cards' && !p.benefit.card_id) return false;
       if (section === 'programs' && !p.benefit.program_id) return false;
       // Cadence filter only applies to consumable mode.
@@ -179,7 +185,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
       }
       return true;
     });
-  }, [modeFiltered, section, cadence, showExhausted, mode]);
+  }, [modeFiltered, section, cadence, showExhausted, showHidden, mode]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, BenefitProjection[]>();
@@ -205,6 +211,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
   const totals = useMemo(() => {
     let value_remaining = 0, value_used = 0;
     for (const p of filtered) {
+      if (p.benefit.is_hidden === 1) continue;
       const cadence = p.benefit.reset_cadence;
       if (cadence === 'unlimited' || cadence === 'spend_threshold') continue;
       if (p.annual_value_remaining_usd !== null) value_remaining += p.annual_value_remaining_usd;
@@ -289,6 +296,10 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
               <input type="checkbox" checked={showExhausted} onChange={e => setShowExhausted(e.target.checked)} />
               Show exhausted
             </label>
+            <label className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+              <input type="checkbox" checked={showHidden} onChange={e => setShowHidden(e.target.checked)} />
+              Show hidden
+            </label>
           </>
         )}
         {loading && <span className="text-xs text-slate-400">Loading…</span>}
@@ -349,6 +360,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
       {choicePickerParentId !== null && (
         <ChoicePickerModal
           parent={projections.find(p => p.benefit.id === choicePickerParentId)!.benefit}
+          refYear={refYear}
           children={choiceChildrenByParent.get(choicePickerParentId) ?? []}
           onClose={() => setChoicePickerParentId(null)}
           onSaved={() => { setChoicePickerParentId(null); reload(); }}
@@ -358,6 +370,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
       {modalBenefitId !== null && (
         <LogUsageModal
           benefitId={modalBenefitId}
+          refYear={refYear}
           onClose={() => setModalBenefitId(null)}
           onSaved={() => { setModalBenefitId(null); reload(); }}
         />
@@ -382,6 +395,8 @@ function ConsumableTile({
   onOpenChoicePicker?: () => void;
 }) {
   const b = p.benefit;
+  const milestone = isMilestone(b);
+  const earnedNights = tracksEarnedNights(b);
   const usesMax = p.uses_max;
   const usesCount = p.uses_count;
   const daysToReset = daysUntil(p.next_reset);
@@ -396,7 +411,7 @@ function ConsumableTile({
   //     stay 'partial' with the correct remaining balance).
   //   • use-count benefit      → progress = uses_count / uses_max, as before.
   const isSpendThreshold = b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null;
-  const isDollarValued = !isSpendThreshold && b.value_usd !== null && b.value_usd > 0 && usesMax !== null;
+  const isDollarValued = !milestone && !isSpendThreshold && b.value_usd !== null && b.value_usd > 0 && usesMax !== null;
   const totalPeriodValue = isDollarValued ? (usesMax as number) * (b.value_usd as number) : null;
 
   let pct: number;
@@ -424,16 +439,15 @@ function ConsumableTile({
     setBusy(true);
     try {
       if (isMarkedUsed) {
+        if (!confirm(milestone ? 'Undo this achievement? Reward selections will be retained but hidden until achieved again.' : 'Delete this usage entry and mark it unused?')) return;
         // Undo: delete the most-recent usage in this period.
-        const last = p.usages[0];
-        if (last) {
-          await window.api.usages.delete(last.id);
-        }
+        const entries = milestone ? p.usages : p.usages.slice(0, 1);
+        for (const last of entries) await window.api.usages.delete(last.id);
       } else {
         const today = new Date().toISOString().slice(0, 10);
         await window.api.usages.create({
           benefit_id: b.id,
-          used_on: today,
+          used_on: p.ref_year === Number(today.slice(0, 4)) ? today : `${p.ref_year}-06-15`,
           amount_usd: null,
           notes: null,
         });
@@ -471,7 +485,7 @@ function ConsumableTile({
             {isSpendThreshold ? (
               <>{fmtUsd(p.spend_progress_usd ?? 0)} of {fmtUsd(b.spend_threshold_usd)} spent</>
             ) : (
-              <>{usesCount} of {usesMax ?? '∞'} used</>
+              <>{milestone ? (isMarkedUsed ? 'Achieved' : 'Not achieved') : earnedNights ? `${usesCount} nights earned` : `${usesCount} of ${usesMax ?? '∞'} used`}</>
             )}
           </span>
           <span className="text-slate-500">
@@ -513,6 +527,7 @@ function ConsumableTile({
         )}
       </div>
 
+      {b.is_hidden === 1 && <div className="text-xs text-slate-500">Hidden from default view and totals</div>}
       {b.expiration_date && (
         <div className="text-xs text-amber-700 dark:text-amber-400">📅 Expires {b.expiration_date}</div>
       )}
@@ -553,9 +568,9 @@ function ConsumableTile({
               } disabled:opacity-50`}
               onClick={toggleUsed}
               disabled={busy}
-              title={isMarkedUsed ? 'Mark as not used (removes last usage)' : `Mark as used on ${new Date().toISOString().slice(0,10)}`}
+              title={milestone ? 'Toggle milestone achievement' : isMarkedUsed ? 'Mark as not used (removes last usage)' : 'Mark as used'}
             >
-              {busy ? '…' : isMarkedUsed ? '✓ Used — click to undo' : 'Mark used'}
+              {busy ? 'Saving…' : milestone ? (isMarkedUsed ? 'Achieved (click to undo)' : 'Mark achieved') : isMarkedUsed ? 'Used (click to undo)' : 'Mark used'}
             </button>
             <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage} title="Backdate or add notes">
               Details…
@@ -563,9 +578,15 @@ function ConsumableTile({
           </>
         ) : (
           <button className="btn-primary text-xs py-1 px-2" onClick={onLogUsage}>
-            + Log usage
+            {earnedNights ? 'Log nights earned' : '+ Log usage'}
           </button>
         )}
+        <button className="btn-ghost text-xs py-1 px-2" disabled={busy} onClick={async () => {
+          setBusy(true);
+          try { await window.api.benefits.update(b.id, { is_hidden: b.is_hidden === 1 ? 0 : 1 }); onChanged(); }
+          catch (e) { alert(`Unable to change visibility: ${e}`); }
+          finally { setBusy(false); }
+        }}>{b.is_hidden === 1 ? 'Unhide' : 'Hide'}</button>
         {b.source_url && (
           <a href={b.source_url} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
             Source ↗
@@ -644,11 +665,13 @@ function OngoingTile({
 
 function ChoicePickerModal({
   parent,
+  refYear,
   children,
   onClose,
   onSaved,
 }: {
   parent: import('../../electron/types').Benefit;
+  refYear: number;
   children: BenefitProjection[];
   onClose: () => void;
   onSaved: () => void;
@@ -657,6 +680,19 @@ function ChoicePickerModal({
     () => new Set(children.filter(c => c.benefit.choice_selected === 1).map(c => c.benefit.id))
   );
   const [saving, setSaving] = useState(false);
+  const diamond = isDiamondChoices(parent);
+  const [slots, setSlots] = useState<string[]>(['', '', '']);
+  const [loaded, setLoaded] = useState(!diamond);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!diamond) return;
+    window.api.benefits.getChoices(parent.id, refYear).then(ids => {
+      setSlots(Array.from({ length: Math.max(3, ids.length) }, (_, i) => ids[i] ? String(ids[i]) : ''));
+      setLoaded(true);
+    }).catch(e => setError(String(e)));
+  }, [parent.id, refYear, diamond]);
+  const selectionCost = slots.filter(Boolean).reduce((sum, id) =>
+    sum + choiceCost(children.find(c => c.benefit.id === Number(id))?.benefit.title ?? ''), 0);
 
   function toggle(id: number) {
     setSelected(prev => {
@@ -670,6 +706,11 @@ function ChoicePickerModal({
     if (saving) return;
     setSaving(true);
     try {
+      if (diamond) {
+        await window.api.benefits.setChoices(parent.id, refYear, slots.filter(Boolean).map(Number));
+        onSaved();
+        return;
+      }
       for (const c of children) {
         const want = selected.has(c.benefit.id) ? 1 : 0;
         if (c.benefit.choice_selected !== want) {
@@ -698,9 +739,22 @@ function ChoicePickerModal({
           <button className="text-slate-400 hover:text-slate-600 text-xl leading-none" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-          Tick the option(s) you selected for this tier. Only ticked options appear on the dashboard.
+          {diamond ? `Record up to three selections for ${refYear}. Achievement is tracked separately. ${selectionCost} of 3 selections allocated.`
+            : 'Tick the option(s) you selected for this tier. Only ticked options appear on the dashboard.'}
         </div>
-        <div className="flex flex-col gap-2">
+        {diamond ? <div className="space-y-3">
+          {slots.map((value, i) => <label className="block text-sm" key={i}>
+            Choice {i + 1}
+            <select aria-label={`Choice ${i + 1}`} className="input mt-1" value={value} disabled={!loaded || saving}
+              onChange={e => setSlots(old => old.map((v, j) => i === j ? e.target.value : v))}>
+              <option value="">Not selected</option>
+              {children.map(c => <option key={c.benefit.id} value={c.benefit.id}>{c.benefit.title}</option>)}
+            </select>
+          </label>)}
+          <p className="text-xs text-slate-500">A reward labeled “2 choices” or “3 choices” consumes that many selections; leave the other inputs blank. Repeated single-choice rewards are recorded separately.</p>
+          {selectionCost > 3 && <p role="alert" className="text-sm text-red-600">These rewards require more than three selections.</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+        </div> : <div className="flex flex-col gap-2">
           {children.map(c => {
             const isOn = selected.has(c.benefit.id);
             return (
@@ -730,10 +784,10 @@ function ChoicePickerModal({
           {children.length === 0 && (
             <div className="text-xs text-slate-500">No choice options defined for this tier.</div>
           )}
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
+        </div>}
+        <div className="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
           <button className="btn-ghost text-sm" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn-primary text-sm" onClick={save} disabled={saving}>
+          <button className="btn-primary text-sm" onClick={save} disabled={saving || !loaded || (diamond && selectionCost > 3)}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>

@@ -23,10 +23,10 @@ jobs:
           fetch-depth: 0
 
       # ── 2. Set up Node.js ────────────────────────────────────────────────────
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       # ── 3. Install dependencies ─────────────────────────────────────────────
@@ -38,6 +38,11 @@ jobs:
       # ABI), before any Electron-ABI rebuild happens below.
       - name: Run tests
         run: npx vitest run
+
+      - name: Type check and dependency audit
+        run: |
+          npx tsc --noEmit -p tsconfig.json
+          npm audit --audit-level=low
 
       # ── 5. Build renderer + Electron main/preload ─────────────────────────────
       - name: Build
@@ -60,11 +65,49 @@ jobs:
           cp node_modules/better-sqlite3/build/Release/better_sqlite3.node prebuilt-win32-x64/better_sqlite3.node
           echo "Refreshed prebuilt-win32-x64/better_sqlite3.node for Electron 43 (ABI 148)"
 
+      - name: Prepare release-specific self-signed certificate
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Ann Dunkin, O=Dunkin Global Advisors, OU=Software, C=US" -CertStoreLocation Cert:\CurrentUser\My -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -NotAfter (Get-Date).AddYears(3)
+          $password = [guid]::NewGuid().ToString()
+          Write-Output "::add-mask::$password"
+          $pfx = Join-Path $env:RUNNER_TEMP "release-signing.pfx"
+          Export-PfxCertificate -Cert $cert -FilePath $pfx -Password (ConvertTo-SecureString $password -AsPlainText -Force) | Out-Null
+          Export-Certificate -Cert $cert -FilePath "build/release-signing.cer" | Out-Null
+          # Trust only on this disposable test runner so Windows can verify
+          # integrity. Users' trust stores are never changed by the installer.
+          Import-Certificate -FilePath "build/release-signing.cer" -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
+          "CSC_LINK=$pfx" >> $env:GITHUB_ENV
+          "CSC_KEY_PASSWORD=$password" >> $env:GITHUB_ENV
+
       # ── 7. Package with electron-builder (zip + nsis) ────────────────────────
       - name: Package Windows installers
         run: npx electron-builder --config electron-builder.config.js --win --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Test signed installer, upgrade, runtime, reinstall, uninstall and repair
+        shell: pwsh
+        run: ./scripts/test-windows-release.ps1
+
+      - name: Upload release test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-evidence
+          path: release-evidence/
+
+      - name: Upload verified build for manual release
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-windows-build
+          compression-level: 0
+          path: |
+            dist-installer/*Setup*.exe
+            dist-installer/*.zip
+            build/release-signing.cer
+            release-evidence/windows-validation.txt
 
       # ── 8. Extract version from tag (strips leading 'v') ─────────────────────
       - name: Extract version
@@ -99,6 +142,7 @@ jobs:
 
       # ── 11. Create GitHub Release and upload assets ───────────────────────────
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: "Credit Card Benefit Tracker v${{ steps.version.outputs.VERSION }}"
@@ -109,5 +153,13 @@ jobs:
           files: |
             ${{ steps.artifacts.outputs.ZIP }}
             ${{ steps.artifacts.outputs.EXE }}
+            build/release-signing.cer
+            release-evidence/windows-validation.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete temporary private signing key
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:CSC_LINK -and (Test-Path $env:CSC_LINK)) { Remove-Item $env:CSC_LINK -Force }

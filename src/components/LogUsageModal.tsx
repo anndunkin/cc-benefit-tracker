@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { Benefit, Usage } from '../../electron/types';
 import { fmtUsd } from '../lib/format';
+import { isMilestone, tracksEarnedNights, valueAtDate } from '../../electron/benefitRules';
 
 export default function LogUsageModal({
-  benefitId, onClose, onSaved,
-}: { benefitId: number; onClose: () => void; onSaved: () => void }) {
+  benefitId, onClose, onSaved, refYear,
+}: { benefitId: number; onClose: () => void; onSaved: () => void; refYear?: number }) {
   const [benefit, setBenefit] = useState<Benefit | null>(null);
   const [history, setHistory] = useState<Usage[]>([]);
   const today = new Date().toISOString().slice(0, 10);
-  const [usedOn, setUsedOn] = useState(today);
+  const [usedOn, setUsedOn] = useState(refYear && refYear !== Number(today.slice(0, 4)) ? `${refYear}-06-15` : today);
+  const [quantity, setQuantity] = useState('1');
+  const [expiration, setExpiration] = useState('');
   const [amount, setAmount] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -20,6 +23,7 @@ export default function LogUsageModal({
       window.api.usages.getForBenefit(benefitId),
     ]).then(([b, u]) => {
       setBenefit(b);
+      setExpiration(b?.expiration_date ?? '');
       setHistory(u);
       // Only prefill the amount when this is a plain dollar-valued benefit.
       // Count-based benefits (SkyClub visits, upgrade certificates, etc.)
@@ -27,7 +31,7 @@ export default function LogUsageModal({
       // Spend-threshold benefits: leave empty so each entry captures the
       // fresh spend increment (not the total value).
       if (b && b.reset_cadence !== 'spend_threshold' && (b.value_usd ?? 0) > 0) {
-        setAmount(String(b.value_usd));
+        setAmount(String(valueAtDate(b, usedOn) ?? ''));
       } else {
         setAmount('');
       }
@@ -47,12 +51,26 @@ export default function LogUsageModal({
   // dollar amount. Spend-threshold and dollar-valued benefits always show it;
   // count-based benefits (unlimited access, visit-count) omit it by default.
   const showAmountField = !isCountBased;
+  const earnedNights = !!benefit && tracksEarnedNights(benefit);
+  const milestone = !!benefit && isMilestone(benefit);
+
+  async function saveExpiration() {
+    if (saving) return;
+    setSaving(true); setErr(null);
+    try {
+      await window.api.benefits.update(benefitId, { expiration_date: expiration || null });
+      onSaved();
+    } catch (e) { setErr(String(e)); setSaving(false); }
+  }
 
   async function save() {
+    if (saving) return;
     setSaving(true); setErr(null);
     try {
       await window.api.usages.create({
         benefit_id: benefitId,
+        quantity: earnedNights ? Number(quantity) : 1,
+        ...(benefit?.category === 'free_night' && !milestone ? { expiration_date: expiration || null } : {}),
         used_on: usedOn,
         // Count-based benefits never carry a dollar amount.
         amount_usd: isCountBased ? null : (amount === '' ? null : parseFloat(amount)),
@@ -84,19 +102,28 @@ export default function LogUsageModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="card p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-label={milestone ? 'Achievement details' : 'Log usage'} className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-lg font-semibold">Log usage</h2>
+            <h2 className="text-lg font-semibold">{milestone ? 'Achievement details' : earnedNights ? 'Log nights earned' : 'Log usage'}</h2>
             <div className="text-sm text-slate-500">{benefit.title}</div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
+        {benefit.category === 'free_night' && !milestone && <div className="mb-4 border-b border-slate-200 pb-4">
+          <label className="label" htmlFor="certificate-expiration">Certificate expiration date</label>
+          <input id="certificate-expiration" type="date" className="input" value={expiration} onChange={e => setExpiration(e.target.value)} />
+          <button className="btn-ghost text-xs mt-2" disabled={saving} onClick={saveExpiration}>Save expiration only</button>
+          <p className="text-xs text-slate-500">Saving or clearing this date does not mark the certificate used.</p>
+        </div>}
 
         <div className={showAmountField ? 'grid grid-cols-2 gap-3' : ''}>
           <div>
-            <label className="label">Date used</label>
-            <input type="date" className="input" value={usedOn} onChange={e => setUsedOn(e.target.value)} />
+            <label className="label" htmlFor="entry-date">{milestone ? 'Date achieved' : earnedNights ? 'Date earned' : 'Date used'}</label>
+            <input id="entry-date" type="date" className="input" value={usedOn} onChange={e => {
+              setUsedOn(e.target.value);
+              if (benefit.value_effective_date) setAmount(String(valueAtDate(benefit, e.target.value) ?? ''));
+            }} />
           </div>
           {showAmountField && (
             <div>
@@ -123,6 +150,11 @@ export default function LogUsageModal({
             </div>
           )}
         </div>
+        {earnedNights && <div className="mt-3">
+          <label className="label" htmlFor="earned-nights">Number of nights earned</label>
+          <input id="earned-nights" type="number" min="1" max="1000000" step="1" className="input" value={quantity} onChange={e => setQuantity(e.target.value)} />
+          <p className="text-xs text-slate-500">Enter newly earned nights, not your year-to-date total.</p>
+        </div>}
         <div className="mt-3">
           <label className="label">Notes</label>
           <input type="text" className="input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional context (hotel name, purchase, etc.)" />
@@ -130,9 +162,9 @@ export default function LogUsageModal({
 
         {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
 
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
           <button className="btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+          <button className="btn-primary" onClick={save} disabled={saving || (milestone && history.some(u => u.used_on.slice(0, 4) === usedOn.slice(0, 4)))}>{saving ? 'Saving…' : milestone ? 'Save achievement' : 'Save usage'}</button>
         </div>
 
         {history.length > 0 && (
@@ -143,7 +175,7 @@ export default function LogUsageModal({
                 <div key={u.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <span className="font-mono text-xs w-24 text-slate-500">{u.used_on}</span>
                   {isCountBased ? (
-                    <span className="font-mono w-20 text-slate-500">1 use</span>
+                    <span className="font-mono w-20 text-slate-500">{milestone ? 'Achieved' : `${u.quantity ?? 1} ${earnedNights ? 'nights' : 'use(s)'}`}</span>
                   ) : (
                     <span className="font-mono w-20">{fmtUsd(u.amount_usd)}</span>
                   )}

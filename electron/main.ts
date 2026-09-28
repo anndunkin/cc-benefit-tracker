@@ -6,7 +6,7 @@ import {
   cardsGetAll, cardGetById, cardCreate, cardUpdate, cardDelete, cardSetVisible,
   programsGetAll, programGetById, programCreate, programUpdate, programDelete,
   benefitsGetAll, benefitsForCard, benefitsForProgram, benefitGetById,
-  benefitCreate, benefitUpdate, benefitDelete,
+  benefitCreate, benefitUpdate, benefitDelete, benefitGetChoices, benefitSetChoices,
   usagesForBenefit, usageCreate, usageUpdate, usageDelete,
   computeProjections,
   refreshGetStatus, refreshStartRun, refreshPendingChanges,
@@ -274,6 +274,8 @@ ipcMain.handle('programs:delete', (_e, id: string) => { programDelete(getDatabas
 
 // ─── Benefits ────────────────────────────────────────────────────────────────
 ipcMain.handle('benefits:getAll', () => benefitsGetAll(getDatabase()));
+ipcMain.handle('benefits:getChoices', (_e, id: number, year: number) => benefitGetChoices(getDatabase(), id, year));
+ipcMain.handle('benefits:setChoices', (_e, id: number, year: number, choices: number[]) => benefitSetChoices(getDatabase(), id, year, choices));
 ipcMain.handle('benefits:forCard', (_e, cardId: string) => benefitsForCard(getDatabase(), cardId));
 ipcMain.handle('benefits:forProgram', (_e, programId: string) => benefitsForProgram(getDatabase(), programId));
 ipcMain.handle('benefits:getById', (_e, id: number) => benefitGetById(getDatabase(), id));

@@ -8,6 +8,8 @@ import type {
   PointsCurrency, PointsCurrencyInput,
 } from './types';
 import { APP_FILE_VERSION } from './types';
+import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights, valueAtDate } from './benefitRules';
+import { ensureRelease20Schema, migrateRelease20 } from './release20';
 import { periodKeyFor, periodLabelFor, nextResetIso, uses_max_for } from './periods';
 import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS, SEED_POINTS_CURRENCIES } from './benefitsSeed';
 
@@ -159,6 +161,7 @@ export function initSchema(database: Database.Database): void {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  ensureRelease20Schema(database);
 }
 
 function metaGet(database: Database.Database, key: string): string | null {
@@ -224,12 +227,12 @@ export function seedIfFresh(database: Database.Database): void {
       card_id, program_id, title, description, category, reset_cadence, uses_per_period,
       value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
       multiplier_rate, multiplier_currency, spend_category, spend_category_note,
-      is_choice_option, sort_order, source_url, notes
+      is_choice_option, sort_order, source_url, notes, previous_value_usd, value_effective_date
     ) VALUES (
       @card_id, @program_id, @title, @description, @category, @reset_cadence, @uses_per_period,
       @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
       @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
-      @is_choice_option, @sort_order, @source_url, @notes
+      @is_choice_option, @sort_order, @source_url, @notes, @previous_value_usd, @value_effective_date
     )
   `);
   const insertPointsCurrency = database.prepare(`
@@ -256,6 +259,8 @@ export function seedIfFresh(database: Database.Database): void {
       source_url: (p as any).source_url ?? null,
     });
     for (const b of SEED_BENEFITS) insertBenefit.run({
+      previous_value_usd: b.previous_value_usd ?? null,
+      value_effective_date: b.value_effective_date ?? null,
       card_id: b.card_id ?? null,
       program_id: b.program_id ?? null,
       description: b.description ?? null,
@@ -306,6 +311,7 @@ export function seedIfFresh(database: Database.Database): void {
 }
 
 export function applyDataMigrations(database: Database.Database): { migrations_run: string[] } {
+  ensureRelease20Schema(database);
   const run: string[] = [];
   // v1.0.0 — schema is initial; no data migrations needed.
   if (!metaGet(database, 'schema_version')) {
@@ -1975,6 +1981,13 @@ export function applyDataMigrations(database: Database.Database): { migrations_r
     tx();
   }
 
+  if (seedVersionLt(database, '1.0.20')) {
+    database.transaction(() => {
+      migrateRelease20(database);
+      metaSet(database, 'seed_version', '1.0.20');
+      run.push('v1_0_20_credits_and_usages');
+    })();
+  }
   return { migrations_run: run };
 }
 
@@ -2190,7 +2203,7 @@ export function pointsCurrencyDelete(database: Database.Database, id: string): v
 
 // ─── Benefits CRUD ───────────────────────────────────────────────────────────
 
-const BEN_COLS = `id, card_id, program_id, title, description, category, reset_cadence,
+const BEN_COLS = `id, is_hidden, previous_value_usd, value_effective_date, card_id, program_id, title, description, category, reset_cadence,
   uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
   multiplier_rate, multiplier_currency, spend_category, spend_category_note,
   prerequisite_benefit_id, is_choice_option, choice_selected,
@@ -2210,6 +2223,7 @@ export function benefitGetById(database: Database.Database, id: number): Benefit
 }
 export function benefitCreate(database: Database.Database, input: BenefitInput, markUserModified = true): Benefit {
   requireStr('title', input.title);
+  validateBenefitDates(input);
   if ((input.card_id && input.program_id) || (!input.card_id && !input.program_id)) {
     throw new Error('Benefit must belong to exactly one card or program');
   }
@@ -2220,8 +2234,8 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
       multiplier_rate, multiplier_currency, spend_category, spend_category_note,
       is_choice_option, choice_selected,
       is_active, sort_order, source_url,
-      notes, is_user_modified
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      notes, is_user_modified, is_hidden, previous_value_usd, value_effective_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     input.card_id ?? null,
     input.program_id ?? null,
@@ -2246,10 +2260,14 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.source_url ?? null,
     input.notes ?? null,
     markUserModified ? 1 : 0,
+    input.is_hidden ?? 0,
+    input.previous_value_usd ?? null,
+    input.value_effective_date ?? null,
   );
   return benefitGetById(database, Number(info.lastInsertRowid))!;
 }
 export function benefitUpdate(database: Database.Database, id: number, patch: Partial<BenefitInput>): Benefit {
+  validateBenefitDates(patch);
   const current = benefitGetById(database, id);
   if (!current) throw new Error(`Benefit ${id} not found`);
   database.prepare(`
@@ -2263,6 +2281,9 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       spend_threshold_usd = @spend_threshold_usd,
       expiration_note = @expiration_note,
       expiration_date = @expiration_date,
+      is_hidden = @is_hidden,
+      previous_value_usd = @previous_value_usd,
+      value_effective_date = @value_effective_date,
       reset_years = @reset_years,
       multiplier_rate = @multiplier_rate,
       multiplier_currency = @multiplier_currency,
@@ -2274,7 +2295,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
       sort_order = COALESCE(@sort_order, sort_order),
       source_url = @source_url,
       notes = @notes,
-      is_user_modified = 1,
+      is_user_modified = @is_user_modified,
       updated_at = datetime('now')
     WHERE id = @id
   `).run({
@@ -2287,7 +2308,11 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     value_usd: patch.value_usd ?? current.value_usd,
     spend_threshold_usd: patch.spend_threshold_usd ?? current.spend_threshold_usd,
     expiration_note: patch.expiration_note ?? current.expiration_note,
-    expiration_date: patch.expiration_date ?? current.expiration_date,
+    expiration_date: patch.expiration_date === undefined ? current.expiration_date : patch.expiration_date,
+    is_hidden: patch.is_hidden ?? current.is_hidden,
+    previous_value_usd: patch.previous_value_usd === undefined ? current.previous_value_usd : patch.previous_value_usd,
+    value_effective_date: patch.value_effective_date === undefined ? current.value_effective_date : patch.value_effective_date,
+    is_user_modified: Object.keys(patch).every(k => k === 'is_hidden') ? current.is_user_modified : 1,
     reset_years: patch.reset_years ?? current.reset_years,
     multiplier_rate: patch.multiplier_rate ?? current.multiplier_rate,
     multiplier_currency: patch.multiplier_currency ?? current.multiplier_currency,
@@ -2306,41 +2331,100 @@ export function benefitDelete(database: Database.Database, id: number): void {
   database.prepare('DELETE FROM benefits WHERE id = ?').run(id);
 }
 
+export function benefitGetChoices(database: Database.Database, parentId: number, year: number): number[] {
+  const row = database.prepare('SELECT selections_json FROM benefit_choices WHERE parent_id = ? AND ref_year = ?')
+    .get(parentId, year) as { selections_json: string } | undefined;
+  return row ? JSON.parse(row.selections_json) : [];
+}
+
+export function benefitSetChoices(database: Database.Database, parentId: number, year: number, choices: number[], requireAchievement = true): void {
+  if (!Number.isInteger(year) || year < 1900 || year > 9999) throw new Error('Invalid choice year');
+  if (!Array.isArray(choices) || choices.length > 3) throw new Error('At most three choices are allowed');
+  const parent = benefitGetById(database, parentId);
+  if (!parent || !isDiamondChoices(parent)) throw new Error('Invalid Diamond milestone');
+  let cost = 0;
+  for (const id of choices) {
+    if (!Number.isInteger(id)) throw new Error('Invalid choice');
+    const child = benefitGetById(database, id);
+    if (!child || child.prerequisite_benefit_id !== parentId || child.is_choice_option !== 1 || child.is_active !== 1) {
+      throw new Error('Choice must belong to this milestone');
+    }
+    cost += choiceCost(child.title);
+  }
+  if (cost > 3) throw new Error('These rewards require more than three selections');
+  if (requireAchievement && choices.length && !database.prepare('SELECT 1 FROM usages WHERE benefit_id = ? AND period_key = ?').get(parentId, String(year))) {
+    throw new Error('Mark Diamond achieved for this year before selecting rewards');
+  }
+  database.prepare('INSERT OR REPLACE INTO benefit_choices VALUES (?, ?, ?)').run(parentId, year, JSON.stringify(choices));
+}
+
 // ─── Usages CRUD ─────────────────────────────────────────────────────────────
 
-const USE_COLS = 'id, benefit_id, used_on, amount_usd, period_key, notes, created_at';
+const USE_COLS = 'id, benefit_id, used_on, amount_usd, quantity, period_key, notes, created_at';
+
+function validateBenefitDates(input: Partial<BenefitInput>): void {
+  for (const field of ['expiration_date', 'value_effective_date'] as const) {
+    if (input[field] != null) requireIsoDate(field, input[field]);
+  }
+  if (input.is_hidden !== undefined && input.is_hidden !== 0 && input.is_hidden !== 1) throw new Error('is_hidden must be 0 or 1');
+}
+
+function requireIsoDate(field: string, value: unknown): void {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)
+    || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value) {
+    throw new Error(`${field} must be a valid YYYY-MM-DD date`);
+  }
+}
+
+function validateQuantity(value: unknown): number {
+  if (!Number.isSafeInteger(value) || (value as number) < 1 || (value as number) > 1000000) {
+    throw new Error('Quantity must be a whole number from 1 to 1000000');
+  }
+  return value as number;
+}
 
 export function usagesForBenefit(database: Database.Database, benefitId: number): Usage[] {
   return database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? ORDER BY used_on DESC, id DESC`).all(benefitId) as Usage[];
 }
 export function usageCreate(database: Database.Database, input: UsageInput): Usage {
   if (!Number.isInteger(input.benefit_id) || input.benefit_id <= 0) throw new Error('benefit_id is required');
-  requireDate('used_on', input.used_on);
+  requireIsoDate('used_on', input.used_on);
+  const quantity = validateQuantity(input.quantity ?? 1);
   const benefit = benefitGetById(database, input.benefit_id);
   if (!benefit) throw new Error(`Benefit ${input.benefit_id} not found`);
   const period_key = periodKeyFor(benefit.reset_cadence, input.used_on);
-  const info = database.prepare(`
-    INSERT INTO usages (benefit_id, used_on, amount_usd, period_key, notes)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(input.benefit_id, input.used_on, input.amount_usd ?? null, period_key, input.notes ?? null);
-  return (database.prepare(`SELECT ${USE_COLS} FROM usages WHERE id = ?`).get(Number(info.lastInsertRowid)) as Usage);
+  return database.transaction(() => {
+    if (input.expiration_date !== undefined) {
+      if (benefit.category !== 'free_night') throw new Error('Expiration entry applies only to free-night certificates');
+      benefitUpdate(database, benefit.id, { expiration_date: input.expiration_date });
+    }
+    const info = database.prepare(`
+      INSERT INTO usages (benefit_id, used_on, amount_usd, quantity, period_key, notes)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(input.benefit_id, input.used_on, input.amount_usd ?? null, quantity, period_key, input.notes ?? null);
+    return database.prepare(`SELECT ${USE_COLS} FROM usages WHERE id = ?`).get(Number(info.lastInsertRowid)) as Usage;
+  })();
 }
 export function usageUpdate(database: Database.Database, id: number, patch: Partial<UsageInput>): Usage {
   const current = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE id = ?`).get(id) as Usage | undefined;
   if (!current) throw new Error(`Usage ${id} not found`);
   const benefit = benefitGetById(database, current.benefit_id);
   const used_on = patch.used_on ?? current.used_on;
+  requireIsoDate('used_on', used_on);
+  const quantity = validateQuantity(patch.quantity ?? current.quantity);
   const period_key = benefit ? periodKeyFor(benefit.reset_cadence, used_on) : current.period_key;
   database.prepare(`
     UPDATE usages SET
       used_on = @used_on,
       amount_usd = @amount_usd,
+      quantity = @quantity,
       period_key = @period_key,
       notes = @notes
     WHERE id = @id
   `).run({
     id,
     used_on,
+    quantity,
     amount_usd: patch.amount_usd ?? current.amount_usd,
     period_key,
     notes: patch.notes ?? current.notes,
@@ -2408,8 +2492,8 @@ function buildPeriodHistory(
         .all(b.id, String(refYear)) as Usage[];
     }
 
-    const value_used_usd = periodUsages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
-    const uses_count = periodUsages.length;
+    const value_used_usd = periodUsages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(b, u.used_on) ?? 0), 0);
+    const uses_count = periodUsages.reduce((s, u) => s + u.quantity, 0);
 
     // Period start (used to tell past-vs-future for empty periods).
     const [ay, amStr] = anchor.split('-');
@@ -2435,7 +2519,8 @@ function buildPeriodHistory(
 
     // Status resolution mirrors the main projection logic per period.
     let status: 'used' | 'partial' | 'unused' | 'future';
-    const per_period_total = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
+    const periodValue = valueAtDate(b, anchor);
+    const per_period_total = uses_max !== null && periodValue !== null ? uses_max * periodValue : null;
     if (b.reset_cadence === 'unlimited') {
       status = uses_count > 0 ? 'used' : (isFuture ? 'future' : 'unused');
     } else if (per_period_total !== null && per_period_total > 0) {
@@ -2484,6 +2569,17 @@ export function computeProjections(database: Database.Database, refYear: number)
 
   const out: BenefitProjection[] = [];
   for (const b of benefits) {
+    const originalBenefit = { ...b };
+    if (b.prerequisite_benefit_id) {
+      const parent = benefits.find(p => p.id === b.prerequisite_benefit_id);
+      if (parent && isDiamondChoices(parent) && b.is_choice_option === 1) {
+        const choices = benefitGetChoices(database, parent.id, refYear);
+        const count = choices.filter(id => id === b.id).length;
+        b.choice_selected = count > 0 ? 1 : 0;
+        if (count > 1 && b.uses_per_period !== null) b.uses_per_period *= count;
+      }
+    }
+    b.value_usd = valueAtDate(b, anchorDate);
     const period_key = periodKeyFor(b.reset_cadence, anchorDate);
     const period_label = periodLabelFor(b.reset_cadence, anchorDate);
 
@@ -2497,7 +2593,8 @@ export function computeProjections(database: Database.Database, refYear: number)
     }
 
     const uses_max = uses_max_for(b);
-    const uses_count = usages.length;
+    const rawCount = usages.reduce((s, u) => s + u.quantity, 0);
+    const uses_count = isMilestone(b) ? Math.min(1, rawCount) : rawCount;
     const uses_remaining = uses_max === null ? null : Math.max(0, uses_max - uses_count);
 
     // Per-period dollar burn. If a usage has no amount_usd (single-use toggle),
@@ -2505,7 +2602,7 @@ export function computeProjections(database: Database.Database, refYear: number)
     // meaningful per-use dollar value; a zero-value points-based benefit
     // shouldn't inflate value_used_usd.
     const per_use_fallback = b.value_usd && b.value_usd > 0 ? b.value_usd : 0;
-    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
+    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(originalBenefit, u.used_on) ?? 0), 0);
     const total_value = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
     const value_remaining_usd = total_value === null ? null : Math.max(0, total_value - value_used_usd);
 
@@ -2526,15 +2623,18 @@ export function computeProjections(database: Database.Database, refYear: number)
           .all(b.id, String(refYear)) as Usage[]
       : usages;
 
-    const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? per_use_fallback), 0);
-    const annual_value_usd = total_value === null ? null : total_value * periodsPerYear;
+    const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(originalBenefit, u.used_on) ?? 0), 0);
+    const annual_value_usd = total_value === null ? null
+      : b.reset_cadence === 'monthly' && originalBenefit.value_effective_date
+        ? Array.from({ length: 12 }, (_, i) => (valueAtDate(originalBenefit, `${refYear}-${String(i + 1).padStart(2, '0')}-01`) ?? 0) * (uses_max ?? 1)).reduce((a, v) => a + v, 0)
+        : total_value * periodsPerYear;
     const annual_value_remaining_usd = annual_value_usd === null ? null : Math.max(0, annual_value_usd - annual_value_used_usd);
 
     // ─── Per-period history for the reference year ─────────────────────────
     // For dashboard mini-strips: one entry per period (Q1..Q4, Jan..Dec, H1/H2,
     // or the year itself). Status marks whether the cap was fully used, partial,
     // unused (past periods only), or future (period hasn't started yet).
-    const period_history = buildPeriodHistory(database, b, refYear, today);
+    const period_history = buildPeriodHistory(database, { ...b, value_usd: originalBenefit.value_usd }, refYear, today);
 
     // ─── Spend-threshold progress ──────────────────────────────────────────
     // For benefits gated on a spend threshold (e.g. Hilton $30K free night),
@@ -2769,6 +2869,8 @@ export function refreshDiscardRun(database: Database.Database, runId: number): v
 
 export function buildFilePayload(database: Database.Database): AppFilePayload {
   return {
+    seed_version: metaGet(database, 'seed_version') ?? '1.0.20',
+    benefit_choices: database.prepare('SELECT * FROM benefit_choices').all() as NonNullable<AppFilePayload['benefit_choices']>,
     version: APP_FILE_VERSION,
     exported_at: new Date().toISOString(),
     cards:            cardsGetAll(database),
@@ -2788,14 +2890,15 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
   const tx = database.transaction(() => {
     database.exec(`
       DELETE FROM refresh_changes; DELETE FROM refresh_runs;
+      DELETE FROM benefit_choices;
       DELETE FROM usages; DELETE FROM benefits;
       DELETE FROM programs; DELETE FROM cards; DELETE FROM points_currencies;
     `);
     const insCard = database.prepare(`
-      INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url, created_at)
-      VALUES (@id, @name, @issuer, @network, @annual_fee_usd, @is_active, @color_hex, @notes, @source_url, @created_at)
+      INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url, created_at)
+      VALUES (@id, @name, @issuer, @network, @annual_fee_usd, @is_active, @is_visible, @color_hex, @notes, @source_url, @created_at)
     `);
-    for (const c of payload.cards) insCard.run(c);
+    for (const c of payload.cards) insCard.run({ ...c, is_visible: c.is_visible ?? 1 });
     const insProg = database.prepare(`
       INSERT INTO programs (id, name, program_type, is_active, notes, source_url, created_at)
       VALUES (@id, @name, @program_type, @is_active, @notes, @source_url, @created_at)
@@ -2806,15 +2909,20 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
         uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
         multiplier_rate, multiplier_currency, spend_category, spend_category_note,
         prerequisite_benefit_id, is_choice_option, choice_selected, is_active, sort_order,
-        source_url, notes, is_user_modified, created_at, updated_at)
+        source_url, notes, is_user_modified, created_at, updated_at, is_hidden, previous_value_usd, value_effective_date)
       VALUES (@id, @card_id, @program_id, @title, @description, @category, @reset_cadence,
         @uses_per_period, @value_usd, @spend_threshold_usd, @expiration_note, @expiration_date, @reset_years,
         @multiplier_rate, @multiplier_currency, @spend_category, @spend_category_note,
         @prerequisite_benefit_id, @is_choice_option, @choice_selected, @is_active, @sort_order,
-        @source_url, @notes, @is_user_modified, @created_at, @updated_at)
+        @source_url, @notes, @is_user_modified, @created_at, @updated_at, @is_hidden, @previous_value_usd, @value_effective_date)
     `);
-    for (const b of payload.benefits) insBen.run({
+    for (const b of payload.benefits) {
+      validateBenefitDates(b);
+      insBen.run({
       ...b,
+      is_hidden: b.is_hidden ?? 0,
+      previous_value_usd: b.previous_value_usd ?? null,
+      value_effective_date: b.value_effective_date ?? null,
       expiration_date: b.expiration_date ?? null,
       reset_years: b.reset_years ?? null,
       multiplier_rate: b.multiplier_rate ?? null,
@@ -2822,12 +2930,19 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
       spend_category: b.spend_category ?? null,
       spend_category_note: b.spend_category_note ?? null,
       prerequisite_benefit_id: b.prerequisite_benefit_id ?? null,
-    });
+      });
+    }
     const insUse = database.prepare(`
-      INSERT INTO usages (id, benefit_id, used_on, amount_usd, period_key, notes, created_at)
-      VALUES (@id, @benefit_id, @used_on, @amount_usd, @period_key, @notes, @created_at)
+      INSERT INTO usages (id, benefit_id, used_on, amount_usd, period_key, notes, created_at, quantity)
+      VALUES (@id, @benefit_id, @used_on, @amount_usd, @period_key, @notes, @created_at, @quantity)
     `);
-    for (const u of payload.usages) insUse.run(u);
+    for (const u of payload.usages) {
+      requireIsoDate('used_on', u.used_on);
+      insUse.run({ ...u, quantity: validateQuantity(u.quantity ?? 1) });
+    }
+    for (const c of payload.benefit_choices ?? []) {
+      benefitSetChoices(database, c.parent_id, c.ref_year, JSON.parse(c.selections_json), false);
+    }
     const insRun = database.prepare(`
       INSERT INTO refresh_runs (id, started_at, completed_at, source_notes, status)
       VALUES (@id, @started_at, @completed_at, @source_notes, @status)
@@ -2847,6 +2962,8 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
         @source_url, @notes, @is_active, @is_user_modified, @updated_at, @created_at)
     `);
     for (const pc of (payload.points_currencies ?? [])) insPc.run(pc);
+    if (!payload.seed_version || parseVersion(payload.seed_version)[2] < 20) migrateRelease20(database);
+    metaSet(database, 'seed_version', '1.0.20');
   });
   tx();
 }

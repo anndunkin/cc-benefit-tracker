@@ -343,7 +343,7 @@ describe('v1.0.17 Bonus Categories backfill (regression for empty tab on upgrade
     expect(cardIdsWithMultipliers.size).toBeGreaterThanOrEqual(9);
 
     const stamp = db.prepare(`SELECT value FROM app_meta WHERE key = 'seed_version'`).get() as { value: string };
-    expect(stamp.value).toBe('1.0.19');
+    expect(stamp.value).toBe('1.0.20');
 
     // Re-running migrations (e.g. app restarted) must not duplicate rows.
     const beforeCount = benefitsGetAll(db).length;

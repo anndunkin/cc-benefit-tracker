@@ -12,6 +12,8 @@ electron/dist/
 build/signing.key
 build/*.pfx
 build/*.p12
+build/release-signing.cer
+release-evidence/
 
 # Local databases
 *.db
