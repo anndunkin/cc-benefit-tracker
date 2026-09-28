@@ -41,10 +41,15 @@ async function evaluate(expression) {
   return result.result.value;
 }
 try {
+  let ready = false;
   for (let i = 0; i < 60; i++) {
-    if (await evaluate("!!window.api && document.body.innerText.includes('Credits')")) break;
+    try {
+      ready = await evaluate("!!window.api && !!document.body && document.body.innerText.includes('Credits')");
+      if (ready) break;
+    } catch { /* navigation may replace the initial execution context */ }
     await delay(500);
   }
+  assert(ready, 'Installed renderer did not finish loading its application UI');
   assert.equal(await evaluate('typeof window.require'), 'undefined', 'Node must not be exposed to the renderer');
   const version = await evaluate('window.api.app.getVersion()');
   assert.equal(version, legacy ? '1.0.19' : '1.0.20');
