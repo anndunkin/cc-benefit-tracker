@@ -66,9 +66,12 @@ jobs:
           echo "Refreshed prebuilt-win32-x64/better_sqlite3.node for Electron 43 (ABI 148)"
 
       - name: Prepare release-specific self-signed certificate
+        timeout-minutes: 2
         shell: pwsh
         run: |
-          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Ann Dunkin, O=Dunkin Global Advisors, OU=Software, C=US" -CertStoreLocation Cert:\CurrentUser\My -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -NotAfter (Get-Date).AddYears(3)
+          Write-Host "Creating exportable software-only signing certificate"
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Ann Dunkin, O=Dunkin Global Advisors, OU=Software, C=US" -CertStoreLocation Cert:\CurrentUser\My -Provider "Microsoft Software Key Storage Provider" -KeyExportPolicy Exportable -KeyProtection None -KeyAlgorithm RSA -KeyLength 3072 -HashAlgorithm SHA256 -NotAfter (Get-Date).AddYears(3)
+          Write-Host "Exporting signing certificate"
           $password = [guid]::NewGuid().ToString()
           Write-Output "::add-mask::$password"
           $pfx = Join-Path $env:RUNNER_TEMP "release-signing.pfx"
@@ -76,7 +79,10 @@ jobs:
           Export-Certificate -Cert $cert -FilePath "build/release-signing.cer" | Out-Null
           # Trust only on this disposable test runner so Windows can verify
           # integrity. Users' trust stores are never changed by the installer.
-          Import-Certificate -FilePath "build/release-signing.cer" -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
+          # certutil -f avoids the interactive Root-store confirmation dialog
+          # raised by Import-Certificate on hosted Windows runners.
+          certutil -user -f -addstore Root "build/release-signing.cer"
+          if ($LASTEXITCODE -ne 0) { throw "Could not trust the release certificate on the test runner" }
           "CSC_LINK=$pfx" >> $env:GITHUB_ENV
           "CSC_KEY_PASSWORD=$password" >> $env:GITHUB_ENV
 
