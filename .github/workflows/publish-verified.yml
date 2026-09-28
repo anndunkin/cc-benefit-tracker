@@ -1,0 +1,62 @@
+name: Publish verified Windows build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build & Release run containing verified-windows-build
+        required: true
+      tag:
+        description: Version tag matching the verified build
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify build provenance
+        id: provenance
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_RUN: ${{ inputs.build_run_id }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          [[ "$BUILD_RUN" =~ ^[0-9]+$ ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN" > run.json
+          jq -e '.conclusion == "success" and .name == "Build & Release" and .head_branch == "main"' run.json
+          SHA=$(jq -r .head_sha run.json)
+          VERSION=$(gh api "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$SHA" --jq .content | base64 -d | jq -r .version)
+          test "$RELEASE_TAG" = "v$VERSION"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Download the previously tested installer
+        uses: actions/download-artifact@v4
+        with:
+          name: verified-windows-build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.build_run_id }}
+          path: verified
+      - name: Publish release without rebuilding
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Credit Card Benefit Tracker ${{ inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          target_commitish: ${{ steps.provenance.outputs.sha }}
+          body_path: docs/release-${{ steps.provenance.outputs.version }}.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            verified/dist-installer/*Setup*.exe
+            verified/dist-installer/*.zip
+            verified/build/release-signing.cer
+            verified/release-evidence/windows-validation.txt
+            docs/validation-${{ steps.provenance.outputs.version }}.md
