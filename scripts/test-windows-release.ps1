@@ -35,7 +35,7 @@ try {
   if ((Get-AuthenticodeSignature $exe).Status -ne 'Valid') { throw 'Installed application signature invalid' }
   if ((Get-AuthenticodeSignature (Join-Path $installDir "Uninstall $product.exe")).Status -ne 'Valid') { throw 'Uninstaller signature invalid' }
   Smoke
-  Write-Host 'PASS: 1.0.19 to 1.0.20 upgrade, native SQLite ABI, renderer, preload, preserved data and new controls'
+  Write-Host 'PASS: 1.0.19 to current-version upgrade, native SQLite ABI, renderer, preload, preserved data and new controls'
   # Reinstall while app is running exercises the custom running-process check.
   Run-Setup $setup
   Smoke

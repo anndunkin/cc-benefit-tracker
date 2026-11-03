@@ -52,7 +52,7 @@ try {
   assert(ready, 'Installed renderer did not finish loading its application UI');
   assert.equal(await evaluate('typeof window.require'), 'undefined', 'Node must not be exposed to the renderer');
   const version = await evaluate('window.api.app.getVersion()');
-  assert.equal(version, legacy ? '1.0.19' : '1.0.20');
+  assert.equal(version, legacy ? '1.0.19' : JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
   const result = await evaluate(`(async () => {
     const all = await window.api.benefits.getAll();
     const nights = all.find(b => b.card_id === 'marriott_premier' && b.title.startsWith('1 Elite Night Credit per'));

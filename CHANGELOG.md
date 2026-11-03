@@ -2,10 +2,12 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
-## v1.0.22 - 2026-11-03
+## v1.0.23 - 2026-11-03
 
 ### Changed
-- The release build now blocks on high or critical advisories only. The remaining 15 moderate advisories are in build-time packaging tools (electron-builder) and are not shipped in the installed app. Version 1.0.21 was tagged but never released because the stricter check stopped the build; 1.0.22 supersedes it with identical application code.
+- The release build now blocks on high or critical advisories only. The remaining 15 moderate advisories are in build-time packaging tools (electron-builder) and are not shipped in the installed app.
+- The installed-app smoke test now reads the expected version from package.json instead of a hard-coded number.
+- Versions 1.0.21 and 1.0.22 were tagged but never released because the release checks stopped the build; 1.0.23 supersedes them with identical application code and the same security fixes.
 
 ## v1.0.21 - 2026-11-02
 
