@@ -2,6 +2,20 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.21 - 2026-11-02
+
+### Security
+- Electron 43.4.0 -> 43.8.6 (patch release on the same major; fixes advisories against 43.4.0).
+- Cleared the 2 critical and 8 high audit findings: concurrently 10.0.6, vite 8.3.5, plus transitive fixes for shell-quote, axios, follow-redirects, joi, source-map-js, brace-expansion, fast-uri and undici.
+- `keyv` 4.5.4 and `cacheable-request` 7.0.4 overrides verified intact.
+
+### Changed
+- React / React DOM 19.3.1, React Router DOM 7.18.5, electron-builder 26.18.1, Tailwind CSS / @tailwindcss/vite 4.3.4, Vitest 4.1.12, and related type, test and build tooling.
+- Verified: TypeScript check, production build, and all 209 tests pass. No benefit data or behavior changed.
+
+### Notes
+- Remaining 15 moderate findings are one minimatch denial-of-service advisory inside electron-builder's build-time toolchain; they do not ship in the installed app, and npm's only suggested "fix" is a downgrade to electron-builder 20.
+
 ## v1.0.20 - 2026-09-28
 
 ### Credits and usages
