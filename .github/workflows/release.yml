@@ -48,7 +48,7 @@ jobs:
       - name: Type check and dependency audit
         run: |
           npx tsc --noEmit -p tsconfig.json
-          npm audit --audit-level=low
+          npm audit --audit-level=high
 
       # ── 5. Build renderer + Electron main/preload ─────────────────────────────
       - name: Build
