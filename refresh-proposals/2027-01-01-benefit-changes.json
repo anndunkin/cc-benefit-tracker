@@ -1,0 +1,159 @@
+{
+  "format": "cc-benefit-tracker-refresh",
+  "format_version": 1,
+  "proposal_id": "2027-01-01-benefit-changes",
+  "title": "Benefit changes effective 2027-01-01",
+  "prepared_on": "2026-11-22",
+  "not_before": "2027-01-01",
+  "changes": [
+    {
+      "scope": "card",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "after": {
+        "annual_fee_usd": 150
+      },
+      "summary": "Chase raised the annual fee from $99 to $150 on October 1, 2026 for new accounts. Existing accounts move to $150 at their first renewal in 2027; a renewal in late 2026 is still $99. Approve this once your 2027 renewal is the next one due.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.ihgplc.com/en/news-and-media/news-releases/2026/chase-introduces-new-ihg-one-rewards-premier-select-credit-card-and-portfolio",
+          "label": "ihgplc.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://media.chase.com/news/ihg-premier-select-card-portfolio-updates",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "Anniversary Free Night (up to 40,000 points)",
+      "after": {
+        "title": "Anniversary Free Night (up to 50,000 points)",
+        "description": "A Reward Night earned each account anniversary year, with a point redemption cap of 50,000 points (certificates awarded through Dec 31, 2026 remain capped at 40,000 points). You may top up with your own points to book above 50,000.",
+        "expiration_note": "Issued each account anniversary year; must be redeemed and stay completed within 12 months from date of issue.",
+        "notes": "Points-based redemption up to 50,000 points for certificates awarded beginning Jan 1, 2027 (40,000 points for certificates awarded through Dec 31, 2026); dollar value varies widely by property."
+      },
+      "summary": "Anniversary Free Night certificates issued from January 1, 2027 can be used for nights costing up to 50,000 points (was 40,000). Certificates issued through December 31, 2026 stay capped at 40,000. Topping up with points is still allowed.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://www.chase.com/personal/credit-cards/offerdetails/ihg",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "removed",
+      "card_id": "ihg_premier",
+      "match_title": "$100 statement credit + 10,000 bonus points after $20,000 spend",
+      "summary": "Chase replaced the $20,000 spend bonus ($100 credit plus 10,000 points) with a $15,000 spend bonus. Chase no longer publishes the $20,000 bonus; existing cardholders are reported to earn it on 2026 spend only. Retire this row once your 2026 bonus has posted, and check your Chase notice if you are close to the threshold.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://www.chase.com/personal/credit-cards/offerdetails/ihg",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.ihgplc.com/en/news-and-media/news-releases/2026/chase-introduces-new-ihg-one-rewards-premier-select-credit-card-and-portfolio",
+          "label": "ihgplc.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        },
+        {
+          "url": "https://thriftytraveler.com/news/credit-card/chase-ihg-credit-card-changes/",
+          "label": "Thrifty Traveler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "5x IHG One Rewards Points on travel",
+      "after": {
+        "title": "5x IHG One Rewards Points on flights booked directly",
+        "description": "Earn 5 points per $1 spent on airline tickets purchased directly with the airline (broad 5x travel applies only to purchases posted through Dec 31, 2026; other non-IHG, non-car-rental travel earns 3x starting Jan 1, 2027).",
+        "spend_category_note": "Direct airline ticket purchases only starting Jan 1, 2027 (general travel through Dec 31, 2026)"
+      },
+      "summary": "From January 1, 2027 the 5x travel category covers only airline tickets bought directly from the airline; car rental agencies keep 5x under their own row, and other travel earns 3x. Purchases through December 31, 2026 earn 5x on all travel.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "15 Elite Night Credits",
+        "description": "Receive 15 IHG One Rewards Elite Night Credits upon account opening and by February 1 each calendar year, counting toward both Elite status and Milestone Rewards.",
+        "category": "status_boost",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Deposited by February 1 each calendar year.",
+        "sort_order": 52,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+        "notes": "Count toward Elite status and Milestone Rewards. Existing cardholders are reported to receive their first 15 from January 1, 2027; confirm in your Chase notice."
+      },
+      "summary": "The card now comes with 15 Elite Night Credits a year, deposited by February 1. New accounts get them at opening; existing cardholders are reported to start on January 1, 2027.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    }
+  ]
+}

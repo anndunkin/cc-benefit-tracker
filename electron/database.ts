@@ -3,7 +3,7 @@ import path from 'path';
 import type {
   Card, CardInput, Program, ProgramInput,
   Benefit, BenefitInput, Usage, UsageInput,
-  BenefitProjection, RefreshChange, RefreshRun, RefreshChangeType,
+  BenefitProjection, RefreshChange, RefreshRun, RefreshChangeType, RefreshStatusInfo, RefreshUnmatched,
   AppFilePayload, ResetCadence, CardNetwork,
   PointsCurrency, PointsCurrencyInput,
 } from './types';
@@ -31,10 +31,14 @@ export function openDatabaseAt(dbPath: string): Database.Database {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   initSchema(db);
-  seedIfFresh(db);
+  lastOpenSeeded = seedIfFresh(db);
   applyDataMigrations(db);
   return db;
 }
+
+let lastOpenSeeded = false;
+/** True when the most recent openDatabaseAt() created and seeded a brand-new database. */
+export function lastOpenWasFresh(): boolean { return lastOpenSeeded; }
 
 /** For tests: inject an in-memory database. */
 export function setDatabase(testDb: Database.Database): void {
@@ -139,7 +143,8 @@ export function initSchema(database: Database.Database): void {
       after_json TEXT,
       review_status TEXT NOT NULL DEFAULT 'pending' CHECK(review_status IN ('pending','approved','rejected')),
       review_notes TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      overwrite_user_edit INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS app_meta (
@@ -162,13 +167,30 @@ export function initSchema(database: Database.Database): void {
     );
   `);
   ensureRelease20Schema(database);
+  ensureRefreshSchema(database);
 }
 
-function metaGet(database: Database.Database, key: string): string | null {
+/**
+ * v1.0.24 additive upgrade for databases created by an older version:
+ * refresh_changes gains points_currency_id (also added by the v1.0.16
+ * migration) and overwrite_user_edit. Safe to run repeatedly.
+ */
+export function ensureRefreshSchema(database: Database.Database): void {
+  const cols = database.prepare(`PRAGMA table_info(refresh_changes)`).all() as { name: string }[];
+  if (cols.length === 0) return;   // table not created yet
+  if (!cols.some(c => c.name === 'points_currency_id')) {
+    database.exec(`ALTER TABLE refresh_changes ADD COLUMN points_currency_id TEXT`);
+  }
+  if (!cols.some(c => c.name === 'overwrite_user_edit')) {
+    database.exec(`ALTER TABLE refresh_changes ADD COLUMN overwrite_user_edit INTEGER NOT NULL DEFAULT 0`);
+  }
+}
+
+export function metaGet(database: Database.Database, key: string): string | null {
   const row = database.prepare('SELECT value FROM app_meta WHERE key = ?').get(key) as { value: string } | undefined;
   return row?.value ?? null;
 }
-function metaSet(database: Database.Database, key: string, value: string): void {
+export function metaSet(database: Database.Database, key: string, value: string): void {
   database.prepare(`INSERT INTO app_meta (key, value) VALUES (?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(key, value);
 }
@@ -210,9 +232,9 @@ function seedVersionLt(database: Database.Database, target: string): boolean {
 
 // v1.0.12: seedIfFresh currently stamps the newest version. Any per-version
 // data migration lives in applyDataMigrations below.
-export function seedIfFresh(database: Database.Database): void {
+export function seedIfFresh(database: Database.Database): boolean {
   const cardCount = (database.prepare('SELECT COUNT(*) AS n FROM cards').get() as { n: number }).n;
-  if (cardCount > 0) return;
+  if (cardCount > 0) return false;
 
   const insertCard = database.prepare(`
     INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url)
@@ -308,10 +330,12 @@ export function seedIfFresh(database: Database.Database): void {
   metaSet(database, 'seed_version', '1.0.16');
   metaSet(database, 'last_refresh_check', new Date().toISOString());
   metaSet(database, 'installed_at', new Date().toISOString());
+  return true;
 }
 
 export function applyDataMigrations(database: Database.Database): { migrations_run: string[] } {
   ensureRelease20Schema(database);
+  ensureRefreshSchema(database);
   const run: string[] = [];
   // v1.0.0 — schema is initial; no data migrations needed.
   if (!metaGet(database, 'schema_version')) {
@@ -2703,11 +2727,11 @@ export function computeProjections(database: Database.Database, refYear: number)
 
 // ─── Refresh (quarterly diff & review) ───────────────────────────────────────
 
-export function refreshGetStatus(database: Database.Database): { last_run_at: string | null; next_due: string; pending_run_id: number | null } {
+export function refreshGetStatus(database: Database.Database): RefreshStatusInfo {
   const last = database.prepare(`SELECT completed_at FROM refresh_runs WHERE status = 'applied' ORDER BY completed_at DESC LIMIT 1`)
     .get() as { completed_at: string } | undefined;
-  const pending = database.prepare(`SELECT id FROM refresh_runs WHERE status = 'draft' ORDER BY started_at DESC LIMIT 1`)
-    .get() as { id: number } | undefined;
+  const pending = database.prepare(`SELECT id, source_notes FROM refresh_runs WHERE status = 'draft' ORDER BY started_at DESC, id DESC LIMIT 1`)
+    .get() as { id: number; source_notes: string | null } | undefined;
 
   // v1.0.19 fix: a database that has never had a completed refresh run used to
   // anchor "next due" at the Unix epoch (new Date(0) = 1970-01-01), which made
@@ -2717,17 +2741,30 @@ export function refreshGetStatus(database: Database.Database): { last_run_at: st
   // never-refreshed install is due 3 months after the app was actually
   // installed, not 3 months after the epoch.
   const installedAtRaw = metaGet(database, 'installed_at');
-  const anchor = last ? new Date(last.completed_at) : new Date(installedAtRaw ?? Date.now());
-  const nextDue = new Date(anchor);
+  // SQLite's datetime('now') is UTC without a zone suffix ("2026-11-22 18:00:00").
+  const parseUtc = (v: string) => new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(v) ? v : `${v.replace(' ', 'T')}Z`);
+  const anchor = last ? parseUtc(last.completed_at) : new Date(installedAtRaw ?? Date.now());
+  const nextDue = new Date(Number.isNaN(anchor.getTime()) ? Date.now() : anchor.getTime());
   nextDue.setUTCMonth(nextDue.getUTCMonth() + 3);
+
+  let unmatched: RefreshUnmatched[] = [];
+  if (pending) {
+    try {
+      const raw = metaGet(database, `refresh_unmatched:${pending.id}`);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) unmatched = parsed as RefreshUnmatched[];
+    } catch { /* ignore malformed meta */ }
+  }
   return {
     last_run_at: last?.completed_at ?? null,
     next_due: nextDue.toISOString().slice(0, 10),
     pending_run_id: pending?.id ?? null,
+    pending_run_notes: pending?.source_notes ?? null,
+    unmatched,
   };
 }
 
-type ChangeInput = Omit<RefreshChange, 'id' | 'refresh_run_id' | 'created_at' | 'review_status' | 'review_notes'>;
+type ChangeInput = Omit<RefreshChange, 'id' | 'refresh_run_id' | 'created_at' | 'review_status' | 'review_notes' | 'overwrite_user_edit' | 'target_user_modified'>;
 
 export function refreshStartRun(database: Database.Database, sourceNotes: string, changes: ChangeInput[]): { run_id: number } {
   if (!Array.isArray(changes) || changes.length === 0) throw new Error('refreshStartRun requires at least one change');
@@ -2746,22 +2783,72 @@ export function refreshStartRun(database: Database.Database, sourceNotes: string
   return { run_id: runId };
 }
 
+const REFRESH_CHANGE_SELECT = `
+  SELECT c.id, c.refresh_run_id, c.change_type, c.card_id, c.program_id, c.benefit_id, c.points_currency_id,
+         c.before_json, c.after_json, c.review_status, c.review_notes, c.created_at, c.overwrite_user_edit,
+         COALESCE(b.is_user_modified, pc.is_user_modified, 0) AS target_user_modified
+  FROM refresh_changes c
+  LEFT JOIN benefits b ON b.id = c.benefit_id
+  LEFT JOIN points_currencies pc ON pc.id = c.points_currency_id
+`;
+
 export function refreshPendingChanges(database: Database.Database, runId: number): RefreshChange[] {
-  return database.prepare(`
-    SELECT id, refresh_run_id, change_type, card_id, program_id, benefit_id, points_currency_id,
-           before_json, after_json, review_status, review_notes, created_at
-    FROM refresh_changes WHERE refresh_run_id = ? ORDER BY id ASC
-  `).all(runId) as RefreshChange[];
+  return database.prepare(`${REFRESH_CHANGE_SELECT} WHERE c.refresh_run_id = ? ORDER BY c.id ASC`).all(runId) as RefreshChange[];
 }
-export function refreshApproveChange(database: Database.Database, id: number, notes?: string): RefreshChange {
-  database.prepare(`UPDATE refresh_changes SET review_status = 'approved', review_notes = ? WHERE id = ?`)
-    .run(notes ?? null, id);
-  return database.prepare(`SELECT * FROM refresh_changes WHERE id = ?`).get(id) as RefreshChange;
+function refreshChangeById(database: Database.Database, id: number): RefreshChange {
+  return database.prepare(`${REFRESH_CHANGE_SELECT} WHERE c.id = ?`).get(id) as RefreshChange;
+}
+/**
+ * Approve one change. `overwriteUserEdit` is the user's explicit, per-row
+ * consent to replace a benefit they edited by hand; without it such a row is
+ * skipped when the run is applied.
+ */
+export function refreshApproveChange(database: Database.Database, id: number, notes?: string, overwriteUserEdit = false): RefreshChange {
+  database.prepare(`UPDATE refresh_changes SET review_status = 'approved', review_notes = ?, overwrite_user_edit = ? WHERE id = ?`)
+    .run(notes ?? null, overwriteUserEdit === true ? 1 : 0, id);
+  return refreshChangeById(database, id);
 }
 export function refreshRejectChange(database: Database.Database, id: number, notes?: string): RefreshChange {
-  database.prepare(`UPDATE refresh_changes SET review_status = 'rejected', review_notes = ? WHERE id = ?`)
+  database.prepare(`UPDATE refresh_changes SET review_status = 'rejected', review_notes = ?, overwrite_user_edit = 0 WHERE id = ?`)
     .run(notes ?? null, id);
-  return database.prepare(`SELECT * FROM refresh_changes WHERE id = ?`).get(id) as RefreshChange;
+  return refreshChangeById(database, id);
+}
+
+// Benefit columns a refresh may write. Nullable ones can be cleared by an
+// explicit null in after_json; the rest ignore null (keep the current value).
+const REFRESH_BENEFIT_COLS: Record<string, boolean /* nullable */> = {
+  title: false, category: false, reset_cadence: false,
+  description: true, uses_per_period: true, value_usd: true, spend_threshold_usd: true,
+  expiration_note: true, reset_years: true, multiplier_rate: true, multiplier_currency: true,
+  spend_category: true, spend_category_note: true, previous_value_usd: true,
+  value_effective_date: true, source_url: true, notes: true,
+};
+const REFRESH_CARD_COLS: Record<string, boolean> = {
+  name: false, issuer: false, network: false, annual_fee_usd: true, source_url: true, notes: true,
+};
+
+function parseAfter(json: string | null): { payload: Record<string, unknown>; meta: Record<string, unknown> | null } {
+  if (!json) return { payload: {}, meta: null };
+  const parsed = JSON.parse(json);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { payload: {}, meta: null };
+  const { _meta, ...payload } = parsed as Record<string, unknown>;
+  return { payload, meta: _meta && typeof _meta === 'object' ? _meta as Record<string, unknown> : null };
+}
+
+/** Build "col = ?" assignments for the whitelisted keys present in payload. */
+function refreshAssignments(payload: Record<string, unknown>, cols: Record<string, boolean>): { sets: string[]; values: unknown[] } {
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  for (const [col, nullable] of Object.entries(cols)) {
+    if (!Object.prototype.hasOwnProperty.call(payload, col)) continue;
+    const v = payload[col];
+    if (v === undefined) continue;
+    if (v === null && !nullable) continue;
+    if (v !== null && typeof v !== 'string' && typeof v !== 'number') continue;
+    sets.push(`${col} = ?`);
+    values.push(v);
+  }
+  return { sets, values };
 }
 
 /** Apply all approved changes in a draft run to the live tables. */
@@ -2771,91 +2858,99 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
   const tx = database.transaction(() => {
     for (const c of changes) {
       if (c.review_status !== 'approved') { skipped++; continue; }
-      // NEVER overwrite a benefit the user has manually modified.
-      if (c.change_type === 'modified' && c.benefit_id) {
-        const cur = benefitGetById(database, c.benefit_id);
-        if (cur && cur.is_user_modified === 1) { skipped++; continue; }
+      const { payload, meta } = parseAfter(c.after_json);
+
+      // ── Points currencies ──
+      if (c.points_currency_id) {
+        if (c.change_type === 'added' && c.after_json) {
+          // New points currency proposed by a refresh run (rare — the seed list
+          // already covers all currencies relevant to the tracked cards/programs).
+          if (!pointsCurrencyGetById(database, c.points_currency_id)) {
+            pointsCurrencyCreate(database, { ...(payload as unknown as PointsCurrencyInput), id: c.points_currency_id });
+          }
+          applied++;
+        } else if (c.change_type === 'modified' && c.after_json) {
+          // Quarterly points-value update (e.g. new One Mile at a Time cent
+          // figures). NEVER overwrite a currency the user has manually edited
+          // unless they explicitly approved replacing their edit.
+          const cur = pointsCurrencyGetById(database, c.points_currency_id);
+          if (!cur) { skipped++; continue; }
+          const keepUserFlag = cur.is_user_modified === 1;
+          if (keepUserFlag && c.overwrite_user_edit !== 1) { skipped++; continue; }
+          const p = payload as Partial<PointsCurrencyInput>;
+          database.prepare(`
+            UPDATE points_currencies SET
+              value_cents_per_point = COALESCE(?, value_cents_per_point),
+              source_name = COALESCE(?, source_name),
+              source_url = ?,
+              notes = ?,
+              is_user_modified = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+          `).run(
+            p.value_cents_per_point ?? null,
+            p.source_name ?? null,
+            p.source_url ?? cur.source_url,
+            p.notes ?? cur.notes,
+            keepUserFlag ? 1 : 0,
+            c.points_currency_id,
+          );
+          applied++;
+        } else {
+          skipped++;
+        }
+        continue;
       }
+
+      // ── Cards (annual fee, name) — v1.0.24 ──
+      if (c.change_type === 'modified' && !c.benefit_id && c.card_id && meta?.scope === 'card') {
+        const { sets, values } = refreshAssignments(payload, REFRESH_CARD_COLS);
+        if (sets.length === 0 || !cardGetById(database, c.card_id)) { skipped++; continue; }
+        database.prepare(`UPDATE cards SET ${sets.join(', ')} WHERE id = ?`).run(...values, c.card_id);
+        applied++;
+        continue;
+      }
+
+      // ── Benefits ──
       if (c.change_type === 'added' && c.after_json) {
-        const payload = JSON.parse(c.after_json) as BenefitInput;
-        benefitCreate(database, payload, false);
+        const { prerequisite_benefit_title, ...row } = payload as Record<string, unknown>;
+        const created = benefitCreate(database, row as unknown as BenefitInput, false);
+        if (typeof prerequisite_benefit_title === 'string' && prerequisite_benefit_title) {
+          const parent = database.prepare('SELECT id FROM benefits WHERE card_id IS ? AND program_id IS ? AND title = ? ORDER BY is_active DESC, id LIMIT 1')
+            .get(created.card_id, created.program_id, prerequisite_benefit_title) as { id: number } | undefined;
+          if (parent) database.prepare('UPDATE benefits SET prerequisite_benefit_id = ? WHERE id = ?').run(parent.id, created.id);
+        }
         applied++;
       } else if (c.change_type === 'modified' && c.benefit_id && c.after_json) {
-        const payload = JSON.parse(c.after_json) as Partial<BenefitInput>;
-        // Use raw UPDATE to leave is_user_modified = 0 (refresh-applied, not user edit).
         const b = benefitGetById(database, c.benefit_id);
         if (!b) { skipped++; continue; }
+        // NEVER overwrite a benefit the user has manually modified, unless the
+        // user explicitly approved replacing their edit for this row. Only the
+        // fields named in the change are written, so other hand edits (dates,
+        // notes, visibility) survive, and the row stays flagged as hand-edited.
+        const keepUserFlag = b.is_user_modified === 1;
+        if (keepUserFlag && c.overwrite_user_edit !== 1) { skipped++; continue; }
+        const { sets, values } = refreshAssignments(payload, REFRESH_BENEFIT_COLS);
+        if (sets.length === 0) { skipped++; continue; }
         database.prepare(`
-          UPDATE benefits SET
-            title = COALESCE(?, title),
-            description = ?,
-            category = COALESCE(?, category),
-            reset_cadence = COALESCE(?, reset_cadence),
-            uses_per_period = ?,
-            value_usd = ?,
-            spend_threshold_usd = ?,
-            expiration_note = ?,
-            source_url = ?,
-            notes = ?,
-            is_user_modified = 0,
-            updated_at = datetime('now')
-          WHERE id = ?
-        `).run(
-          payload.title ?? null,
-          payload.description ?? b.description,
-          payload.category ?? null,
-          payload.reset_cadence ?? null,
-          payload.uses_per_period ?? b.uses_per_period,
-          payload.value_usd ?? b.value_usd,
-          payload.spend_threshold_usd ?? b.spend_threshold_usd,
-          payload.expiration_note ?? b.expiration_note,
-          payload.source_url ?? b.source_url,
-          payload.notes ?? b.notes,
-          c.benefit_id,
-        );
+          UPDATE benefits SET ${sets.join(', ')}, is_user_modified = ?, updated_at = datetime('now') WHERE id = ?
+        `).run(...values, keepUserFlag ? 1 : 0, c.benefit_id);
         applied++;
       } else if (c.change_type === 'removed' && c.benefit_id) {
         // Removed benefits are deactivated (soft-delete). Preserves usage history.
+        // A hand-edited benefit is only retired with the same explicit consent
+        // that replacing its text would need.
+        const b = benefitGetById(database, c.benefit_id);
+        if (!b) { skipped++; continue; }
+        if (b.is_user_modified === 1 && c.overwrite_user_edit !== 1) { skipped++; continue; }
         database.prepare(`UPDATE benefits SET is_active = 0, updated_at = datetime('now') WHERE id = ?`).run(c.benefit_id);
-        applied++;
-      } else if (c.change_type === 'added' && c.points_currency_id && c.after_json) {
-        // New points currency proposed by a refresh run (rare — the seed list
-        // already covers all currencies relevant to the tracked cards/programs).
-        const payload = JSON.parse(c.after_json) as PointsCurrencyInput;
-        if (!pointsCurrencyGetById(database, c.points_currency_id)) {
-          pointsCurrencyCreate(database, { ...payload, id: c.points_currency_id });
-        }
-        applied++;
-      } else if (c.change_type === 'modified' && c.points_currency_id && c.after_json) {
-        // Quarterly points-value update (e.g. new One Mile at a Time cent
-        // figures). NEVER overwrite a currency the user has manually edited —
-        // same is_user_modified guard used for benefits above.
-        const cur = pointsCurrencyGetById(database, c.points_currency_id);
-        if (!cur) { skipped++; continue; }
-        if (cur.is_user_modified === 1) { skipped++; continue; }
-        const payload = JSON.parse(c.after_json) as Partial<PointsCurrencyInput>;
-        database.prepare(`
-          UPDATE points_currencies SET
-            value_cents_per_point = COALESCE(?, value_cents_per_point),
-            source_name = COALESCE(?, source_name),
-            source_url = ?,
-            notes = ?,
-            is_user_modified = 0,
-            updated_at = datetime('now')
-          WHERE id = ?
-        `).run(
-          payload.value_cents_per_point ?? null,
-          payload.source_name ?? null,
-          payload.source_url ?? cur.source_url,
-          payload.notes ?? cur.notes,
-          c.points_currency_id,
-        );
         applied++;
       } else {
         skipped++;
       }
     }
     database.prepare(`UPDATE refresh_runs SET status = 'applied', completed_at = datetime('now') WHERE id = ?`).run(runId);
+    database.prepare(`DELETE FROM app_meta WHERE key = ?`).run(`refresh_unmatched:${runId}`);
   });
   tx();
   return { applied, skipped };
@@ -2863,6 +2958,7 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
 
 export function refreshDiscardRun(database: Database.Database, runId: number): void {
   database.prepare(`UPDATE refresh_runs SET status = 'discarded', completed_at = datetime('now') WHERE id = ?`).run(runId);
+  database.prepare(`DELETE FROM app_meta WHERE key = ?`).run(`refresh_unmatched:${runId}`);
 }
 
 // ─── File payloads ───────────────────────────────────────────────────────────
@@ -2950,11 +3046,13 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
     for (const r of payload.refresh_runs) insRun.run(r);
     const insCh = database.prepare(`
       INSERT INTO refresh_changes (id, refresh_run_id, change_type, card_id, program_id, benefit_id,
-        before_json, after_json, review_status, review_notes, created_at)
+        points_currency_id, before_json, after_json, review_status, review_notes, created_at, overwrite_user_edit)
       VALUES (@id, @refresh_run_id, @change_type, @card_id, @program_id, @benefit_id,
-        @before_json, @after_json, @review_status, @review_notes, @created_at)
+        @points_currency_id, @before_json, @after_json, @review_status, @review_notes, @created_at, @overwrite_user_edit)
     `);
-    for (const c of payload.refresh_changes) insCh.run(c);
+    for (const c of payload.refresh_changes) {
+      insCh.run({ ...c, points_currency_id: c.points_currency_id ?? null, overwrite_user_edit: c.overwrite_user_edit === 1 ? 1 : 0 });
+    }
     const insPc = database.prepare(`
       INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name,
         source_url, notes, is_active, is_user_modified, updated_at, created_at)

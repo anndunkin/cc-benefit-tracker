@@ -2,6 +2,24 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.24 - 2026-11-22
+
+### Benefit refresh
+- **The app can now propose a refresh.** Earlier versions had the review screen but nothing that could create a refresh, so none was ever offered. Each release now carries a researched list of published benefit changes. On first launch after upgrading, the app compares that list with your data and opens a draft on **Quarterly Refresh** with a banner: "Benefit changes are ready for your review."
+- **Nothing changes until you approve it.** Each row shows what changed, the effective date, the before and after values, and links to the issuer or program page it came from. Approve or reject row by row, or use **Approve all undecided**, then **Apply approved**. **Discard refresh** asks for confirmation and leaves your benefits as they were.
+- **Hand-edited benefits stay yours.** A row for a benefit you edited by hand is marked, is skipped by a normal approval and by "Approve all", and is replaced only if you choose **Approve and replace my edit** on that row. Even then only the listed fields change, and your usage history is kept.
+- **November 2026 refresh included:** 88 proposed changes across the Amex Platinum, Hilton Aspire and Hilton Honors Diamond, Delta Reserve and Medallion, Citi / AAdvantage Executive and AAdvantage status, Citi Prestige, Marriott Bonvoy cards and status, IHG Premier, World of Hyatt and British Airways Visa, plus two point valuations. Each change was researched against the issuer or program page and checked a second time independently; items that could not be confirmed were left out.
+- **Dated changes wait for their date.** Changes that start later are held and offered on the day they take effect: January 1, 2027 (IHG Premier fee, 50,000-point certificate, narrower 5x travel, 15 Elite Night Credits, end of the $20,000 spend bonus), January 6, 2027 (Hilton Aspire Venue Collection enrollment) and February 1, 2027 (Delta Choice Benefit Hyatt free nights).
+- **Check for benefit changes** and **Load refresh file...** on the Quarterly Refresh screen re-run the built-in comparison or load a refresh file (JSON, same format as `refresh-proposals/` in the repository). Changes that cannot be matched to one of your benefits are listed rather than dropped.
+- New databases start with the current refresh already applied.
+
+### Safety
+- Refresh files are treated as untrusted input: size limit, strict field and value validation, https-only source links, and no changes outside the benefit, card-fee and point-value fields.
+- Review decisions, the replace-my-edit consent and the record of which refreshes were already offered are saved in the database file and in JSON exports.
+
+### Verified
+- TypeScript checks, production build and all 266 tests pass (57 new). The installer test now also confirms that an upgraded database is offered the refresh as a draft, with every change matched and nothing applied without approval, and that the review actions are visible at 1000 x 640.
+
 ## v1.0.23 - 2026-11-03
 
 ### Changed

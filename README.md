@@ -7,7 +7,7 @@ Windows desktop application that tracks the credit card and airline/hotel status
 - **Yearly usage tracking** for benefits that reset (annual, semiannual, quarterly, monthly credits and choice benefits).
 - **Separate "Programs" section** for status-driven benefits (Delta Medallion, Marriott Bonvoy, AAdvantage, IHG Ambassador) so complimentary upgrades and elite bonuses don't clutter the card list.
 - **Unlimited benefits** (award-flight discounts, priority boarding, free bags, etc.) are tracked separately from consumable credits.
-- **Diff & review quarterly refresh workflow** — the app proposes a change set; you approve or reject each row before it touches your saved benefits. Any benefit you have edited by hand is never overwritten by a refresh.
+- **Diff & review quarterly refresh workflow** — each release carries a researched list of published benefit changes; the app compares it with your data and proposes a change set with sources and effective dates. You approve or reject each row before it touches your saved benefits. Any benefit you have edited by hand is never overwritten by a refresh unless you choose "Approve and replace my edit" for that row.
 - **Full file management** — save your database anywhere, load it back, export a portable JSON payload.
 - **Self-signed Windows installer** so the executable identifies itself as coming from Dunkin Global Advisors.
 - **13 seeded cards, 4 seeded loyalty programs, 176 seeded benefits** — every value is linked to its published source page for quick verification.
@@ -44,7 +44,8 @@ is updated to the latest stable 12.x release; it intentionally does not use
 - **Programs** — separate table for status/loyalty programs. Same fields.
 - **Benefits** — belong to exactly one card OR one program. Each has a title, category, reset cadence, uses per period, dollar value, optional spend threshold, expiration note, and a source URL back to the official page.
 - **Usages** — a row per redemption: benefit, date, dollar amount, optional note. The app tags each row with the correct period key at insert time so "used this quarter" queries never do calendar math on the fly.
-- **Refresh runs** — a diff between the current database and the newly proposed benefit list. Each pending change is `pending`, then `approved` or `rejected`. Applying a run skips any benefit whose `is_user_modified` flag is set.
+- **Refresh runs** — a diff between the current database and the newly proposed benefit list. Each pending change is `pending`, then `approved` or `rejected`. Applying a run skips any benefit whose `is_user_modified` flag is set. The exception is a row you explicitly approved with "Approve and replace my edit".
+- **Refresh proposals** — the prepared change lists behind a refresh run, kept as JSON in `refresh-proposals/` and compiled into the app by `scripts/build-refresh-proposals.mjs`. A proposal can carry a `not_before` date so that changes are offered on the day they take effect. The same JSON can be loaded by hand with **Load refresh file...** on the Quarterly Refresh screen.
 
 ## File format
 
@@ -61,6 +62,8 @@ tests/security.test.ts      · SQL injection, secret scanning, electron security
 tests/validation.test.ts    · Required fields, CHECK constraints, cadence validation
 tests/boundary.test.ts      · Period math, unicode, extreme values, 100+ benefits
 tests/functionality.test.ts · CRUD, seed idempotence, refresh workflow, export/import round-trip
+tests/refreshProposal.test.ts · Refresh proposals: validation of untrusted files, diffing, hand-edit protection, bundled refresh data
+tests/refresh-ui.test.tsx   · Quarterly Refresh screen: review, approve, replace-my-edit consent, discard confirmation
 ```
 
 Run `npm run test` to see the full suite. All 139 tests pass on a clean checkout.

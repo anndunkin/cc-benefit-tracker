@@ -314,6 +314,74 @@ export interface RefreshChange {
   review_status: RefreshStatus;
   review_notes: string | null;
   created_at: string;
+  // v1.0.24: set when the user explicitly approved replacing a benefit they
+  // had edited by hand. Without it, hand-edited benefits are always skipped.
+  overwrite_user_edit?: number;      // 0 | 1
+  // v1.0.24 (read-only, computed): 1 when the targeted benefit / currency is
+  // currently flagged as hand-edited.
+  target_user_modified?: number;     // 0 | 1
+}
+
+// ─── Refresh proposals (v1.0.24) ───────────────────────────────────────────────
+// A proposal is a prepared list of published benefit changes. It is bundled
+// with the app or loaded from a file, compared with the live database, and
+// turned into a draft RefreshRun for review. Benefits are identified by
+// owner + title because row ids differ between databases.
+
+export interface RefreshProposalSource {
+  url: string;
+  label?: string | null;
+  source_type?: 'official' | 'secondary';
+}
+
+export interface RefreshProposalChange {
+  scope: 'benefit' | 'card' | 'points_currency';
+  change_type: RefreshChangeType;
+  card_id?: string | null;
+  program_id?: string | null;
+  points_currency_id?: string | null;
+  match_title?: string | null;            // current benefit title (modified / removed)
+  after?: Record<string, unknown>;        // modified: only the fields that change; added: the full row
+  summary: string;                        // one plain-English sentence
+  effective_date?: string | null;         // YYYY-MM-DD
+  sources: RefreshProposalSource[];
+}
+
+export interface RefreshProposal {
+  format: 'cc-benefit-tracker-refresh';
+  format_version: 1;
+  proposal_id: string;
+  title: string;
+  prepared_on: string;                    // YYYY-MM-DD
+  not_before?: string | null;             // do not offer before this date (changes that take effect later)
+  changes: RefreshProposalChange[];
+}
+
+/** A proposed change that could not be lined up with a row in this database. */
+export interface RefreshUnmatched {
+  owner_id: string;
+  title: string;
+  summary: string;
+  reason: string;
+  sources: RefreshProposalSource[];
+}
+
+export interface RefreshProposalResult {
+  state: 'created' | 'applied' | 'up_to_date' | 'draft_exists' | 'cancelled';
+  run_id: number | null;
+  title: string | null;
+  proposed: number;
+  already_current: number;
+  unmatched: RefreshUnmatched[];
+  error?: string;
+}
+
+export interface RefreshStatusInfo {
+  last_run_at: string | null;
+  next_due: string;
+  pending_run_id: number | null;
+  pending_run_notes: string | null;
+  unmatched: RefreshUnmatched[];
 }
 
 // ─── File management ─────────────────────────────────────────────────────────
@@ -378,14 +446,18 @@ export interface WindowApi {
     all: (refYear?: number) => Promise<BenefitProjection[]>;
   };
   refresh: {
-    getStatus: () => Promise<{ last_run_at: string | null; next_due: string; pending_run_id: number | null }>;
+    getStatus: () => Promise<RefreshStatusInfo>;
     startRun: (sourceNotes: string, changes: Array<Omit<RefreshChange, 'id' | 'refresh_run_id' | 'created_at' | 'review_status' | 'review_notes'>>) =>
       Promise<{ run_id: number }>;
     getPendingChanges: (runId: number) => Promise<RefreshChange[]>;
-    approveChange: (changeId: number, notes?: string) => Promise<RefreshChange>;
+    approveChange: (changeId: number, notes?: string, overwriteUserEdit?: boolean) => Promise<RefreshChange>;
     rejectChange: (changeId: number, notes?: string) => Promise<RefreshChange>;
     applyRun: (runId: number) => Promise<{ applied: number; skipped: number }>;
     discardRun: (runId: number) => Promise<{ ok: true }>;
+    /** Compare the refresh bundled with this version against the open file and propose any differences. */
+    checkBundled: () => Promise<RefreshProposalResult>;
+    /** Let the user pick a refresh (.json) file and propose its changes. */
+    importProposal: () => Promise<RefreshProposalResult>;
   };
   pointsCurrencies: {
     getAll: () => Promise<PointsCurrency[]>;

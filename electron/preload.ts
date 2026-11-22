@@ -41,10 +41,12 @@ const api: WindowApi = {
     getStatus:         ()               => ipcRenderer.invoke('refresh:getStatus'),
     startRun:          (notes, changes) => ipcRenderer.invoke('refresh:startRun', notes, changes),
     getPendingChanges: (runId)          => ipcRenderer.invoke('refresh:getPendingChanges', runId),
-    approveChange:     (id, notes)      => ipcRenderer.invoke('refresh:approveChange', id, notes),
+    approveChange:     (id, notes, overwrite) => ipcRenderer.invoke('refresh:approveChange', id, notes, overwrite),
     rejectChange:      (id, notes)      => ipcRenderer.invoke('refresh:rejectChange', id, notes),
     applyRun:          (runId)          => ipcRenderer.invoke('refresh:applyRun', runId),
     discardRun:        (runId)          => ipcRenderer.invoke('refresh:discardRun', runId),
+    checkBundled:      ()               => ipcRenderer.invoke('refresh:checkBundled'),
+    importProposal:    ()               => ipcRenderer.invoke('refresh:importProposal'),
   },
   pointsCurrencies: {
     getAll:   ()               => ipcRenderer.invoke('pointsCurrencies:getAll'),

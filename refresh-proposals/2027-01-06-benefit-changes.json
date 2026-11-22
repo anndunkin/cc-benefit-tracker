@@ -1,0 +1,41 @@
+{
+  "format": "cc-benefit-tracker-refresh",
+  "format_version": 1,
+  "proposal_id": "2027-01-06-benefit-changes",
+  "title": "Benefit changes effective 2027-01-06",
+  "prepared_on": "2026-11-22",
+  "not_before": "2027-01-06",
+  "changes": [
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "hilton_aspire",
+      "after": {
+        "title": "$250 American Express Venue Collection Concessions Credit",
+        "description": "10% back in statement credits on qualifying food and beverage concessions purchases at participating stadiums and arenas in the American Express Venue Collection, up to $250 per calendar year. Enrollment required.",
+        "category": "entertainment_credit",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 250,
+        "expiration_note": "Calendar-year cap; unused amounts do not roll over.",
+        "sort_order": 115,
+        "source_url": "https://www.americanexpress.com/en-us/benefits/membership/experiences/venues/concessions-enrollment/",
+        "notes": "Enroll the Aspire card in the Benefits section of your Amex account. Each eligible Basic Card is enrolled separately; Additional Card Members cannot enroll, but their qualifying purchases earn credits on the enrolled account, capped at $250 per enrolled Card Account per calendar year. Merchandise, tickets, parking, and suite/catering orders do not qualify. Log the 10% amount received on each qualifying purchase."
+      },
+      "summary": "From January 6, 2027 the Amex Venue Collection concessions credit can be enrolled separately on each eligible card, so the Hilton Aspire gets its own 10% back, up to $250 per calendar year. Until then Amex allows one enrolled card per Card Member, and you track it on the Delta Reserve.",
+      "effective_date": "2027-01-06",
+      "sources": [
+        {
+          "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/benefits/membership/experiences/venues/concessions-enrollment/",
+          "label": "American Express",
+          "source_type": "official"
+        }
+      ]
+    }
+  ]
+}

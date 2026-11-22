@@ -1,0 +1,66 @@
+{
+  "format": "cc-benefit-tracker-refresh",
+  "format_version": 1,
+  "proposal_id": "2027-02-01-benefit-changes",
+  "title": "Benefit changes effective 2027-02-01",
+  "prepared_on": "2026-11-22",
+  "not_before": "2027-02-01",
+  "changes": [
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "delta_medallion",
+      "after": {
+        "title": "Platinum Choice - World of Hyatt Category 1-4 Free Night Award",
+        "description": "1 World of Hyatt Category 1-4 Free Night Award selectable as a Platinum Medallion Choice Benefit starting with the 2028 Medallion Year (beginning February 1, 2027).",
+        "category": "free_night",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per Medallion Year (available beginning Feb 1, 2027 for 2028 Medallion Year Choice Benefit selections).",
+        "sort_order": 21,
+        "source_url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+        "notes": "Requires linked Delta SkyMiles and World of Hyatt accounts. Available beginning February 1, 2027 as a 2028 Medallion Year Choice Benefit; not available for 2026 or 2027 Medallion Year Choice Benefit selections.",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "Platinum Medallion Choice Benefit (1 selection)"
+      },
+      "summary": "New Platinum Medallion Choice Benefit option for the 2028 Medallion Year, selectable from February 1, 2027: a World of Hyatt Category 1-4 Free Night Award.",
+      "effective_date": "2027-02-01",
+      "sources": [
+        {
+          "url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+          "label": "Delta",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "delta_medallion",
+      "after": {
+        "title": "Diamond Choice - World of Hyatt Category 1-7 Free Night Award",
+        "description": "1 World of Hyatt Category 1-7 Free Night Award selectable as a Diamond Medallion Choice Benefit starting with the 2028 Medallion Year (beginning February 1, 2027).",
+        "category": "free_night",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per Medallion Year (available beginning Feb 1, 2027 for 2028 Medallion Year Choice Benefit selections).",
+        "sort_order": 46,
+        "source_url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+        "notes": "Requires linked Delta SkyMiles and World of Hyatt accounts. Available beginning February 1, 2027 as a 2028 Medallion Year Choice Benefit; not available for 2026 or 2027 Medallion Year Choice Benefit selections. Delta has not yet specified whether this option consumes 1 or multiple Diamond Choice selections.",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "Diamond Medallion Choice Benefits (3 selections)"
+      },
+      "summary": "New Diamond Medallion Choice Benefit option for the 2028 Medallion Year, selectable from February 1, 2027: a World of Hyatt Category 1-7 Free Night Award.",
+      "effective_date": "2027-02-01",
+      "sources": [
+        {
+          "url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+          "label": "Delta",
+          "source_type": "official"
+        }
+      ]
+    }
+  ]
+}

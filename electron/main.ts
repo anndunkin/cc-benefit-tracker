@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, shell, d
 import path from 'path';
 import fs from 'fs';
 import {
-  getDatabase, openDatabaseAt,
+  getDatabase, openDatabaseAt, lastOpenWasFresh,
   cardsGetAll, cardGetById, cardCreate, cardUpdate, cardDelete, cardSetVisible,
   programsGetAll, programGetById, programCreate, programUpdate, programDelete,
   benefitsGetAll, benefitsForCard, benefitsForProgram, benefitGetById,
@@ -21,6 +21,8 @@ import type {
   PointsCurrencyInput,
 } from './types';
 import { resolveIconPath } from './iconPath';
+import { offerBundledProposals, importProposalText, MAX_PROPOSAL_BYTES } from './refreshProposal';
+import type { RefreshProposalResult } from './types';
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const APP_USER_MODEL_ID = 'com.dunkinglobal.ccbenefittracker';
@@ -44,6 +46,19 @@ function logError(msg: string): void {
     fs.appendFileSync(path.join(app.getPath('userData'), 'cc-benefit-tracker-error.log'),
       `[${new Date().toISOString()}] ${msg}\n`);
   } catch { /* ignore */ }
+}
+
+/**
+ * v1.0.24: after a database is opened, offer the benefit refresh bundled with
+ * this version. Existing data gets a draft run to review (nothing is changed
+ * until the user approves it); a brand-new database starts from the refreshed
+ * catalog. A failure here must never stop the app from opening.
+ */
+function offerBundledRefresh(fresh: boolean): void {
+  try {
+    const r = offerBundledProposals(getDatabase(), { fresh });
+    logError(`bundled refresh: ${JSON.stringify({ state: r.state, run_id: r.run_id, proposed: r.proposed, already_current: r.already_current, unmatched: r.unmatched.length })}`);
+  } catch (err) { logError(`bundled refresh failed: ${err}`); }
 }
 
 function createWindow(): void {
@@ -247,6 +262,7 @@ app.whenReady().then(() => {
   currentDbPath = defaultDbPath();
   openDatabaseAt(currentDbPath);
   logError(`data migrations: ${JSON.stringify(applyDataMigrations(getDatabase()))}`);
+  offerBundledRefresh(lastOpenWasFresh());
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -298,10 +314,52 @@ ipcMain.handle('refresh:getStatus', () => refreshGetStatus(getDatabase()));
 ipcMain.handle('refresh:startRun', (_e, sourceNotes: string, changes: any[]) =>
   refreshStartRun(getDatabase(), sourceNotes, changes));
 ipcMain.handle('refresh:getPendingChanges', (_e, runId: number) => refreshPendingChanges(getDatabase(), runId));
-ipcMain.handle('refresh:approveChange', (_e, id: number, notes?: string) => refreshApproveChange(getDatabase(), id, notes));
+ipcMain.handle('refresh:approveChange', (_e, id: number, notes?: string, overwrite?: boolean) =>
+  refreshApproveChange(getDatabase(), id, notes, overwrite === true));
 ipcMain.handle('refresh:rejectChange',  (_e, id: number, notes?: string) => refreshRejectChange(getDatabase(), id, notes));
-ipcMain.handle('refresh:applyRun',      (_e, runId: number) => refreshApplyRun(getDatabase(), runId));
-ipcMain.handle('refresh:discardRun',    (_e, runId: number) => { refreshDiscardRun(getDatabase(), runId); return { ok: true }; });
+// After a run is finished, offer the next bundled refresh that has come due (if any).
+ipcMain.handle('refresh:applyRun',      (_e, runId: number) => {
+  const result = refreshApplyRun(getDatabase(), runId);
+  offerBundledRefresh(false);
+  return result;
+});
+ipcMain.handle('refresh:discardRun',    (_e, runId: number) => {
+  refreshDiscardRun(getDatabase(), runId);
+  offerBundledRefresh(false);
+  return { ok: true };
+});
+
+const NO_PROPOSAL: RefreshProposalResult = { state: 'cancelled', run_id: null, title: null, proposed: 0, already_current: 0, unmatched: [] };
+
+// Manual "check again": re-compare the refresh bundled with this version,
+// including one that was applied or discarded earlier.
+ipcMain.handle('refresh:checkBundled', (): RefreshProposalResult => {
+  try { return offerBundledProposals(getDatabase(), { force: true }); }
+  catch (err) { logError(`refresh:checkBundled ${err}`); return { ...NO_PROPOSAL, error: String(err instanceof Error ? err.message : err) }; }
+});
+
+// Load a refresh file chosen by the user. The file is untrusted: it is size
+// limited, parsed as JSON only, and validated field by field before anything
+// is written. It can only create a draft run for review.
+ipcMain.handle('refresh:importProposal', async (): Promise<RefreshProposalResult> => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog(activeWindow(), {
+      title: 'Load Benefit Refresh File',
+      filters: [{ name: 'Benefit refresh', extensions: ['json'] }],
+      properties: ['openFile'],
+    });
+    if (canceled || !filePaths.length) return NO_PROPOSAL;
+    const chosen = filePaths[0];
+    if (!fs.existsSync(chosen) || !safeChosenPath(chosen, ['.json'])) {
+      return { ...NO_PROPOSAL, error: 'Invalid file path.' };
+    }
+    if (fs.statSync(chosen).size > MAX_PROPOSAL_BYTES) return { ...NO_PROPOSAL, error: 'The refresh file is too large.' };
+    return importProposalText(getDatabase(), fs.readFileSync(chosen, 'utf-8'));
+  } catch (err) {
+    logError(`refresh:importProposal ${err}`);
+    return { ...NO_PROPOSAL, error: String(err instanceof Error ? err.message : err) };
+  }
+});
 
 // ─── Points currencies ───────────────────────────────────────────────────────
 ipcMain.handle('pointsCurrencies:getAll', () => pointsCurrenciesGetAll(getDatabase()));
@@ -337,6 +395,7 @@ ipcMain.handle('file:newDb', async (): Promise<FileResult> => {
     if (fs.existsSync(filePath)) fs.rmSync(filePath);
     currentDbPath = filePath;
     openDatabaseAt(filePath);
+    offerBundledRefresh(lastOpenWasFresh());
     return { success: true, filePath };
   } catch (err) { logError(`file:newDb ${err}`); return { success: false, error: String(err) }; }
 });
@@ -355,6 +414,7 @@ ipcMain.handle('file:openDb', async (): Promise<FileResult> => {
     }
     currentDbPath = chosen;
     openDatabaseAt(chosen);
+    offerBundledRefresh(lastOpenWasFresh());
     return { success: true, filePath: chosen };
   } catch (err) { logError(`file:openDb ${err}`); return { success: false, error: String(err) }; }
 });
@@ -410,6 +470,7 @@ ipcMain.handle('file:importJson', async (): Promise<FileResult> => {
     const raw = fs.readFileSync(chosen, 'utf-8');
     const payload = JSON.parse(raw) as AppFilePayload;
     importFilePayload(getDatabase(), payload);
+    offerBundledRefresh(false);
     return { success: true, filePath: chosen, payload };
   } catch (err) { logError(`file:importJson ${err}`); return { success: false, error: String(err) }; }
 });

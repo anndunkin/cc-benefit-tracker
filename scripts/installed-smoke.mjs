@@ -58,6 +58,7 @@ try {
     const nights = all.find(b => b.card_id === 'marriott_premier' && b.title.startsWith('1 Elite Night Credit per'));
     const hyatt = all.find(b => b.card_id === 'hyatt_visa' && b.title.startsWith('Annual'));
     const history = await window.api.usages.getForBenefit(nights.id);
+    let refreshEvidence = null;
     if (${legacy}) {
       if (!history.some(u => u.notes === 'upgrade-preservation-sentinel')) {
         await window.api.usages.create({benefit_id:nights.id, used_on:'2026-08-15', notes:'upgrade-preservation-sentinel'});
@@ -83,8 +84,19 @@ try {
       const ids = all.filter(b => b.prerequisite_benefit_id === diamond.id && !b.title.includes('Membership')).slice(0,3).map(b=>b.id);
       await window.api.benefits.setChoices(diamond.id, 2026, ids);
       if ((await window.api.benefits.getChoices(diamond.id,2026)).length !== 3) throw Error('Choice persistence failed');
+      // v1.0.24: an upgraded database must be offered the bundled benefit refresh as a
+      // draft for review, with every change matched and nothing applied without approval.
+      const refresh = await window.api.refresh.getStatus();
+      if (!refresh.pending_run_id) throw Error('Upgrade did not offer the bundled benefit refresh for review');
+      const proposed = await window.api.refresh.getPendingChanges(refresh.pending_run_id);
+      if (proposed.length < 20) throw Error('Bundled refresh offered only ' + proposed.length + ' changes');
+      if (proposed.some(c => c.review_status !== 'pending')) throw Error('Refresh changes were decided without the user');
+      if (refresh.unmatched.length) throw Error('Bundled refresh could not match: ' + refresh.unmatched.map(u => u.identifier ?? u.title ?? JSON.stringify(u)).join('; '));
+      const exec = (await window.api.cards.getAll()).find(c => c.id === 'aa_executive');
+      if (exec.annual_fee_usd !== 595) throw Error('A refresh change was applied without approval');
+      refreshEvidence = {run_id: refresh.pending_run_id, proposed: proposed.length, unmatched: 0};
     }
-    return {version:await window.api.app.getVersion(), dbPath:await window.api.file.currentPath(), notes:'installed native SQLite + preload IPC checks passed'};
+    return {version:await window.api.app.getVersion(), dbPath:await window.api.file.currentPath(), refresh:refreshEvidence, notes:'installed native SQLite + preload IPC checks passed'};
   })()`);
   fs.mkdirSync('release-evidence', { recursive: true });
   fs.writeFileSync('release-evidence/runtime.json', JSON.stringify(result, null, 2));
@@ -98,6 +110,14 @@ try {
     assert(await evaluate("!!document.querySelector('#earned-nights')"), 'Earned nights modal unavailable');
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('release-evidence/earned-nights-1000x640.png', Buffer.from(screenshot.data, 'base64'));
+    // The review screen must show its actions at a small window size.
+    await evaluate("location.hash = '#/refresh'");
+    await delay(1500);
+    assert(await evaluate("document.body.innerText.includes('Apply approved') && document.body.innerText.includes('Approve all undecided')"), 'Refresh review actions unavailable');
+    assert(await evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent === 'Apply approved'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth; })()"), 'Apply approved is not visible at 1000x640');
+    const review = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('release-evidence/refresh-review-1000x640.png', Buffer.from(review.data, 'base64'));
+    await evaluate("location.hash = '#/'");
   }
   console.log(JSON.stringify(result));
 } finally { ws.close(); }

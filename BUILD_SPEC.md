@@ -21,6 +21,8 @@ cc-benefit-tracker/
 │   ├── preload.ts           Whitelisted IPC bridge (contextIsolation:true, nodeIntegration:false)
 │   ├── database.ts          SQLite schema + CRUD + refresh + projections + file I/O
 │   ├── periods.ts           Period bucket math for reset cadences
+│   ├── refreshProposal.ts   Refresh proposals: validation, diff against live data, draft-run creation
+│   ├── refreshProposalData.ts GENERATED from refresh-proposals/*.json by scripts/build-refresh-proposals.mjs
 │   ├── benefitsSeed.ts      Seed loader — reads generated data with fallback lists
 │   ├── benefitsSeedData.ts  GENERATED from benefits-research.json (13 cards, 4 programs, 176 benefits)
 │   ├── iconPath.ts          App-icon path resolution with traversal guard
@@ -30,9 +32,10 @@ cc-benefit-tracker/
 │   ├── components/          RefreshBanner, LogUsageModal, BenefitEditor
 │   └── main.tsx, App.tsx, theme.tsx, index.css
 ├── tests/                   vitest test suites + electron mock + helpers
-├── scripts/                 afterPack, copy-electron-assets, clean-tsbuildinfo, generate_seed.py, installer.nsh
+├── scripts/                 afterPack, copy-electron-assets, clean-tsbuildinfo, generate_seed.py, build-refresh-proposals.mjs, installer.nsh
 ├── build/                   sign.sh + signing.crt (signing.key gitignored)
 ├── prebuilt-win32-x64/      better_sqlite3.node prebuilt binary for Windows x64
+├── refresh-proposals/       Reviewed benefit-change lists (JSON) offered on the Quarterly Refresh screen
 └── benefits-research.json   Immutable input to scripts/generate_seed.py
 ```
 

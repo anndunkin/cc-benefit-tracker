@@ -1,0 +1,2546 @@
+{
+  "format": "cc-benefit-tracker-refresh",
+  "format_version": 1,
+  "proposal_id": "2026-11-benefit-refresh",
+  "title": "November 2026 benefit refresh",
+  "prepared_on": "2026-11-22",
+  "not_before": null,
+  "changes": [
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "$600 Hotel Credit ($300 semiannually)",
+      "after": {
+        "title": "$600 Lodging Credit ($300 semiannually)",
+        "description": "Up to $300 in statement credits semi-annually on prepaid Fine Hotels + Resorts or The Hotel Collection bookings made through Amex Travel, and on prepaid Airbnb Luxe bookings (two-night minimum) made with Airbnb through AmexTravel.com or the Amex Travel App.",
+        "notes": "$300/half; $600/year. The Hotel Collection and Airbnb Luxe bookings require a 2-night minimum. Fine Hotels + Resorts bookings qualify with one night through Dec 31, 2026; effective January 1, 2027, FHR bookings also require a 2-night minimum to earn the credit (FHR on-property benefits still apply to 1-night stays). Half is determined by when the prepaid charge is processed."
+      },
+      "summary": "Amex renamed the $600 Hotel Credit to the $600 Lodging Credit on October 22, 2026 and extended it to prepaid Airbnb Luxe bookings (two-night minimum) made through Amex Travel. Amount and semiannual timing are unchanged. Upcoming: from January 1, 2027, Fine Hotels + Resorts bookings also need a two-night stay to earn the credit.",
+      "effective_date": "2026-10-22",
+      "sources": [
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/benefits/lodging-credit/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/newsroom/travel-dining-experiences/amex-travel-airbnb-partnership/",
+          "label": "American Express news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/get-inspired/make-yourself-at-home-with-airbnb/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/programs-and-benefits/terms-and-conditions/",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.airbnb.com/resources/hosting-homes/a/what-to-know-about-our-partnership-with-american-express-779",
+          "label": "airbnb.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/platinum-card-hotel-programs/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/amex-launches-new-airbnb-benefits-on-platinum-cards/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "$120 Uber One Credit",
+      "after": {
+        "description": "Up to $120 in statement credits per calendar year on Uber One membership fees (monthly or annual plan) charged to the card for an auto-renewing Uber One membership.",
+        "reset_cadence": "annual",
+        "value_usd": 120,
+        "expiration_note": "Per calendar year; no monthly cap stated in the terms.",
+        "notes": "$120 per calendar year per Card Account, valid on both monthly and annual Uber One memberships. Must pay the Uber One fee directly with the Platinum Card (Uber Cash toggled off; not via Apple Pay/PayPal)."
+      },
+      "summary": "Amex's terms define this as up to $120 per calendar year on monthly or annual Uber One fees, with no $10 monthly cap. The tracker had it as $10 per month.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/uber-one-credit/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.uber.com/us/en/u/amex/?sm_flow_id=avaYQg88",
+          "label": "Uber",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "$200 Airline Fee Credit",
+      "after": {
+        "notes": "You must select a qualifying airline (Alaska, American, Delta, JetBlue, Southwest, United). Incidental fees only, not airfare."
+      },
+      "summary": "The qualifying-airline list in the row includes Hawaiian and Spirit; Amex's current benefit terms list only Alaska, American, Delta, JetBlue, Southwest and United.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/airline-fee-credit/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "$400 Resy Credit ($100 quarterly)",
+      "after": {
+        "description": "Up to $100 in statement credits quarterly on eligible purchases at qualifying U.S. Resy restaurants, on Resy.com/the Resy app/Resy Pay, and (since September 15, 2026) purchases made directly on Tock (exploretock.com or the Tock app, e.g. prepaid reservations and deposits) for U.S. establishments."
+      },
+      "summary": "The Resy credit previously covered only Resy purchases; since September 15, 2026 it also covers purchases made directly on Tock for U.S. establishments.",
+      "effective_date": "2026-09-15",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/400-resy-credit/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "Unlimited Delta Sky Club + Centurion Guest Access after $75,000 Spend",
+      "after": {
+        "expiration_note": "Each benefit lasts for the remainder of the calendar year in which it becomes effective, the following calendar year, and through January 31 of the next calendar year (e.g., effective May 1, 2025, valid through January 31, 2027).",
+        "description": "Spend $75,000 or more in eligible purchases on the Platinum Card in a calendar year to qualify for both unlimited Delta Sky Club access on eligible same-day flights and complimentary Centurion Lounge access for up to two guests per visit at U.S. and select international locations. Once each benefit becomes effective, it lasts through January 31 of the second calendar year after it becomes effective.",
+        "notes": "The two benefits share the $75,000 calendar-year spend threshold; each may take up to 12 weeks to become effective. Centurion guests must travel on the same flight as the Card Member; standard U.S. guest fees are $50 per adult and $30 for children ages 2-17. Delta Sky Club entry requires an eligible same-day flight; Delta Main Basic (Basic Economy) fares do not qualify."
+      },
+      "summary": "The row says the Centurion guest benefit lasts only through the following calendar year; current terms extend both the Centurion guest access and unlimited Sky Club access through January 31 of the year after that.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/lounge-guest-access-pass/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/delta-sky-club-access/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/lounges/the-platinum-card/terms/",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "amex_platinum",
+      "match_title": "Amex International Airline Program",
+      "after": {
+        "title": "Platinum Member Airfares",
+        "description": "Savings on select first, business and premium economy tickets with participating airlines on designated international flights; select international economy and designated domestic tickets may also qualify on limited participating airlines. Discounts on selected flights from over 30 participating airlines are available through Amex Travel.",
+        "notes": "Must book through Amex Travel. Formerly the International Airline Program (combined with Recommended Flights and renamed in 2026). Covers the Card Member plus up to 7 companions on the same itinerary."
+      },
+      "summary": "The International Airline Program has been renamed and combined into Platinum Member Airfares (launched around April 2026), which now also covers select economy tickets, including on some domestic flights.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/platinum-member-airfares/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/account/get-started/additional-card-member//platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/get-inspired/platinum-member-airfares/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://money.usnews.com/credit-cards/articles/amex-adds-platinum-member-airfares-with-flight-discounts",
+          "label": "U.S. News",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "amex_platinum",
+      "after": {
+        "title": "$250 Airbnb Experiences Credit",
+        "description": "After you make a prepaid Airbnb Luxe booking with Airbnb through AmexTravel.com or the Amex Travel App, get up to $250 in statement credits through the end of that calendar year on eligible Airbnb Experiences bought directly with Airbnb.",
+        "category": "travel_credit",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 250,
+        "expiration_note": "Unlocks for the rest of the calendar year in which a qualifying Airbnb Luxe booking is confirmed; must be re-unlocked each year.",
+        "sort_order": 11,
+        "source_url": "https://global.americanexpress.com/card-benefits/detail/experiences-credit/platinum",
+        "notes": "Requires linking your Airbnb account to Amex. Experiences that redirect to third-party platforms (e.g., live event tickets) are not eligible. At least one qualifying Airbnb Luxe booking must remain uncanceled; if all are canceled, the benefit relocks and any credits previously received may be reversed. Multiple eligible Airbnb Experiences purchases can count toward the $250 calendar-year cap per Card Account."
+      },
+      "summary": "New benefit (launched Oct 22, 2026): up to $250 per calendar year in Airbnb Experiences credits, unlocked by a prepaid Airbnb Luxe booking through Amex Travel.",
+      "effective_date": "2026-10-22",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/experiences-credit/platinum",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/newsroom/travel-dining-experiences/amex-travel-airbnb-partnership/",
+          "label": "American Express news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.airbnb.com/resources/hosting-homes/a/what-to-know-about-our-partnership-with-american-express-779",
+          "label": "airbnb.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/programs-and-benefits/terms-and-conditions/",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "amex_platinum",
+      "after": {
+        "title": "5x Membership Rewards Points on prepaid Airbnb stays via Amex Travel",
+        "description": "Earn 5 points per $1 on prepaid short-term rental bookings with Airbnb made through AmexTravel.com or the Amex Travel App.",
+        "category": "earning_multiplier",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "n.a.",
+        "multiplier_rate": 5,
+        "multiplier_currency": "Amex Membership Rewards",
+        "spend_category": "hotels",
+        "spend_category_note": "Prepaid Airbnb short-term rentals booked via AmexTravel.com / Amex Travel App only",
+        "sort_order": 211,
+        "source_url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+        "notes": "Airbnb account must be linked to your Amex account. Add-on fees (e.g. pet or pool-heating fees) do not earn 5x."
+      },
+      "summary": "New earning category: 5x Membership Rewards on prepaid Airbnb short-term rentals booked through Amex Travel (launched Oct 22, 2026).",
+      "effective_date": "2026-10-22",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/platinum",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/newsroom/travel-dining-experiences/amex-travel-airbnb-partnership/",
+          "label": "American Express news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/get-inspired/make-yourself-at-home-with-airbnb/",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.americanexpress.com/en-us/travel/programs-and-benefits/terms-and-conditions/",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.airbnb.com/resources/hosting-homes/a/what-to-know-about-our-partnership-with-american-express-779",
+          "label": "airbnb.com",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "hilton_aspire",
+      "match_title": "$400 Hilton Resort Credit ($200 semiannually)",
+      "after": {
+        "notes": "Only at participating Hilton Resorts (not all Hilton properties); Small Luxury Hotels of the World properties are excluded. Purchases must be made directly with the participating resort and charged to the Aspire card. Advance Purchase and non-refundable rates are ineligible. Incidental charges, including dining or spa, must be charged to your room at the resort and paid with the Aspire card. Cap is $200 per half and $400 per calendar year."
+      },
+      "summary": "The $200 semiannual cap is unchanged, but the card's terms exclude advance-purchase and non-refundable rates and require incidentals to be charged to the room.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/hilton-aspire",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "hilton_aspire",
+      "match_title": "$209 CLEAR Plus Credit",
+      "after": {
+        "title": "$219 CLEAR Plus Credit",
+        "description": "Up to $219 in statement credits per calendar year after you pay for a CLEAR Plus membership (subject to auto-renewal) with the card.",
+        "value_usd": 219,
+        "previous_value_usd": 209,
+        "value_effective_date": "2026-07-01"
+      },
+      "summary": "The Aspire card's annual CLEAR Plus credit increased from $209 to $219.",
+      "effective_date": "2026-07-01",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/clear-credit/hilton-aspire",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/hilton-aspire",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://thriftytraveler.com/news/travel/clear-raises-prices-again/",
+          "label": "Thrifty Traveler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "Diamond Elite Status (base tier benefits)",
+      "after": {
+        "description": "Diamond is Hilton Honors' top standard elite tier (Diamond Reserve sits above it), earned via 50 nights, 25 stays, or $11,500 in eligible spend in a calendar year, or complimentary with the Hilton Honors Aspire card. Includes Gold-level benefits, with the 100% Base Points bonus replacing Gold's 80% bonus; space-available upgrades, the daily food and beverage credit or breakfast, and other individual perks are tracked separately.",
+        "expiration_note": "Earned status is kept for the rest of the year it is earned and the following calendar year. Lifetime Diamond has no annual requalification: qualify with 10 nonconsecutive years of Diamond plus 1,000 paid or reward nights or $200,000 in lifetime eligible spend.",
+        "notes": "Parent status row; individual Diamond perks are tracked separately. Excess nights from 2025 can count in 2026, but nights earned in 2026 do not roll over to 2027."
+      },
+      "summary": "Lifetime Diamond's alternate requirement switched from 2 million Base Points to $200,000 in eligible lifetime spend, and 2026 nights no longer roll over into 2027.",
+      "effective_date": "2026-01-01",
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/member-benefits/",
+          "label": "Hilton",
+          "source_type": "official"
+        },
+        {
+          "url": "https://stories.hilton.com/releases/loyalty-upgraded-hilton-honors-introduces-faster-path-to-elite-status-and-reveals-new-premium-tier-diamond-reserve",
+          "label": "Hilton news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://loyaltylobby.com/2025/11/18/hilton-honors-2026-refresh-new-diamond-reserve-end-of-rollover-nights-lowered-qualification-requirements-milestone-rewards/",
+          "label": "LoyaltyLobby",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "100% Bonus Points on Stays",
+      "after": {
+        "description": "Diamond members earn a 100% bonus on Base Points from qualifying stays. Most brands earn 10 Base Points per eligible dollar; some brands earn fewer."
+      },
+      "summary": "Diamond's 100% bonus is unchanged, but Hilton earns 10 Base Points per dollar only at most brands, not across the entire portfolio.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/member-benefits/",
+          "label": "Hilton",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "Daily Food & Beverage Credit or Breakfast (member + 1 guest)",
+      "after": {
+        "description": "A daily food and beverage credit of $10-$25 per person at participating U.S. brands, including Hilton Garden Inn, or a credit that varies by property and local currency at participating Motto by Hilton and YOTEL properties outside the U.S. Select other properties outside the U.S. offer complimentary continental breakfast instead. The benefit applies to the member and one guest registered to the same room.",
+        "notes": "MyWay benefit for Gold, Diamond, and Diamond Reserve; members select the credit (or Bonus Points) as their MyWay benefit. Select YOTEL properties offer bonus points instead of a credit. Members receiving complimentary breakfast in the Executive Lounge are not eligible for the credit."
+      },
+      "summary": "The food and beverage credit is not U.S.-only: eligible international Motto and YOTEL locations offer a credit, while select other international properties provide breakfast.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/member-benefits/",
+          "label": "Hilton",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/support-faq/",
+          "label": "Hilton help page",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "Executive Lounge Access",
+      "after": {
+        "description": "Complimentary access to participating hotels' Executive Lounges for the Diamond member and one additional registered guest, even without a room upgrade.",
+        "notes": "Only at hotels with Executive Lounges; availability varies by property. Excludes executive suites, villas, specialty accommodations/floors/towers and 'Club' accommodation types (e.g., Club Signia, Enclave rooms at all-inclusive resorts). Where the lounge serves complimentary breakfast seven days a week, the Daily Food & Beverage Credit is not given. Premium Club access is a separate Diamond Reserve benefit."
+      },
+      "summary": "Diamond Executive Lounge access covers a registered guest and does not depend on an upgrade, and it does not confer the separate Diamond Reserve Premium Club benefit.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/help-center/hilton-honors-benefits/tiers-and-benefits/",
+          "label": "Hilton help page",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "Space-Available Room Upgrades (up to 1-Bedroom Suite)",
+      "after": {
+        "description": "Complimentary space-available room upgrades, based on availability at check-in, up to a one-bedroom suite at participating brands. Eligible Diamond members can also view available complimentary and paid upgrades in the Hilton Honors app during Digital Check-In.",
+        "notes": "Availability is not guaranteed. A separate Confirmable Upgrade Reward can confirm an eligible upgrade at booking; it can be earned at Diamond Reserve qualification or selected at 120 eligible nights, and can also be transferred by an eligible member."
+      },
+      "summary": "Hilton added in-app complimentary and paid upgrade options during Digital Check-In, and Confirmable Upgrade Rewards are not limited to members who themselves earn Diamond Reserve.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://stories.hilton.com/hilton-honors/hilton-honors-redefines-the-room-upgrade-experience-for-members-with-more-choice-and-flexibility",
+          "label": "Hilton news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "hilton_status",
+      "match_title": "One-Time Diamond Status Extension",
+      "after": {
+        "description": "Beginning with the 2027 extension cycle, eligible members whose Diamond status is set to expire March 31 can request a one-time, one-year extension if they did not requalify, held Diamond for three total years (not necessarily consecutive), and have at least 250 lifetime paid or reward nights or $50,000 in lifetime eligible spend."
+      },
+      "summary": "From 2027, Hilton's one-time Diamond extension requires $50,000 in lifetime eligible spend (instead of 500,000 Base Points) or 250 lifetime nights. Correction: the three years of Diamond status do not have to be consecutive.",
+      "effective_date": "2027-01-01",
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "hilton_status",
+      "after": {
+        "title": "Elite Milestone Bonuses",
+        "description": "Earn 10,000 Hilton Honors Bonus Points at 40 eligible nights and every 10 additional eligible nights through 180 in a calendar year, plus 30,000 additional points at 60 nights. At 120 eligible nights, choose another 30,000 points or a Confirmable Upgrade Reward, in addition to the regular 10,000 points.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "value_usd": 0,
+        "expiration_note": "Only eligible nights earned in the same calendar year count.",
+        "sort_order": 150,
+        "source_url": "https://www.hilton.com/en/hilton-honors/terms/",
+        "notes": "Regular Hilton Milestone Bonus Points post automatically; rollover nights do not count."
+      },
+      "summary": "Hilton benefit that the tracker did not list: Milestone Bonuses of 10,000 points at 40 nights and every 10 nights after that through 180, an extra 30,000 points at 60 nights, and a choice at 120 nights between 30,000 more points and a Confirmable Upgrade Reward.",
+      "effective_date": "2026-01-01",
+      "sources": [
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://stories.hilton.com/releases/loyalty-upgraded-hilton-honors-introduces-faster-path-to-elite-status-and-reveals-new-premium-tier-diamond-reserve",
+          "label": "Hilton news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://loyaltylobby.com/2025/11/18/hilton-honors-2026-refresh-new-diamond-reserve-end-of-rollover-nights-lowered-qualification-requirements-milestone-rewards/",
+          "label": "LoyaltyLobby",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "hilton_status",
+      "after": {
+        "title": "Pay with Points at Digital Checkout",
+        "description": "Hilton Honors members with Silver, Gold, Diamond, or Diamond Reserve can redeem points against eligible hotel charges during Digital Check-Out in the Hilton Honors app at participating properties.",
+        "category": "other",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "Only in the Hilton Honors app on the scheduled checkout date before checkout is completed.",
+        "sort_order": 160,
+        "source_url": "https://www.hilton.com/en/help-center/hilton-honors-points/pay-with-points/",
+        "notes": "Launched at participating U.S. hotels. Hilton expects to expand to more than 800 U.S. hotels by year-end 2026 and more than 6,000 participating U.S. and Canadian properties in early 2027; exact rollout dates and property availability vary."
+      },
+      "summary": "Hilton launched a new elite benefit to pay eligible hotel charges with points at digital checkout, with wider U.S. and Canadian availability expected in early 2027.",
+      "effective_date": "2026-10-21",
+      "sources": [
+        {
+          "url": "https://stories.hilton.com/releases/hilton-becomes-first-major-hotel-brand-to-offer-digital-solution-to-pay-with-points",
+          "label": "Hilton news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/help-center/hilton-honors-points/pay-with-points/",
+          "label": "Hilton help page",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.hilton.com/en/hilton-honors/terms/",
+          "label": "Hilton terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "delta_reserve",
+      "match_title": "$240 Resy Credit ($20 monthly)",
+      "after": {
+        "description": "Up to $20 per month in statement credits on eligible purchases at over 10,000 qualifying U.S. Resy restaurants, on Resy.com/the Resy app/Resy Pay, and (since September 15, 2026) purchases made directly on Tock (exploretock.com or the Tock app) for eligible U.S. establishments."
+      },
+      "summary": "Since September 15, 2026 the Resy credit also covers purchases made directly on Tock (exploretock.com and the Tock app) for U.S. establishments. The $20 monthly amount is unchanged.",
+      "effective_date": "2026-09-15",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "delta_reserve",
+      "match_title": "Annual Companion Certificate",
+      "after": {
+        "description": "One Companion Certificate each year after card renewal, valid for a round-trip Delta First, Delta Premium Select, Delta Comfort or Delta Main companion ticket within the U.S. and to Mexico, the Caribbean or Central America (including the eligible flight portion of a Delta Vacations package).",
+        "notes": "No fixed dollar value; benefit is a routing certificate. Requires payment of government-imposed taxes/fees of $22-$250 (no more than $80 domestic round trip). Delta Basic experiences are not eligible; not valid for Delta One. Primary and Companion tickets must be purchased with the Reserve Card and/or Delta eCredits."
+      },
+      "summary": "Amex's current terms let the Companion Certificate be used on the flight portion of a Delta Vacations package and let both tickets be paid with the Reserve Card and/or Delta eCredits. The tracker said both tickets had to be bought with the Reserve Card.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://news.delta.com/more-travel-value-added-delta-skymiles-cards-no-increase-annual-fees",
+          "label": "Delta",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "delta_reserve",
+      "match_title": "The Centurion Lounge Access",
+      "after": {
+        "description": "Complimentary access to The Centurion Lounge (U.S. and select international locations), Sidecar by The Centurion Lounge (U.S.), and Escape Lounges when flying on a same-day Delta-marketed or Delta-operated flight booked on a U.S.-issued American Express Card.",
+        "notes": "The same-day Delta flight must be booked on a U.S.-issued American Express Card. For Sidecar by The Centurion Lounge you must arrive within 90 minutes of departure. Guest fees apply at each location."
+      },
+      "summary": "Amex's current terms also give Reserve Card Members access to Sidecar by The Centurion Lounge in the U.S. (arrive within 90 minutes of departure) and to Escape Lounges on a same-day Delta flight, and the flight may be booked on any U.S.-issued American Express Card.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/amex-venue-collection/delta-reserve",
+          "label": "American Express",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "delta_reserve",
+      "match_title": "American Express Venue Collection (10% off concessions, up to $250/yr)",
+      "after": {
+        "description": "10% back as a statement credit on qualifying food and beverage concessions purchases at stadiums and arenas participating in the American Express Venue Collection, up to $250 per calendar year. Also includes dedicated entrances / fast lanes and special ticket access.",
+        "source_url": "https://www.americanexpress.com/en-us/benefits/membership/experiences/venues/concessions-enrollment/",
+        "notes": "Log the 10% statement credit received on each qualifying purchase. The $250 cap represents savings received, not spend. Through Jan 5, 2027, enrolled via Amex Offers with a limit of one enrolled card per Card Member. Beginning Jan 6, 2027, enrollment moves to the Amex Benefits section and Card Members with multiple eligible Basic Cards can separately enroll each Basic Card (up to $250/calendar year per enrolled Card Account, including Additional Card Member spend)."
+      },
+      "summary": "Correction and upcoming change. Merchandise does not qualify: Amex limits the 10% back to in-person food and beverage concessions. From January 6, 2027 the benefit moves from Amex Offers to the Benefits section and each eligible Basic Card can be enrolled separately; until then it is one enrolled card per Card Member.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.americanexpress.com/en-us/benefits/membership/experiences/venues/concessions-enrollment/",
+          "label": "American Express",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "delta_reserve",
+      "after": {
+        "title": "MQD Boost (1 MQD per $10 spend)",
+        "description": "Earn $1 Medallion Qualification Dollar (MQD) for every $10 in eligible purchases charged to the Reserve Card (including Additional Cards) during a Medallion Qualification Year.",
+        "category": "status_boost",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "Qualification Year runs January 1 to December 31; MQDs reset annually and do not roll over.",
+        "sort_order": 95,
+        "source_url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+        "notes": "MQDs post to the Basic Card Member's SkyMiles account and count toward Medallion Status for the following Medallion Year. No cap."
+      },
+      "summary": "Published Reserve benefit that the tracker did not list: 1 MQD for every $10 of eligible purchases on the card.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "delta_reserve",
+      "after": {
+        "title": "4 Delta Sky Club One-Time Guest Passes",
+        "description": "Basic Reserve Card Members are issued four One-Time Guest Passes each year for a guest to enter the Delta Sky Club or use Grab and Go when traveling on a same-day Delta-marketed or Delta-operated flight.",
+        "category": "lounge_access",
+        "reset_cadence": "annual",
+        "uses_per_period": 4,
+        "value_usd": 0,
+        "expiration_note": "Issued within 6-8 weeks after February 1 each year; expire January 31.",
+        "sort_order": 55,
+        "source_url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+        "notes": "Basic Card Members only; Additional Card Members are not eligible. The Basic Card Member must be present, and no more than two passes may be used per visit. One pass covers Sky Club entries within 24 hours of the first entry. Passes appear in the Fly Delta app wallet."
+      },
+      "summary": "Published Reserve benefit that the tracker did not list: four One-Time Sky Club Guest Passes each year, issued after February 1 and expiring January 31. These are separate from your 15 Sky Club visits.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/delta-reserve",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "delta_medallion",
+      "match_title": "Complimentary CLEAR Plus Membership (Diamond)",
+      "after": {
+        "title": "$90 CLEAR+ Membership Discount (Diamond)",
+        "description": "Diamond Medallion Members receive $90 off an annual CLEAR+ membership ($129 per year instead of the $219 standard rate). The complimentary membership is now limited to Delta 360 Invitees.",
+        "value_usd": 90,
+        "source_url": "https://www.delta.com/us/en/check-in-security/expedited-airport-security/clear",
+        "notes": "Discounted partner pricing ($129/year off the $219 standard annual CLEAR+ rate), not a statement credit. Platinum, Gold, and Silver Medallion Members and Basic Delta Amex Gold/Platinum/Reserve Card Members receive $40 off ($179/year).",
+        "expiration_note": "Per annual CLEAR+ membership term."
+      },
+      "summary": "Delta no longer gives Diamond Medallion Members a free CLEAR+ membership. delta.com now lists $90 off ($129 a year); the free membership is limited to Delta 360 Invitees. The change is reported to have taken effect June 1, 2026.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.delta.com/us/en/check-in-security/expedited-airport-security/clear",
+          "label": "Delta",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.delta.com/us/en/skymiles/medallion-program/diamond-medallion-status",
+          "label": "Delta",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.clearme.com/partner-detail-pages/delta-air-lines",
+          "label": "CLEAR",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/delta-diamond-elites-to-lose-complimentary-clear-membership-as-of-6-1-26/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "delta_medallion",
+      "after": {
+        "title": "1x Delta SkyMiles on eligible World of Hyatt stays",
+        "description": "Linked Delta Medallion Members (Silver, Gold, Platinum, and Diamond) earn 1 bonus mile per $1 of eligible spend at participating World of Hyatt hotels and resorts worldwide, in addition to World of Hyatt points.",
+        "category": "earning_multiplier",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "n.a.",
+        "multiplier_rate": 1,
+        "multiplier_currency": "Delta SkyMiles",
+        "spend_category": "hotels",
+        "spend_category_note": "Eligible spend at participating Hyatt hotels and resorts (linked accounts required)",
+        "sort_order": 90,
+        "source_url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+        "notes": "Requires linking your SkyMiles and World of Hyatt accounts at delta.com/WorldOfHyatt. Exclusions apply, including taxes and other fees; see the program terms."
+      },
+      "summary": "New Medallion benefit launched November 16, 2026: Delta Medallion Members who link their SkyMiles and World of Hyatt accounts earn 1 Delta bonus mile per $1 of eligible spend on qualifying Hyatt stays.",
+      "effective_date": "2026-11-16",
+      "sources": [
+        {
+          "url": "https://news.delta.com/delta-and-hyatt-launch-new-benefits-and-experiences-skymilesr-and-world-hyatt-members",
+          "label": "Delta",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.delta.com/us/en/skymiles/how-to-earn-miles/skymiles-partners-offers/hyatt",
+          "label": "Delta",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "card",
+      "change_type": "modified",
+      "card_id": "aa_executive",
+      "after": {
+        "annual_fee_usd": 695,
+        "notes": "Published fee for new cardmembers starting August 23, 2026; confirm the applicable fee and timing for an existing account in its Citi notice or statement."
+      },
+      "summary": "The published annual fee rose from $595 to $695 for accounts opened from August 23, 2026. Existing accounts move to the new fee at a later renewal; check your Citi notice or statement for the date before relying on this figure.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/citi-executive-card-american-airlines-direct/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/print/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://upgradedpoints.com/news/aadvantage-executive-card-refresh-2026",
+          "label": "Upgraded Points",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "aa_executive",
+      "match_title": "Admirals Club Membership",
+      "after": {
+        "description": "Complimentary Admirals Club membership for the primary cardmember (and up to 2 guests or immediate family members), with access to more than 100 Admirals Club and partner lounges worldwide. AA states a value of up to $1,400."
+      },
+      "summary": "AA now values the included Admirals Club membership at up to $1,400 (was $850) after the Aug 23, 2026 membership repricing.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/citi-executive-card-american-airlines-direct/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/i18n/travel-info/clubs/admirals-club-membership.jsp",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent/en_US/travel-info/clubs/admirals-club-membership.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "aa_executive",
+      "match_title": "$15 Monthly Lyft Credit (effective September 2026)",
+      "after": {
+        "notes": "User-requested update: $15/month effective September 1, 2026. Scheduled annual credit: $140 in 2026, $180 in subsequent years.\nUpdated at user request: $15/month effective September 1, 2026; $140 total scheduled credit for 2026.\nStarting February 1, 2027, Lyft Wait & Save rides no longer count as Eligible Rides. Rides must be requested by the primary cardmember; rides paid via digital wallets or virtual card numbers do not count."
+      },
+      "summary": "Upcoming, effective 2027-02-01: Lyft credit stays $15 after 3 rides/month, but from Feb 1, 2027 Wait & Save rides no longer count toward the 3 eligible rides.",
+      "effective_date": "2027-02-01",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "aa_executive",
+      "match_title": "Global Entry / TSA PreCheck Application Fee Credit",
+      "after": {
+        "description": "Up to $120 every 4 years as reimbursement for the Global Entry or TSA PreCheck application fee.",
+        "expiration_note": "Every 4 years.",
+        "reset_years": 4,
+        "notes": "Citi AA Executive resets every 4 years."
+      },
+      "summary": "Global Entry/TSA PreCheck credit is up to $120 every 4 years, not every 5 years as the tracker said.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "aa_executive",
+      "match_title": "4x AAdvantage Miles on American Airlines purchases",
+      "after": {
+        "description": "Earn 4 AAdvantage miles per $1 on eligible American Airlines purchases. After $150,000 in card purchases in a calendar year, earn 5 miles per $1 on eligible American Airlines purchases that post by December 31 of that year.",
+        "spend_category_note": "Eligible American Airlines purchases only; rises to 5x for the remainder of the calendar year after $150,000 in calendar-year card spend."
+      },
+      "summary": "The 5x booster is based on $150,000 of spend in a calendar year, not a cardmember year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "$500 American Airlines Vacations Credit ($250 semiannual)",
+        "description": "Up to $250 in statement credits on eligible American Airlines Vacations travel packages or Experiences purchased at aavacations.com from January through June, and up to $250 from July through December (up to $500 per calendar year).",
+        "category": "travel_credit",
+        "reset_cadence": "semiannual",
+        "uses_per_period": 1,
+        "value_usd": 250,
+        "expiration_note": "Per half-year (Jan-Jun, Jul-Dec); does not roll over.",
+        "sort_order": 170,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Packages must include two or more travel components (e.g., flight + hotel) or be AA Vacations Experiences; pay with the card."
+      },
+      "summary": "New benefit: up to $250 per half-year ($500/calendar year) in statement credits on American Airlines Vacations purchases.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "$100 Inflight & Admirals Club Purchase Credit",
+        "description": "Up to $100 in statement credits every calendar year on inflight purchases and eligible Admirals Club purchases (e.g., food and beverage; excludes One-Day Passes) made with the card.",
+        "category": "travel_credit",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 100,
+        "expiration_note": "Per calendar year.",
+        "sort_order": 180,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Eligible inflight purchases must be on domestic flights marketed and operated by American Airlines or marketed by American and operated by an eligible American Eagle carrier; other codeshares are excluded."
+      },
+      "summary": "New benefit: up to $100 per calendar year back on inflight and eligible Admirals Club purchases.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "$200 inKind Dining Credit ($100 semiannual)",
+        "description": "$100 in Citi / AAdvantage Executive Dining Credits via the inKind app from January through June and another $100 from July through December, used by paying the check in the inKind app with the card at inKind-network restaurants.",
+        "category": "dining_credit",
+        "reset_cadence": "semiannual",
+        "uses_per_period": 1,
+        "value_usd": 100,
+        "expiration_note": "The January-June credit expires July 1 at 4:00 a.m. CST; the July-December credit expires January 1 at 4:00 a.m. CST, as stated in the terms. No carryover.",
+        "sort_order": 190,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Add the card in the inKind app. Combined $200/year cap shared with Authorized Users; cannot be used for tips."
+      },
+      "summary": "New benefit: $100 per half-year ($200/calendar year) dining credit through inKind.",
+      "effective_date": "2026-10-25",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi",
+          "source_type": "official"
+        },
+        {
+          "url": "https://inkind.com/terms-citi-aadvantage-executive",
+          "label": "inKind terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://viewfromthewing.com/citi-adds-200-in-annual-dining-credits-to-its-american-airlines-executive-card-100-available-now/",
+          "label": "View from the Wing",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "Omni Hotels Champion Status",
+        "description": "Primary cardmembers can enroll in complimentary Omni Hotels & Resorts Select Guest Champion status (room upgrades, early check-in and late check-out, subject to availability).",
+        "category": "status_boost",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "Ongoing while card is open; enrollment required.",
+        "sort_order": 200,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Enroll via the Citi Mobile App Benefits Hub or by phone; allow 14 days."
+      },
+      "summary": "New benefit: complimentary Omni Champion status for primary cardmembers (enrollment required).",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "Omni Free Night Award",
+        "description": "Once per calendar year, the primary cardmember earns 100 Omni Credits redeemable for one Free Night Award after completing a qualifying single reservation of at least two consecutive nights at the same hotel, booked directly with Omni in the primary cardmember's name with their Omni account number and paid with the card.",
+        "category": "free_night",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Once per calendar year based on checkout date; redeem the credits for a Free Night Award within 12 months of issue.",
+        "sort_order": 210,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Omni Champion Status benefit enrollment must be activated before check-in; allow 14 days. Book on omnihotels.com or through the Omni VIP desk."
+      },
+      "summary": "New benefit: one Omni Free Night Award per calendar year after a qualifying 2+ night direct stay.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "Avis President's Club Status",
+        "description": "Complimentary Avis President's Club status for primary cardmembers, enrolled via the AAdvantage Rewards page.",
+        "category": "status_boost",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "Status through Aug 31, 2028; enrollment required.",
+        "sort_order": 220,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Must first enroll in Avis Preferred; allow up to 7 days for activation."
+      },
+      "summary": "New benefit: complimentary Avis President's Club status through Aug 31, 2028.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "10,000 Loyalty Point Bonus at 165,000 Loyalty Points",
+        "description": "The primary cardmember earns an additional 10,000 Loyalty Points after earning 165,000 Loyalty Points in the same status qualification year.",
+        "category": "status_boost",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 92,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Part of up to 40,000 bonus Loyalty Points per qualifying year (50K/90K/165K/240K)."
+      },
+      "summary": "New 165,000-Loyalty-Point milestone earns another 10,000 bonus Loyalty Points (cap raised from 20,000 to 40,000 per year).",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "aa_executive",
+      "after": {
+        "title": "10,000 Loyalty Point Bonus at 240,000 Loyalty Points",
+        "description": "The primary cardmember earns an additional 10,000 Loyalty Points after earning 240,000 Loyalty Points in the same status qualification year.",
+        "category": "status_boost",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 94,
+        "source_url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+        "notes": "Part of up to 40,000 bonus Loyalty Points per qualifying year (50K/90K/165K/240K)."
+      },
+      "summary": "New 240,000-Loyalty-Point milestone earns another 10,000 bonus Loyalty Points.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://creditcards.aa.com/credit-cards/exec_standard/",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.aa.com/card-benefits/executive-terms/",
+          "label": "American Airlines terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.citigroup.com/global/news/press-release/2026/american-airlines-citi-elevate-premium-travel-enhanced-citi-aadvantage-executive-world-legend-mastercard",
+          "label": "Citi news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "15K LP Choice - 2 inflight food/beverage coupons (coming soon)",
+      "after": {
+        "title": "15K LP Choice - 2 inflight food/beverage coupons"
+      },
+      "summary": "This 15K choice is no longer marked 'coming soon'; AA lists it as a selectable 2026 reward with full terms.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "15K LP Choice - 12-month NYT Games/Cooking/Athletic subscription (coming soon)",
+      "after": {
+        "title": "15K LP Choice - 12-month NYT Games/Cooking/Athletic subscription"
+      },
+      "summary": "This 15K choice is no longer marked 'coming soon'; AA lists it as a selectable 2026 reward with full terms.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "100,000 Loyalty Points - AAdvantage Platinum",
+      "after": {
+        "expiration_note": "Per status qualification year. Hyatt Discoverist portion only if AAdvantage and World of Hyatt accounts were linked by Nov 15, 2026; Hyatt rewards end after the 2026 qualification year (earn through Feb 28, 2027); Hyatt status runs through Feb 29, 2028."
+      },
+      "summary": "American and World of Hyatt ended their partnership on Nov 15, 2026: Hyatt Loyalty Point Rewards now require accounts linked by that date and can only be earned through Feb 28, 2027 (select by Mar 31, 2027).",
+      "effective_date": "2026-11-15",
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/american-airlines.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://newsroom.hyatt.com/AirlineUpdate",
+          "label": "Hyatt news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "175K LP Choice - World of Hyatt Explorist status",
+      "after": {
+        "expiration_note": "Per status qualification year. Only if AAdvantage and World of Hyatt accounts were linked by Nov 15, 2026; last earnable through Feb 28, 2027, select by Mar 31, 2027; status runs through Feb 29, 2028. Partnership ended - not expected in 2027 program year."
+      },
+      "summary": "American and World of Hyatt ended their partnership on Nov 15, 2026: Hyatt Loyalty Point Rewards now require accounts linked by that date and can only be earned through Feb 28, 2027 (select by Mar 31, 2027).",
+      "effective_date": "2026-11-15",
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/american-airlines.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://newsroom.hyatt.com/AirlineUpdate",
+          "label": "Hyatt news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://news.aa.com/news/news-details/2026/Update-on-American-and-Hyatt-relationship-AADV-09/",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "250K LP Choice - World of Hyatt Explorist status",
+      "after": {
+        "expiration_note": "Per status qualification year. Only if AAdvantage and World of Hyatt accounts were linked by Nov 15, 2026; last earnable through Feb 28, 2027, select by Mar 31, 2027; status runs through Feb 29, 2028. Partnership ended - not expected in 2027 program year."
+      },
+      "summary": "American and World of Hyatt ended their partnership on Nov 15, 2026: Hyatt Loyalty Point Rewards now require accounts linked by that date and can only be earned through Feb 28, 2027 (select by Mar 31, 2027).",
+      "effective_date": "2026-11-15",
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/american-airlines.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://newsroom.hyatt.com/AirlineUpdate",
+          "label": "Hyatt news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "400K LP Choice - World of Hyatt Category 1-4 Free Night Award",
+      "after": {
+        "expiration_note": "Per status qualification year. Only if AAdvantage and World of Hyatt accounts were linked by Nov 15, 2026; last earnable through Feb 28, 2027, select by Mar 31, 2027. Partnership ended - not expected in 2027 program year."
+      },
+      "summary": "American and World of Hyatt ended their partnership on Nov 15, 2026: Hyatt Loyalty Point Rewards now require accounts linked by that date and can only be earned through Feb 28, 2027 (select by Mar 31, 2027).",
+      "effective_date": "2026-11-15",
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/american-airlines.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://newsroom.hyatt.com/AirlineUpdate",
+          "label": "Hyatt news release",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "250K LP Choice - Admirals Club membership (uses both choices)",
+      "after": {
+        "value_usd": 1400,
+        "previous_value_usd": 850,
+        "value_effective_date": "2026-08-23"
+      },
+      "summary": "American repriced the Admirals Club annual membership on August 23, 2026: $1,400 for general members (was $850). The Executive Platinum rate is $1,200; the tracker uses the general rate, as it did before.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://www.aa.com/i18n/travel-info/clubs/admirals-club-membership.jsp",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/i18nForward.do?p=/travel-info/clubs/admirals-club-membership.jsp",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "400K LP Choice - Admirals Club membership (uses both choices)",
+      "after": {
+        "value_usd": 1400,
+        "previous_value_usd": 850,
+        "value_effective_date": "2026-08-23"
+      },
+      "summary": "American repriced the Admirals Club annual membership on August 23, 2026: $1,400 for general members (was $850). The Executive Platinum rate is $1,200; the tracker uses the general rate, as it did before.",
+      "effective_date": "2026-08-23",
+      "sources": [
+        {
+          "url": "https://www.aa.com/i18n/travel-info/clubs/admirals-club-membership.jsp",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/i18nForward.do?p=/travel-info/clubs/admirals-club-membership.jsp",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "aa_status",
+      "match_title": "Complimentary Upgrades by Status Tier",
+      "after": {
+        "description": "Complimentary upgrades within North America for the member and up to 1 companion: Main Cabin to Premium Economy, Premium Economy to Business/domestic First, or Main Cabin to Business/domestic First on aircraft without Premium Economy. Since Aug 25, 2026, Main Cabin upgrades on select transcontinental and Hawaii routes clear to Premium Economy. Windows: Gold 24 hours, Platinum 48 hours, Platinum Pro 72 hours, Executive Platinum 100 hours before departure."
+      },
+      "summary": "Complimentary upgrades from Main Cabin now clear to Premium Economy (not Business) on select transcon and Hawaii routes and wherever Premium Economy is offered; previously described as Main Cabin to Business/First.",
+      "effective_date": "2026-08-25",
+      "sources": [
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/answers-support/upgrades-for-status-members.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "aa_status",
+      "after": {
+        "title": "175K LP Choice - 12-month NYT All Access subscription",
+        "description": "AAdvantage Loyalty Choice Reward option.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 52,
+        "source_url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "175,000 Loyalty Points - Platinum Pro + 1 Loyalty Choice Reward"
+      },
+      "summary": "AA's 2026 Loyalty Point Rewards menu now includes this option, which is missing from the tracker (175K LP Choice tier).",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "aa_status",
+      "after": {
+        "title": "250K LP Choice - AAdvantage Exchange premium gift (uses both choices)",
+        "description": "AAdvantage Loyalty Choice Reward option.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 74,
+        "source_url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+        "notes": "Requires 2 choices.",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "250,000 Loyalty Points - Executive Platinum + 2 Loyalty Choice Rewards"
+      },
+      "summary": "AA's 2026 Loyalty Point Rewards menu now includes this option, which is missing from the tracker (250K LP Choice tier).",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "aa_status",
+      "after": {
+        "title": "250K LP Choice - 12-month NYT All Access subscription",
+        "description": "AAdvantage Loyalty Choice Reward option.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 75,
+        "source_url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "250,000 Loyalty Points - Executive Platinum + 2 Loyalty Choice Rewards"
+      },
+      "summary": "AA's 2026 Loyalty Point Rewards menu now includes this option, which is missing from the tracker (250K LP Choice tier).",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "aa_status",
+      "after": {
+        "title": "400K LP Choice - AAdvantage Exchange premium gift (uses both choices)",
+        "description": "AAdvantage Loyalty Choice Reward option.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 93,
+        "source_url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+        "notes": "Requires 2 choices.",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "400,000 Loyalty Points - 2 Loyalty Choice Rewards"
+      },
+      "summary": "AA's 2026 Loyalty Point Rewards menu now includes this option, which is missing from the tracker (400K LP Choice tier).",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "aa_status",
+      "after": {
+        "title": "400K LP Choice - 12-month NYT All Access subscription",
+        "description": "AAdvantage Loyalty Choice Reward option.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Per status qualification year.",
+        "sort_order": 94,
+        "source_url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+        "is_choice_option": 1,
+        "prerequisite_benefit_title": "400,000 Loyalty Points - 2 Loyalty Choice Rewards"
+      },
+      "summary": "AA's 2026 Loyalty Point Rewards menu now includes this option, which is missing from the tracker (400K LP Choice tier).",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.aa.com/web/i18n/aadvantage-program/aadvantage-status/loyalty-point-rewards.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.aa.com/pubcontent//en_US/aadvantage-program/aadvantage-program-updates.html",
+          "label": "American Airlines",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "citi_prestige",
+      "match_title": "Global Entry / TSA PreCheck Credit",
+      "after": {
+        "description": "One Global Entry or TSA PreCheck application fee credit of up to $120 once every four years, automatically reimbursed when charged to the card.",
+        "expiration_note": "Once every 4 years.",
+        "reset_years": 4
+      },
+      "summary": "Citi's current Prestige terms give the Global Entry/TSA PreCheck credit every four years, not every five.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.cardbenefits.citi.com/-/media/CPP/Files/LegalDocs/TermsAndConditions/PID90_128_Prestige_CRE371_TandC_0126_tagged.pdf",
+          "label": "Citi terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "citi_prestige",
+      "match_title": "Cell Phone Protection",
+      "after": {
+        "description": "Reimbursement for repair or replacement of a stolen or damaged eligible phone: up to $1,000 per claim and $1,500 per 12-month period, with a $50 deductible per claim. Covers the primary line and up to the first four additional lines on the preceding monthly wireless bill paid with the Citi Prestige card.",
+        "expiration_note": "$1,500 cap per 12-month period."
+      },
+      "summary": "Correction: Citi's Prestige protection guide caps cell phone claims at $1,000 per claim (the tracker said $800). The $50 deductible and $1,500 per 12 months are as before.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.cardbenefits.citi.com/-/media/CPP/Files/LegalDocs/SOAPI/PID128_PRESTIGE_CRE130_GTPB_0124_TAGGED.PDF",
+          "label": "Citi terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "marriott_premier",
+      "match_title": "15 Elite Night Credits (annual)",
+      "after": {
+        "expiration_note": "Per Marriott Bonvoy member account, only the highest annual Elite Night Credit benefit among eligible consumer cards is awarded each year, regardless of issuer. One separate eligible business-card annual benefit can stack."
+      },
+      "summary": "The cap is one highest-value annual consumer-card credit deposit per Bonvoy account, not one 15-credit deposit per consumer card, and a separate eligible business-card deposit can stack.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://marriott.chase.com/premier",
+          "label": "Chase",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "marriott_business",
+      "match_title": "Annual Free Night Award",
+      "after": {
+        "description": "Receive 1 Free Night Award every year after your card renewal month, usable for one night at hotels participating in Marriott Bonvoy with a redemption level at or under 35,000 points. You may add up to 25,000 Marriott Bonvoy points.",
+        "expiration_note": "Deposited within 8-12 weeks after the card renewal month; expires 12 months from issuance.",
+        "notes": "Certain hotels have resort fees. Value estimated at ~0.7 cents/point on 35,000 points."
+      },
+      "summary": "The annual certificate's formerly historical 35,000-point cap is confirmed, the top-up cap is 25,000 points, and issuer terms specify the deposit window and one-year validity.",
+      "effective_date": "2026-03-12",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/marriott-bonvoy-business",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.marriott.com/offers/free-night-award-OFF-206324/-~X~5A7EACBE-A94D-5918-A4D3-FAD0F65919E7~X~134B74B4-E709-5D12-8B79-4A6F5C9EFD57~X~6A57087C-3321-5CAE-8435-3ABC25A4C21C~X~E7FD8720-20FE-5435-A8DE-37002238FA2E~X~08E5ACE9-518A-5802-A51F-D7639C806B5B~X~DDDF8DB1-6561-5A7A-8767-ECA68B960626",
+          "label": "Marriott",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.nerdwallet.com/travel/learn/marriott-award-top-off-changes",
+          "label": "NerdWallet",
+          "source_type": "secondary"
+        },
+        {
+          "url": "https://awardwallet.com/news/marriott-bonvoy/free-night-award-top-off-limit-increase/",
+          "label": "AwardWallet",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "marriott_business",
+      "match_title": "Additional Free Night Award after $60,000 spend",
+      "after": {
+        "description": "Earn 1 additional Free Night Award after you spend $60,000 in eligible purchases on the card in a calendar year. The award is usable for one night at a participating Marriott Bonvoy hotel with a redemption level at or under 35,000 points, with the option to add up to 25,000 Marriott Bonvoy points.",
+        "expiration_note": "Calendar-year spend. Deposited within 8-12 weeks after meeting the purchase requirement; expires 12 months from issuance."
+      },
+      "summary": "The $60,000 spend award was listed without redemption or validity limits; it is a 35,000-point certificate with up to a 25,000-point top-up and a one-year expiry.",
+      "effective_date": "2026-03-12",
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/marriott-bonvoy-business",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.marriott.com/offers/free-night-award-OFF-206324/-~X~5A7EACBE-A94D-5918-A4D3-FAD0F65919E7~X~134B74B4-E709-5D12-8B79-4A6F5C9EFD57~X~6A57087C-3321-5CAE-8435-3ABC25A4C21C~X~E7FD8720-20FE-5435-A8DE-37002238FA2E~X~08E5ACE9-518A-5802-A51F-D7639C806B5B~X~DDDF8DB1-6561-5A7A-8767-ECA68B960626",
+          "label": "Marriott",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.nerdwallet.com/travel/learn/marriott-award-top-off-changes",
+          "label": "NerdWallet",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "marriott_business",
+      "match_title": "6x Marriott Bonvoy Points at Marriott properties",
+      "after": {
+        "description": "Earn 6 points per $1 spent on eligible purchases charged directly with participating Marriott Bonvoy properties, standalone Marriott-branded retail establishments and Marriott-branded online stores (including online purchases of Marriott-branded gift cards), in each case owned or managed by Marriott International or its affiliates.",
+        "spend_category_note": "Participating Marriott Bonvoy properties and eligible Marriott-branded standalone and online retail."
+      },
+      "summary": "The 6x category is not limited to participating hotel properties: it includes qualifying Marriott-branded standalone and online retail purchases.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/marriott-bonvoy-business",
+          "label": "American Express terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "marriott_business",
+      "match_title": "4x Marriott Bonvoy Points on dining, U.S. gas, shipping & wireless",
+      "after": {
+        "description": "Earn 4 points per $1 spent at restaurants worldwide, on gasoline at standalone U.S. gas stations, on U.S. purchases for shipping, and on wireless telephone services purchased directly from U.S. service providers (excluding Google Fi).",
+        "spend_category_note": "Also applies to gasoline at standalone U.S. gas stations, U.S. shipping, and U.S. wireless service purchases excluding Google Fi."
+      },
+      "summary": "The 4x rate does not extend to every U.S. gas or wireless purchase: the issuer lists standalone U.S. gas stations and excludes Google Fi.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://global.americanexpress.com/card-benefits/terms/marriott-bonvoy-business",
+          "label": "American Express terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://global.americanexpress.com/card-benefits/detail/amex-business-app/marriott-bonvoy-business",
+          "label": "American Express",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_bonvoy_base",
+      "match_title": "Stay for 5, Pay for 4 (5th Award Night Free)",
+      "after": {
+        "description": "Redeem points for at least five consecutive nights under one reservation at the same Marriott Bonvoy property using a Standard Redemption Award or PointSavers Award paid entirely with points. For every five consecutive nights, one night is free, with the lowest-priced night(s) selected across the full stay. Available to every Marriott Bonvoy member; no elite status or co-branded credit card required. The discount only covers the standard room cost and does not apply to stays using Free Night Awards/certificates or Cash + Points Awards. If you apply Premium Room Redemption Awards or Nightly Upgrade Awards, they are required for every night, including the free night(s).",
+        "notes": "Official name: \"Stay for 5, Pay for 4 Offer\" (Loyalty Program Terms and Conditions, section 3.3.d). Must be one reservation, at least five consecutive nights, same property, paid entirely with points. For a 10-night stay, the two lowest-point nights across the entire reservation are free."
+      },
+      "summary": "The offer is for each five-night increment within one reservation, not exact multiples only, and premium room or nightly upgrade awards must cover every night rather than making the standard-room discount unavailable.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://help.marriott.com/s/article/stay-for-5-pay-for-4-benefit",
+          "label": "Marriott help page",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "50-Night Choice - $1,000 off a Marriott bed/mattress",
+      "after": {
+        "expiration_note": "The discount code is valid through December 31 of the year following the year the benefit was earned."
+      },
+      "summary": "The row only specifies the qualification year, but the $1,000 discount is usable through December 31 of the following year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "50-Night Choice - Gift Silver Elite status",
+      "after": {
+        "description": "Annual Choice Benefit option at 50 Elite Nights: gift Silver Elite status to another Marriott Bonvoy member who has not already achieved Elite Status in the current Eligible Status Year."
+      },
+      "summary": "Gifted Silver Elite status is not available to every other Bonvoy member; the recipient cannot have already achieved elite status in the current eligible status year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "75-Night Choice - 1 Free Night Award (up to 40,000 points)",
+      "after": {
+        "description": "Annual Choice Benefit option at 75 Elite Nights: 1 Free Night Award valued at up to 40,000 points for a standard room at a participating property. You may add up to 25,000 Marriott Bonvoy points."
+      },
+      "summary": "The 40,000-point certificate face value is unchanged, but it is not a hard room-price limit because up to 25,000 additional points can be applied.",
+      "effective_date": "2026-03-12",
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.nerdwallet.com/travel/learn/marriott-award-top-off-changes",
+          "label": "NerdWallet",
+          "source_type": "secondary"
+        },
+        {
+          "url": "https://awardwallet.com/news/marriott-bonvoy/free-night-award-top-off-limit-increase/",
+          "label": "AwardWallet",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "75-Night Choice - Gift Gold Elite status",
+      "after": {
+        "description": "Annual Choice Benefit option at 75 Elite Nights: gift Gold Elite status to another Bonvoy member who has not already achieved Elite Status in the current Eligible Status Year."
+      },
+      "summary": "Gifted Gold Elite status is not available to every other Bonvoy member; the recipient cannot have already achieved elite status in the current eligible status year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://choice-benefit.marriott.com/en-us/terms",
+          "label": "Marriott terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "75-Night Choice - $1,000 off a Marriott bed/mattress",
+      "after": {
+        "expiration_note": "The discount code is valid through December 31 of the year following the year the benefit was earned."
+      },
+      "summary": "The row only specifies the qualification year, but the $1,000 discount is usable through December 31 of the following year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://choice-benefit.marriott.com/en-us/terms",
+          "label": "Marriott terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "Platinum Elite Benefits (50 nights)",
+      "after": {
+        "description": "50% more points on eligible hotel purchases, enhanced room upgrades including select suites, welcome gift choice (points, breakfast offering or amenity), member rates and complimentary Wi-Fi, and 4 p.m. late checkout (guaranteed except at resort and convention hotels, Design Hotels and StudioRes, where it is subject to availability; other brand exceptions apply).",
+        "notes": "Platinum members also receive lounge access with breakfast at eligible brands. Apartments by Marriott Bonvoy guarantee 2 p.m.; Lefay guarantees 1 p.m. Both offer up to 4 p.m. based on availability. Other brand and property exceptions apply."
+      },
+      "summary": "Platinum's standard late checkout is 4 p.m., not 2 p.m., with participating-property exceptions including a 1 p.m. guarantee at newly added Lefay.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/member-benefits/platinum.mi",
+          "label": "Marriott",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "Titanium Elite Benefits (75 nights)",
+      "after": {
+        "description": "75% more points on eligible hotel purchases, enhanced room upgrade, and welcome gift choice."
+      },
+      "summary": "Titanium earns a 75% points bonus on eligible hotel purchases, not 50%.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/member-benefits/titanium.mi",
+          "label": "Marriott",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "Ambassador Elite Benefits (100 nights + $23K spend)",
+      "after": {
+        "description": "75% more points on stays, enhanced room upgrade, welcome gift choice, dedicated Ambassador Service, and Your24 (request a 24-hour check-in/check-out window, subject to availability and participating-property exclusions including Lefay)."
+      },
+      "summary": "Your24 is a request subject to availability and exclusions, and the November terms add Lefay to the brands that do not offer it.",
+      "effective_date": "2026-11-18",
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/member-benefits/ambassador.mi",
+          "label": "Marriott",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://loyaltylobby.com/2026/11/18/marriott-bonvoy-loyalty-program-tcs-change-november-18-2026-lefay/",
+          "label": "LoyaltyLobby",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "program_id": "marriott_status",
+      "match_title": "Gold Elite Benefits (25 nights)",
+      "after": {
+        "description": "25% more points on eligible hotel purchases and up to 2 p.m. late checkout, subject to availability."
+      },
+      "summary": "Gold earns a 25% points bonus rather than 10%, and its late checkout is specifically up to 2 p.m., subject to availability.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/member-benefits/gold.mi",
+          "label": "Marriott",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "program_id": "marriott_status",
+      "after": {
+        "title": "Ambassador Elite - Lefay resort benefits",
+        "description": "Ambassador Elite members receive a 10% discount on eligible packages, spa services, and vital gourmet products and services at Lefay and may receive early check-in subject to availability.",
+        "category": "other",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "Available while holding Ambassador Elite status.",
+        "sort_order": 61,
+        "source_url": "https://www.marriott.com/loyalty/terms/default.mi",
+        "notes": "Applies only at participating Lefay properties; the early check-in is not Your24."
+      },
+      "summary": "Previously absent from Bonvoy, Lefay now offers Ambassador Elites a 10% discount on certain charges and early check-in when available.",
+      "effective_date": "2026-11-18",
+      "sources": [
+        {
+          "url": "https://www.marriott.com/loyalty/terms/default.mi",
+          "label": "Marriott terms",
+          "source_type": "official"
+        },
+        {
+          "url": "https://loyaltylobby.com/2026/11/18/marriott-bonvoy-loyalty-program-tcs-change-november-18-2026-lefay/",
+          "label": "LoyaltyLobby",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "$50 United TravelBank Cash",
+      "after": {
+        "title": "$50 United TravelBank Cash ($25 semiannually)",
+        "description": "Receive one $25 United TravelBank Cash deposit around January 5 (for Jan 1-Jun 30) and another $25 deposit around July 5 (for Jul 1-Dec 31), up to $50 each calendar year, after registering your card with your MileagePlus account.",
+        "reset_cadence": "semiannual",
+        "value_usd": 25,
+        "expiration_note": "Jan-Jun deposit (~Jan 5) expires Jul 15; Jul-Dec deposit (~Jul 5) expires Jan 15 of the following year.",
+        "notes": "$25/half; $50/year. One-time registration at ihg.com/united with your United MileagePlus account is required."
+      },
+      "summary": "Correction: United TravelBank Cash arrives as two $25 deposits, one for January to June and one for July to December, not one $50 deposit a year. Chase kept the benefit in its October 2026 refresh.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.doctorofcredit.com/chase-makes-changes-to-existing-ihg-card-lineup-increased-annual-fees-more/",
+          "label": "doctorofcredit.com",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "Automatic IHG One Rewards Platinum Elite Status",
+      "after": {
+        "description": "Automatic Platinum Elite status (pre-Oct 1, 2026 cardholders) through Dec 31, 2027; the card's automatic status becomes Gold Elite after that.",
+        "notes": "New applicants from Oct 1, 2026 receive Gold Elite. Existing cardholders reportedly keep Platinum through Dec 31, 2027 (per Chase as reported by Frequent Miler/Thrifty Traveler; confirm in your Chase change notice). Platinum can also be earned via $15,000 calendar-year spend."
+      },
+      "summary": "New accounts opened from October 1, 2026 get Gold Elite instead of Platinum Elite. Existing cardholders are reported to keep Platinum through December 31, 2027; that detail comes from Chase statements quoted by Frequent Miler and Thrifty Traveler, not from a Chase page, so check your Chase notice. The row keeps its Platinum title for now.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.ihgplc.com/en/news-and-media/news-releases/2026/chase-introduces-new-ihg-one-rewards-premier-select-credit-card-and-portfolio",
+          "label": "ihgplc.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        },
+        {
+          "url": "https://thriftytraveler.com/news/credit-card/chase-ihg-credit-card-changes/",
+          "label": "Thrifty Traveler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "20% off purchased points",
+      "after": {
+        "title": "30% off purchased points",
+        "description": "Save at least 30% when you purchase IHG One Rewards points with the card.",
+        "notes": "Cannot be combined with any other points purchase offer (such as bonus-points sales)."
+      },
+      "summary": "The discount on purchasing IHG One Rewards points with the card increased from 20% to 30% effective October 1, 2026 (non-combinable with other points purchase promotions).",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://www.chase.com/personal/credit-cards/offerdetails/ihg",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.chase.com/personal/credit-cards/ihg/premier/earn-rewards",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "DashPass membership + $10 quarterly DoorDash credit",
+      "after": {
+        "description": "One year complimentary DashPass for DoorDash and Caviar, plus up to $10 off quarterly on one non-restaurant DoorDash order (monthly instead if DashPass was first activated on or after Sep 1, 2026).",
+        "expiration_note": "Activate by Dec 31, 2027; non-restaurant DoorDash promo runs through Dec 31, 2027.",
+        "notes": "$10/quarter if DashPass was first activated 2025-02-01 to 2026-08-31; $10/month if first activated 2026-09-01 to 2027-12-31 (check Manage DashPass page). Active DashPass enrollment required; after the complimentary year, DashPass auto-enrolls at the current monthly rate."
+      },
+      "summary": "For DashPass first activated with the card from September 1, 2026 through December 31, 2027, the $10 non-restaurant DoorDash discount is monthly instead of quarterly. Earlier activations stay quarterly, so the tracker keeps the quarterly clock; switch it to monthly yourself if Manage DashPass shows a later activation.",
+      "effective_date": "2026-09-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+          "label": "Chase",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ihg_premier",
+      "match_title": "10x IHG One Rewards Points at IHG hotels",
+      "after": {
+        "description": "Earn 10 points per $1 spent at IHG Hotels & Resorts (card-level rate; combined with IHG One Rewards membership and card-granted elite status for up to 26x total with Platinum, which pre-Oct 2026 cardholders keep through 2027, or 24x with Gold).",
+        "spend_category_note": "IHG Hotels & Resorts only; see chase.com for combined member+status total of up to 24x"
+      },
+      "summary": "Chase now advertises up to 24x at IHG hotels, because new accounts get Gold Elite (a 40% bonus) instead of Platinum (60%). While you keep Platinum the total stays up to 26x; the card itself still earns 10x.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://www.chase.com/personal/credit-cards/ihg/premier/earn-rewards",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.ihgplc.com/en/news-and-media/news-releases/2026/chase-introduces-new-ihg-one-rewards-premier-select-credit-card-and-portfolio",
+          "label": "ihgplc.com",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "$100 IHG Food & Beverage Rewards ($25 quarterly)",
+        "description": "Receive one $25 IHG Food & Beverage Reward voucher each calendar quarter (up to $100 per year) to redeem against eligible food and beverage charges billed to your room at participating IHG Hotels & Resorts.",
+        "category": "dining_credit",
+        "reset_cadence": "quarterly",
+        "uses_per_period": 1,
+        "value_usd": 25,
+        "expiration_note": "Issued each calendar quarter (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec); expires at the end of the issuing quarter.",
+        "sort_order": 22,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+        "notes": "$25/quarter; $100/year. Single-use voucher posted to your IHG Rewards Wallet; unused portion on a voucher under $25 is forfeited. Must be charged to the primary cardmember's room folio. Excludes IHG Army Hotels, select Six Senses, Iberostar, Royal Resorts, and InterContinental Alliance Resorts (Macau)."
+      },
+      "summary": "Chase added up to $100 per year in IHG Food & Beverage Rewards, issued as one $25 single-use voucher per calendar quarter expiring at quarter-end, effective October 1, 2026.",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "$100 Annual Airline Statement Credit",
+        "description": "Receive a one-time $100 statement credit each calendar year when you spend at least $250 in a single purchase on flight tickets booked directly with an airline through December 31, 2027.",
+        "category": "airline_credit",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 100,
+        "expiration_note": "Once per calendar year through Dec 31, 2027.",
+        "sort_order": 25,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+        "notes": "Requires a single transaction of $250 or more on flight tickets booked directly with the airline. Available in calendar year 2026 and calendar year 2027; benefit ends 12/31/27."
+      },
+      "summary": "Chase added a $100 annual statement credit when spending $250 or more on flight tickets booked directly with an airline each calendar year through December 31, 2027, effective October 1, 2026.",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "2 Elite Night Credits per $5,000 spent",
+        "description": "Earn 2 IHG One Rewards Elite Night Credits for every $5,000 spent on purchases with the card, counting toward Elite status and Milestone Rewards with no annual cap.",
+        "category": "status_boost",
+        "reset_cadence": "spend_threshold",
+        "value_usd": 0,
+        "spend_threshold_usd": 5000,
+        "expiration_note": "Repeats for each $5,000 of spend; no limit on Elite Night Credits earned.",
+        "sort_order": 55,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+        "notes": "Counts toward Elite membership status and Milestone Rewards for the calendar year in which earned."
+      },
+      "summary": "Chase added uncapped earning of 2 IHG One Rewards Elite Night Credits for every $5,000 spent on purchases effective October 1, 2026.",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "Platinum Elite Status + 5 Elite Night Credits + 15,000 bonus points after $15,000 spend",
+        "description": "Earn IHG One Rewards Platinum Elite status, 5 additional Elite Night Credits, and 15,000 bonus points after spending $15,000 on purchases in a calendar year.",
+        "category": "status_boost",
+        "reset_cadence": "spend_threshold",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "spend_threshold_usd": 15000,
+        "expiration_note": "Calendar-year spend; Platinum status valid through Dec 31 of the following year.",
+        "sort_order": 60,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+        "notes": "Replaces the former $20,000 spend bonus ($100 statement credit + 10,000 points). The 5 ENCs are in addition to the 2 ENCs per $5,000 spent. Points and status/ENC benefit; no cash credit."
+      },
+      "summary": "Chase added a new $15,000 calendar-year spend threshold awarding Platinum Elite status, 5 bonus Elite Night Credits, and 15,000 bonus points effective October 1, 2026.",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://creditcards.chase.com/a1/ihg/PremierNAEPQ410",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://thriftytraveler.com/news/credit-card/chase-ihg-credit-card-changes/",
+          "label": "Thrifty Traveler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "5x IHG One Rewards Points at car rental agencies",
+        "description": "Earn 5 points per $1 spent at car rental agencies.",
+        "category": "earning_multiplier",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "n.a.",
+        "multiplier_rate": 5,
+        "multiplier_currency": "IHG One Rewards Points",
+        "spend_category": "car_rentals",
+        "spend_category_note": "Car rental agencies (retained at 5x after general travel narrows on Jan 1, 2027)",
+        "sort_order": 145,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier"
+      },
+      "summary": "Car rental agencies are now a dedicated 5x earning category on the IHG One Rewards Premier Credit Card (continuing to earn 5x after broad travel drops to 3x on January 1, 2027).",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ihg_premier",
+      "after": {
+        "title": "5x IHG One Rewards Points at grocery stores",
+        "description": "Earn 5 points per $1 spent at grocery stores.",
+        "category": "earning_multiplier",
+        "reset_cadence": "unlimited",
+        "value_usd": 0,
+        "expiration_note": "n.a.",
+        "multiplier_rate": 5,
+        "multiplier_currency": "IHG One Rewards Points",
+        "spend_category": "groceries",
+        "sort_order": 155,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier"
+      },
+      "summary": "Chase added grocery stores as a 5x earning category on the IHG One Rewards Premier Credit Card effective October 1, 2026.",
+      "effective_date": "2026-10-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
+          "label": "Frequent Miler",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "hyatt_visa",
+      "match_title": "Annual Category 1-4 Free Night Award",
+      "after": {
+        "description": "1 free night each year after your cardmember anniversary in a standard room at any Category 1-4 Hyatt hotel or resort (not valid at Miraval, Hyatt Zilara, or Hyatt Ziva resorts).",
+        "notes": "Category-defined (not point-capped; cannot top off with points). Under Hyatt's 5-tier award chart (Lowest/Low/Moderate/Upper/Top) effective May 20, 2026, Category 4 standard rooms cost 12,000-25,000 points. Starting Jan 1, 2027, Category 1-4 Free Night Awards can be combined with Suite Upgrade Awards (other combinations per World of Hyatt program terms). Same certificate rules apply to the $15,000-spend Free Night Award. Points-based redemption; dollar value varies by property and is not tracked as a credit."
+      },
+      "summary": "Correction: the certificate is defined by category, not by a 15,000-point cap. Under Hyatt's five-tier award chart (from May 20, 2026) a Category 4 standard room costs 12,000 to 25,000 points and the certificate covers all of it. From January 1, 2027 it can be combined with a Suite Upgrade Award.",
+      "effective_date": "2026-05-20",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/free-nights-upgrades.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "label": "Hyatt",
+          "source_type": "official"
+        },
+        {
+          "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+          "label": "Hyatt news release",
+          "source_type": "official"
+        },
+        {
+          "url": "https://onemileatatime.com/guides/hyatt-free-night-award/",
+          "label": "One Mile at a Time",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "hyatt_visa",
+      "after": {
+        "title": "DashPass membership + $10 monthly DoorDash credit",
+        "description": "One year complimentary DashPass for DoorDash and Caviar, plus up to $10 off monthly on non-restaurant DoorDash orders (or $10 quarterly if DashPass was first activated between Feb 1, 2025 and Aug 31, 2026).",
+        "category": "dining_credit",
+        "reset_cadence": "monthly",
+        "uses_per_period": 1,
+        "value_usd": 10,
+        "expiration_note": "Activate by Dec 31, 2027; non-restaurant DoorDash promo runs through Dec 31, 2027.",
+        "sort_order": 55,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+        "notes": "Enhanced Sep 1, 2026: $10/month (up to $120/year) if DashPass was first activated between 2026-09-01 and 2027-12-31; $10/quarter if first activated between 2025-02-01 and 2026-08-31. Active DashPass enrollment required; after the complimentary year, DashPass auto-enrolls at the current monthly rate."
+      },
+      "summary": "The World of Hyatt Credit Card includes Chase's complimentary 1-year DashPass membership plus $10 monthly off non-restaurant DoorDash orders through December 31, 2027 (enhanced from $10 quarterly on September 1, 2026 for activations on or after that date).",
+      "effective_date": "2026-09-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+          "label": "Chase",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "modified",
+      "card_id": "ba_visa",
+      "match_title": "DashPass membership + $10 quarterly DoorDash credit",
+      "after": {
+        "title": "DashPass membership + $10 DoorDash discount (monthly or quarterly)",
+        "description": "12 months of complimentary DashPass for DoorDash and Caviar for qualifying first activations with this card. Up to $10 off one qualifying U.S. non-restaurant DoorDash order per calendar month for first activations September 1, 2026-December 31, 2027, or per calendar quarter for first activations February 1, 2025-August 31, 2026, while enrolled in DashPass.",
+        "notes": "Check the first activation date in Manage DashPass. Switch the tracker to monthly only for a confirmed September 1, 2026-December 31, 2027 first activation; keep quarterly for February 1, 2025-August 31, 2026. Use the enrolled card to pay.",
+        "expiration_note": "First-activation deadline December 31, 2027. Each discount expires at the end of its applicable month or quarter without rollover."
+      },
+      "summary": "For DashPass first activated with the card from September 1, 2026 through December 31, 2027, the $10 non-restaurant DoorDash discount is monthly instead of quarterly. Earlier activations stay quarterly, so the tracker keeps the quarterly clock; switch it to monthly yourself if Manage DashPass shows a later activation.",
+      "effective_date": "2026-09-01",
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/avios/british-airways",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://help.doordash.com/en-us/consumers/article/chase-partnership",
+          "label": "DoorDash help page",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.chase.com/personal/credit-cards/offerdetails-acquisitions/avios",
+          "label": "Chase",
+          "source_type": "official"
+        },
+        {
+          "url": "https://www.chase.com/digital/resources/terms-of-use/cobrand-doordash.html",
+          "label": "Chase terms",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "benefit",
+      "change_type": "added",
+      "card_id": "ba_visa",
+      "after": {
+        "title": "2,500 Anniversary Avios",
+        "description": "Receive 2,500 bonus Avios each account anniversary year.",
+        "category": "other",
+        "reset_cadence": "annual",
+        "uses_per_period": 1,
+        "value_usd": 0,
+        "expiration_note": "Posts 6-8 weeks after the account anniversary date.",
+        "sort_order": 25,
+        "source_url": "https://creditcards.chase.com/travel-credit-cards/avios/british-airways",
+        "notes": "Points-based benefit; dollar value is not counted toward totals."
+      },
+      "summary": "The tracker has no anniversary-bonus row; the Chase page now lists 2,500 bonus Avios every account anniversary year.",
+      "effective_date": null,
+      "sources": [
+        {
+          "url": "https://creditcards.chase.com/travel-credit-cards/avios/british-airways",
+          "label": "Chase",
+          "source_type": "official"
+        }
+      ]
+    },
+    {
+      "scope": "points_currency",
+      "change_type": "modified",
+      "points_currency_id": "british_airways_avios",
+      "after": {
+        "value_cents_per_point": 1.2
+      },
+      "summary": "OMAAT lowered its British Airways Club Avios valuation from 1.3 to 1.2 cents per point.",
+      "effective_date": "2026-09-02",
+      "sources": [
+        {
+          "url": "https://onemileatatime.com/guides/value-miles-points/",
+          "label": "One Mile at a Time",
+          "source_type": "secondary"
+        }
+      ]
+    },
+    {
+      "scope": "points_currency",
+      "change_type": "modified",
+      "points_currency_id": "world_of_hyatt_points",
+      "after": {
+        "value_cents_per_point": 1.4
+      },
+      "summary": "OMAAT lowered its World of Hyatt valuation from 1.5 to 1.4 cents per point.",
+      "effective_date": "2026-09-02",
+      "sources": [
+        {
+          "url": "https://onemileatatime.com/guides/value-miles-points/",
+          "label": "One Mile at a Time",
+          "source_type": "secondary"
+        }
+      ]
+    }
+  ]
+}
