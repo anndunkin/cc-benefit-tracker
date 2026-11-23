@@ -147,3 +147,42 @@ it('the bundled refresh opens for review and the banner points to it', async () 
   render(<MemoryRouter><RefreshBanner /></MemoryRouter>);
   expect(await screen.findByText('Benefit changes are ready for your review.')).toBeInTheDocument();
 });
+
+it('shows a proposed loyalty program, and says its benefits depend on it until it is approved (v1.0.27)', async () => {
+  fileText = JSON.stringify({
+    format: PROPOSAL_FORMAT, format_version: 1, proposal_id: 'ui-test-program', title: 'UI test program', prepared_on: '2026-11-23',
+    changes: [
+      { scope: 'program', change_type: 'added', program_id: 'ui_hotel_status',
+        after: { name: 'UI Hotel Status', program_type: 'hotel_elite_status', source_url: 'https://example.com/program' },
+        summary: 'Adds the hotel program.', sources: [{ url: 'https://example.com/program', label: 'Program page', source_type: 'official' }] },
+      { scope: 'benefit', change_type: 'added', program_id: 'ui_hotel_status',
+        after: { title: 'Late checkout', category: 'status_boost', reset_cadence: 'unlimited', value_usd: 0 },
+        summary: 'Tier benefit.', sources: [{ url: 'https://example.com/program', label: 'Program page', source_type: 'official' }] },
+    ],
+  });
+  render(<MemoryRouter><Refresh /></MemoryRouter>);
+  fireEvent.click(await screen.findByRole('button', { name: 'Load refresh file…' }));
+  const rows = await screen.findAllByTestId('refresh-change');
+  expect(rows).toHaveLength(2);
+  const programRow = rows.find(r => within(r).queryByText('Adds the hotel program.'))!;
+  const benefitRow = rows.find(r => within(r).queryByText('Tier benefit.'))!;
+  expect(within(programRow).getByText(/New loyalty program · 1 benefit proposed with it/)).toBeInTheDocument();
+  expect(within(programRow).getAllByText('UI Hotel Status').length).toBeGreaterThan(0);
+  expect(within(programRow).getAllByText(/Hotel elite status/i).length).toBeGreaterThan(0);
+  expect(within(programRow).getByText(/added only if this\s+row is approved/)).toBeInTheDocument();
+  expect(programRow.textContent).not.toContain('hotel_elite_status');
+  // The benefit names the new program as its owner and warns that it depends on it.
+  expect(within(benefitRow).getAllByText(/UI Hotel Status/).length).toBeGreaterThan(1);
+  expect(benefitRow.textContent).not.toContain('ui_hotel_status');
+  expect(within(benefitRow).getByTestId('needs-program')).toHaveTextContent('added only if the new program "UI Hotel Status" is also approved');
+  expect(data.programsGetAll(db).some(p => p.id === 'ui_hotel_status')).toBe(false);
+
+  fireEvent.click(within(programRow).getByRole('button', { name: 'Approve' }));
+  await waitFor(() => expect(screen.queryByTestId('needs-program')).not.toBeInTheDocument());
+  fireEvent.click(within(screen.getAllByTestId('refresh-change').find(r => within(r).queryByText('Tier benefit.'))!).getByRole('button', { name: 'Approve' }));
+  await waitFor(() => expect(screen.getByText(/2 approved/)).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Apply approved' }));
+  expect(await screen.findByText('Applied 2 changes; skipped 0.')).toBeInTheDocument();
+  expect(data.programsGetAll(db).find(p => p.id === 'ui_hotel_status')).toMatchObject({ name: 'UI Hotel Status', program_type: 'hotel_elite_status' });
+  expect(data.benefitsGetAll(db).filter(b => b.program_id === 'ui_hotel_status').map(b => b.title)).toEqual(['Late checkout']);
+});

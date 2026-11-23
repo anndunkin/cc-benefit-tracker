@@ -2,6 +2,33 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.27 - 2026-11-23
+
+### World of Hyatt program
+- **The World of Hyatt program is now available**, separate from the World of Hyatt Credit Card. Earlier versions tracked only the card. The program appears under **Programs** as "World of Hyatt Elite Status & Milestone Rewards" once you approve it.
+- **It arrives as a refresh to approve.** On first launch after upgrading, **Quarterly Refresh** shows one row for the new program and 95 rows for its benefits. Nothing is added until you approve and apply. Rejecting the program row leaves all of its benefits out, and the app does not ask again on its own; **Check for benefit changes** offers it again. A new file starts with the program already in place.
+- **What is included.** Member, Discoverist, Explorist, Globalist and Lifetime Globalist benefits; Globalist Club lounge access or breakfast, waived resort fees and parking on free nights; the Brand Explorer free night; the resort-fee waiver on Free Night Awards; early access to award nights; Delta SkyMiles dual earn; the Aeroplan Air Canada flight credit; Peloton workout points; and the 2026 Milestone Rewards chart from 20 to 150 qualifying nights.
+- **Milestone Rewards work like the other milestone ladders.** Each level is one row to log when you reach it. The awards issued automatically at that level then appear, and the awards you can choose appear as options to tick. Levels you have not reached stay out of the way. Where Hyatt lets you pick from two groups, the description of each option says which group it belongs to; the picker does not enforce how many you may pick.
+- **Card benefits are not repeated.** The World of Hyatt Credit Card rows stay on the card. The Discoverist row on the program lists what the tier includes and notes that the card already grants it.
+- **The 2027 chart is held until January 1, 2027.** Hyatt announced a new Milestone Rewards chart for 2027. On that date the app offers a second refresh that adds the new 10-night level, retires the options that end (including the American Airlines options and awards that become a choice), updates the wording and validity of the ones that stay, and adds the new options such as Delta eCertificates, Sky Club passes, Medallion status, Tier-Qualifying Night Credits, spa, Thompson and Premium Suite credits and the Free Parking Award. Retired rows keep their usage history.
+
+### Refresh engine
+- A refresh can now add a loyalty program together with its benefits. The Quarterly Refresh screen shows the program row first, says how many benefits come with it, and marks benefit rows that need the program to be approved.
+- A refresh can move an existing benefit under another one, named by title, which keeps the benefit and its usage history while a new first milestone level is put in front of it. The move is shown as "Unlocked by" on the review screen. It is skipped if the row it should follow was rejected or would create a loop, and it follows the same rule as other changes for hand-edited benefits.
+- Hyatt milestone levels are treated as milestones: they are left off the expiring-credits list and are not counted as credits.
+
+### Notes
+- Every tier and every milestone level is included because the app does not know your Hyatt tier. Hide the rows you do not need.
+- Lifetime Globalist annual awards are described on the Lifetime row rather than added as separate rows. If you hold Lifetime Globalist, add them as your own benefits to count their use.
+- The Peloton row is an ongoing benefit rather than a monthly one so that it does not appear on the expiring-credits list each month; the limit of 10 workouts a month is in its title and text.
+- The Aeroplan flight credit is in Canadian dollars, so no US dollar value is recorded.
+- Hyatt had not published the full 2027 terms when this release was prepared. The 2027 rows say so where a detail is not confirmed: the deadline for choosing a reward, how long My Hyatt Concierge access lasts, and whether Tier-Qualifying Night Credits have a redemption window.
+- Not included: the Venetian and Mr & Mrs Smith partner benefits, Points + Cash, event-planner rewards and point gifting.
+
+### Verified
+- TypeScript checks, production build and all 410 tests pass (20 new, covering a refresh that adds a program, rejection and partial approval, export and import of a half-reviewed refresh, moving a row under a new first level, the bundled Hyatt refresh on an existing and a new file, the hold until January 1, 2027, the conversion to the 2027 chart with usage history kept, and hand-edited rows).
+- Tier benefits, award terms and both Milestone Rewards charts were checked row by row against Hyatt's tiers page, the program terms effective October 15, 2026, Hyatt's 2027 announcement, and the Delta, Aeroplan and Peloton partner pages. Sources are linked on each row of the refresh.
+
 ## v1.0.26 - 2026-11-23
 
 ### Print expiring credits

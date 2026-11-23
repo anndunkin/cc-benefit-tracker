@@ -71,6 +71,10 @@ const BENEFIT_ADD_ONLY_FIELDS: Record<string, FieldRule> = {
   is_choice_option:           { kind: 'flag', nullable: false },
   prerequisite_benefit_title: { kind: 'text', nullable: true },
 };
+/** A modified benefit may also be moved under another benefit (v1.0.27), named by title. */
+const BENEFIT_MODIFY_EXTRA_FIELDS: Record<string, FieldRule> = {
+  prerequisite_benefit_title: { kind: 'text', nullable: false },
+};
 export const CARD_FIELDS: Record<string, FieldRule> = {
   name:           { kind: 'text', nullable: false },
   issuer:         { kind: 'text', nullable: false },
@@ -78,6 +82,14 @@ export const CARD_FIELDS: Record<string, FieldRule> = {
   annual_fee_usd: { kind: 'number', nullable: true },
   source_url:     { kind: 'url', nullable: true },
   notes:          { kind: 'longtext', nullable: true },
+};
+const PROGRAM_TYPES = ['airline', 'hotel', 'other', 'airline_elite_status', 'hotel_elite_status', 'hotel_paid_membership'];
+/** Columns of a loyalty program that a proposal may set when it ADDS the program. */
+export const PROGRAM_FIELDS: Record<string, FieldRule> = {
+  name:         { kind: 'text', nullable: false },
+  program_type: { kind: { enum: PROGRAM_TYPES }, nullable: false },
+  source_url:   { kind: 'url', nullable: true },
+  notes:        { kind: 'longtext', nullable: true },
 };
 export const POINTS_CURRENCY_FIELDS: Record<string, FieldRule> = {
   value_cents_per_point: { kind: 'number', nullable: false },
@@ -187,8 +199,8 @@ export function validateProposal(raw: unknown): RefreshProposal {
     if (!isPlainObject(c)) throw new Error(`${where} must be an object`);
     const scope = c.scope;
     const change_type = c.change_type;
-    if (scope !== 'benefit' && scope !== 'card' && scope !== 'points_currency') {
-      throw new Error(`${where}.scope must be benefit, card or points_currency`);
+    if (scope !== 'benefit' && scope !== 'card' && scope !== 'points_currency' && scope !== 'program') {
+      throw new Error(`${where}.scope must be benefit, card, points_currency or program`);
     }
     if (change_type !== 'added' && change_type !== 'modified' && change_type !== 'removed') {
       throw new Error(`${where}.change_type must be added, modified or removed`);
@@ -232,9 +244,23 @@ export function validateProposal(raw: unknown): RefreshProposal {
       if (change_type === 'removed') {
         return { ...base, card_id, program_id, points_currency_id: null, match_title, after: {} };
       }
-      const after = cleanAfter(where, c.after, BENEFIT_FIELDS);
+      const after = cleanAfter(where, c.after, { ...BENEFIT_FIELDS, ...BENEFIT_MODIFY_EXTRA_FIELDS });
       if (Object.keys(after).length === 0) throw new Error(`${where}.after must change at least one field`);
       return { ...base, card_id, program_id, points_currency_id: null, match_title, after };
+    }
+
+    if (scope === 'program') {
+      // A proposal can add a loyalty program (and, in the same file, its benefits).
+      // Renaming or removing a program is left to the user.
+      if (change_type !== 'added') throw new Error(`${where}: only "added" is supported for program`);
+      const after = cleanAfter(where, c.after, PROGRAM_FIELDS);
+      for (const req of ['name', 'program_type']) {
+        if (after[req] === undefined) throw new Error(`${where}.after.${req} is required for an added program`);
+      }
+      return {
+        ...base, card_id: null, program_id: cleanId(`${where}.program_id`, c.program_id),
+        points_currency_id: null, match_title: null, after,
+      };
     }
 
     if (change_type !== 'modified') throw new Error(`${where}: only "modified" is supported for ${scope}`);
@@ -307,12 +333,33 @@ export function diffProposal(database: Database.Database, proposal: RefreshPropo
     WHERE card_id IS ? AND program_id IS ? AND lower(trim(title)) = lower(trim(?))
     ORDER BY is_active DESC, id ASC
   `);
+  const titleOf = database.prepare('SELECT title FROM benefits WHERE id = ?');
   const hasCard = database.prepare('SELECT 1 FROM cards WHERE id = ?');
   const hasProgram = database.prepare('SELECT 1 FROM programs WHERE id = ?');
+
+  // Programs this proposal adds that are not in the file yet. Their benefits can
+  // be proposed alongside them; they are created only if the program is approved.
+  const proposedPrograms = new Set<string>();
+  for (const c of proposal.changes) {
+    if (c.scope === 'program' && c.program_id && !hasProgram.get(c.program_id)) proposedPrograms.add(c.program_id);
+  }
+  const programQueued = new Set<string>();
 
   for (const c of proposal.changes) {
     const after = c.after ?? {};
     const meta = metaFor(proposal, c);
+
+    if (c.scope === 'program') {
+      const id = c.program_id as string;
+      if (!proposedPrograms.has(id) || programQueued.has(id)) { already++; continue; }
+      programQueued.add(id);
+      changes.push({
+        change_type: 'added', card_id: null, program_id: id, benefit_id: null, points_currency_id: null,
+        before_json: null,
+        after_json: JSON.stringify({ ...after, _meta: meta }),
+      });
+      continue;
+    }
 
     if (c.scope === 'card') {
       const card = database.prepare('SELECT * FROM cards WHERE id = ?').get(c.card_id) as Card | undefined;
@@ -349,7 +396,9 @@ export function diffProposal(database: Database.Database, proposal: RefreshPropo
     }
 
     // ── Benefit changes ──
-    const ownerExists = c.card_id ? hasCard.get(c.card_id) : hasProgram.get(c.program_id);
+    const ownerExists = c.card_id
+      ? hasCard.get(c.card_id)
+      : hasProgram.get(c.program_id) || (c.change_type === 'added' && proposedPrograms.has(c.program_id as string));
     if (!ownerExists) {
       unmatchedList.push(unmatched(c, c.card_id ? 'This card is not in your file.' : 'This program is not in your file.'));
       continue;
@@ -394,6 +443,13 @@ export function diffProposal(database: Database.Database, proposal: RefreshPropo
     const diff: Record<string, unknown> = {};
     const before: Record<string, unknown> = { title: row.title };
     for (const [k, v] of Object.entries(after)) {
+      if (k === 'prerequisite_benefit_title') {
+        // Compared by the title of the row it currently hangs off, not by id.
+        const parent = row.prerequisite_benefit_id
+          ? (titleOf.get(row.prerequisite_benefit_id) as { title: string } | undefined)?.title ?? null : null;
+        if ((parent ?? '').trim().toLowerCase() !== String(v).trim().toLowerCase()) { diff[k] = v; before[k] = parent; }
+        continue;
+      }
       const cur = (row as unknown as Record<string, unknown>)[k];
       if (!sameValue(cur, v)) { diff[k] = v; before[k] = cur ?? null; }
     }

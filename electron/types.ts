@@ -335,7 +335,9 @@ export interface RefreshProposalSource {
 }
 
 export interface RefreshProposalChange {
-  scope: 'benefit' | 'card' | 'points_currency';
+  // 'program' (v1.0.27): adds a loyalty program; only change_type 'added'. Benefits for that
+  // program can be proposed in the same file and are added only if the program is approved.
+  scope: 'benefit' | 'card' | 'points_currency' | 'program';
   change_type: RefreshChangeType;
   card_id?: string | null;
   program_id?: string | null;

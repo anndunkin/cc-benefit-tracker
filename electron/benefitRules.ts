@@ -6,7 +6,8 @@ export function isMilestone(b: RuleBenefit): boolean {
   if (b.is_choice_option === 1 || b.reset_cadence !== 'annual') return false;
   return (b.program_id === 'aa_status' && /Loyalty Points/i.test(b.title))
     || (b.program_id === 'marriott_status' && /Elite Nights.*Choice Benefit/i.test(b.title))
-    || (b.program_id === 'delta_medallion' && /Medallion Choice Benefits/i.test(b.title));
+    || (b.program_id === 'delta_medallion' && /Medallion Choice Benefits/i.test(b.title))
+    || (b.program_id === 'hyatt_status' && /Qualifying Nights.*Milestone Reward/i.test(b.title));
 }
 
 export function isDiamondChoices(b: RuleBenefit): boolean {

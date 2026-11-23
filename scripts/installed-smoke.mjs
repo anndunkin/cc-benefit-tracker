@@ -97,6 +97,8 @@ try {
       if (refresh.unmatched.length) throw Error('Bundled refresh could not match: ' + refresh.unmatched.map(u => u.identifier ?? u.title ?? JSON.stringify(u)).join('; '));
       const exec = (await window.api.cards.getAll()).find(c => c.id === 'aa_executive');
       if (exec.annual_fee_usd !== 595) throw Error('A refresh change was applied without approval');
+      // v1.0.27: a program proposed by a refresh is never added before it is approved.
+      if ((await window.api.programs.getAll()).some(p => p.id === 'hyatt_status')) throw Error('The World of Hyatt program was added without approval');
       refreshEvidence = {run_id: refresh.pending_run_id, proposed: proposed.length, unmatched: 0};
     }
     return {version:await window.api.app.getVersion(), dbPath:await window.api.file.currentPath(), refresh:refreshEvidence, notes:'installed native SQLite + preload IPC checks passed'};

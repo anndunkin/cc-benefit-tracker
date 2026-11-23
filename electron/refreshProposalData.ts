@@ -9,6 +9,3132 @@ export const BUNDLED_REFRESH_PROPOSALS: RefreshProposal[] = [
   {
     "format": "cc-benefit-tracker-refresh",
     "format_version": 1,
+    "proposal_id": "2026-11-23-world-of-hyatt-program",
+    "title": "World of Hyatt program: elite tiers and Milestone Rewards",
+    "prepared_on": "2026-11-23",
+    "changes": [
+      {
+        "scope": "program",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "name": "World of Hyatt Elite Status & Milestone Rewards",
+          "program_type": "hotel_elite_status",
+          "source_url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+          "notes": "Benefits of the World of Hyatt program itself, by tier and by Milestone Reward. Benefits of the World of Hyatt Credit Card stay on the card. Milestone Reward rows are updated by a refresh when Hyatt changes its chart; a new chart starts January 1, 2027. A milestone level is awarded once per calendar year. Under the terms effective October 15, 2026, Guest of Honor, Club Access, Suite Upgrade, Category 1-4, Category 1-7, Miraval Extra Night and Ultimate Free Night Awards can each be transferred once to another member, and a member can receive at most 10 transferred awards per calendar year."
+        },
+        "summary": "Adds the World of Hyatt loyalty program (elite tiers and Milestone Rewards) to your Programs list. The World of Hyatt Credit Card benefits you already track stay on the card and are not repeated.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Member Benefits (free to join)",
+          "description": "Earn 5 Base Points per eligible US$1 at most Hyatt hotels and resorts (2.5 at Hyatt Studios), book member rates, and redeem points for free nights starting at 3,000 points, subject to availability. Resort, destination or facility fees are waived on Free Night Award nights at participating properties, except where a property's supplemental terms say otherwise; separate service fees are not waived.",
+          "category": "status_boost",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "No expiry. All points are forfeited if the account has no activity for 24 consecutive months.",
+          "sort_order": 10,
+          "source_url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html"
+        },
+        "summary": "Baseline benefits every World of Hyatt member gets, before any elite tier.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Discoverist Benefits (10 nights or 25,000 Base Points)",
+          "description": "10% bonus on Base Points; preferred room within the room type booked, as available at check-in; premium in-room internet where offered; one bottle of water a day; elite check-in area; 2:00 p.m. late checkout on request (subject to availability at resorts, casino hotels and Destination by Hyatt Residences; not offered at Hyatt Vacation Club); and a dedicated reservation phone line. In-hotel benefits apply on eligible rates and award nights and vary by property.",
+          "category": "status_boost",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Status earned in a calendar year lasts through the end of February of the second calendar year after qualification (for example, earned in 2026, valid through February 29, 2028).",
+          "sort_order": 20,
+          "source_url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+          "notes": "The World of Hyatt Credit Card already gives Discoverist status (tracked on the card). This row lists what the tier includes."
+        },
+        "summary": "First elite tier, earned with 10 qualifying nights or 25,000 Base Points in a calendar year.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Explorist Benefits (30 nights or 50,000 Base Points)",
+          "description": "20% bonus on Base Points. Best room available at check-in, excluding suites and rooms with Club lounge access, at participating properties; brand and property exclusions apply. Room guarantee: one standard guest room at the Standard Rate for personal use if the hotel is otherwise entirely sold out, including suites. Book directly and guarantee the reservation with a valid credit card at least 72 hours before local arrival. Blackouts and hotel requirements apply. Excludes Hyatt resorts, casino hotels, Destination by Hyatt Residences locations, and Residences at Grand Hyatt Deer Valley. Cancellation: cancel up to 24 hours before scheduled check-in if the property's standard cancellation period is 48 hours or less. Excludes Hyatt Vacation Club, Miraval, prepaid or nonrefundable rates, negotiated corporate or group contract rates, and room-specific cancellation policies. Also: early access to award nights; a dedicated Explorist reservation line; plus the Discoverist 2:00 p.m. late checkout, elite check-in, premium internet and bottled water.",
+          "category": "status_boost",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Status earned in a calendar year lasts through the end of February of the second calendar year after qualification (for example, earned in 2026, valid through February 29, 2028).",
+          "sort_order": 30,
+          "source_url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html"
+        },
+        "summary": "Middle elite tier, earned with 30 qualifying nights or 50,000 Base Points in a calendar year.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Globalist Benefits (60 nights or 100,000 Base Points)",
+          "description": "30% bonus on Base Points. Best room available at check-in, including standard suites and rooms with Club lounge access, at participating properties; brand and property exclusions apply. 4:00 p.m. late checkout on request (subject to availability at resorts, casino hotels and Destination by Hyatt Residences; not offered at Hyatt Vacation Club). Room guarantee: one standard guest room at the Standard Rate for personal use if the hotel is otherwise entirely sold out, including suites. Book directly and guarantee the reservation with a valid credit card at least 48 hours before local arrival. Blackouts and hotel requirements apply. Excludes Hyatt resorts, casino hotels, Destination by Hyatt Residences resorts, and Residences at Grand Hyatt Deer Valley. Also: priority access to the first available room of the booked category, from 9:00 a.m.; at Hyatt Studios, a choice at check-in of a US$15 market credit or 500 Bonus Points, once per stay; early access to award nights; a dedicated Globalist reservation line; plus elite check-in, premium internet, bottled water and the same 24-hour cancellation rule, with the same exclusions, as Explorist. Club access or breakfast, waived resort fees and parking on free nights are listed as separate rows.",
+          "category": "status_boost",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Status earned in a calendar year lasts through the end of February of the second calendar year after qualification (for example, earned in 2026, valid through February 29, 2028).",
+          "sort_order": 40,
+          "source_url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+          "notes": "Guest of Honor and My Hyatt Concierge are not included with the tier itself; they come from Milestone Rewards."
+        },
+        "summary": "Top elite tier, earned with 60 qualifying nights or 100,000 Base Points in a calendar year.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Globalist - Club Lounge Access or Daily Breakfast",
+          "description": "At participating hotels with a Club lounge, Globalists get Club lounge access. Where there is no lounge, or it is closed, Globalists get a daily full breakfast (one entree or the standard buffet, juice and coffee, with tax, gratuity and service charge) for each registered guest in the room, up to 2 adults and 2 children. Not valid for in-room dining and not provided on the day of check-in. Some brands and properties differ or are excluded.",
+          "category": "lounge_access",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Applies on eligible paid and award nights while Globalist status is held.",
+          "sort_order": 50,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter"
+        },
+        "summary": "Globalist lounge and breakfast benefit.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Globalist - Resort Fees Waived on Paid Stays",
+          "description": "Resort, destination or facility fees are waived for Globalists paying an eligible rate. Separate service fees are not waived. Not valid at Hyatt Vacation Club or at properties excluded in their supplemental terms.",
+          "category": "hotel_credit",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Applies on eligible paid stays while Globalist status is held.",
+          "sort_order": 60,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter"
+        },
+        "summary": "Globalist-only waiver of resort fees on paid stays.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Globalist - Free Parking on Free Night Awards",
+          "description": "Globalists get free parking, valet or self-parking where offered, on nights stayed on a Free Night Award, where the parking charge can be billed to the room. Does not apply to paid nights. Not valid at Hyatt Vacation Club.",
+          "category": "other",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Being phased out. Members who are Globalist on December 31, 2026 keep it for Free Night Award stays that check out by their tier expiration date or February 29, 2028, whichever comes first. From 2027 Hyatt offers a Free Parking Award as a Milestone Reward choice instead.",
+          "sort_order": 70,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter"
+        },
+        "summary": "Globalist parking on award nights. Hyatt announced on November 18, 2026 that it is being phased out; the dates are in the expiration note.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Lifetime Globalist Status (1,000,000 lifetime Base Points)",
+          "description": "Globalist status for life after earning 1,000,000 Base Points over the membership. Eligible Hyatt Gold Passport Lifetime Diamond members also received Lifetime Globalist at the program launch on March 1, 2017. Includes all Globalist benefits and access to a dedicated My Hyatt Concierge agent. Each year Lifetime Globalists also receive 4 Suite Upgrade Awards, 5 Guest of Honor Awards and 1 Category 1-7 Free Night Award, issued on or around March 1 (in the year Lifetime status is first reached, at the time it is reached).",
+          "category": "status_boost",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "No requalification; lasts for life or until the program or the membership ends. Annual awards: Suite Upgrade Awards are valid through the end of the year earned plus 14 months; Lifetime Guest of Honor Awards are valid 12 months from issuance; the Category 1-7 Free Night Award is valid 180 days from issuance. Stays using the annual awards must check out by the award expiration date.",
+          "sort_order": 80,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "If you hold Lifetime Globalist, add the yearly awards as your own benefits to count their use; they are described here so they do not clutter the list for everyone else."
+        },
+        "summary": "Lifetime version of Globalist, with the awards it adds each year.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Brand Explorer Free Night Award (every 5 brands)",
+          "description": "Earn one Category 1-4 standard-room Free Night Award after completed stays of at least one night, on an eligible rate or a Free Night Award, at 5 different Hyatt brands, and another for each further 5 brands not counted before, over the life of the membership. There is no yearly reset.",
+          "category": "free_night",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Each award is valid 1 year from issuance; the stay must check out by the expiry date. No blackout dates, but a hotel's minimum-stay requirement can prevent its use.",
+          "sort_order": 120,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter"
+        },
+        "summary": "Program-wide free night not tied to tier, earned by staying at new Hyatt brands.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/brand-explorer-award.html",
+            "label": "Brand Explorer award",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Resort Fees Waived on Free Night Awards (all members)",
+          "description": "Resort, destination or facility fees are waived for every member on nights booked with a Free Night Award at participating properties, except where a property's supplemental terms say otherwise. Separate service fees are not waived. Does not apply to Points + Cash or room upgrade awards.",
+          "category": "hotel_credit",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Applies on Free Night Award nights; no cap.",
+          "sort_order": 130,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter"
+        },
+        "summary": "Program-wide fee waiver on award nights, at every tier.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Early Access to Award Nights (Explorist and above)",
+          "description": "For Free Night Award or Points + Cash reservations made on or after June 30, 2026, Explorists, Globalists, Lifetime Globalists and primary cardholders of a Hyatt credit card (at any tier) get advance access to booking compared with other members.",
+          "category": "other",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Based on status, or card membership, at the time of booking.",
+          "sort_order": 140,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not state how much earlier."
+        },
+        "summary": "Benefit in effect since June 30, 2026: higher tiers and Hyatt cardholders can book award nights earlier.",
+        "effective_date": "2026-06-30",
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Delta SkyMiles Dual Earn (Discoverist and above)",
+          "description": "With linked World of Hyatt and Delta SkyMiles accounts, Discoverists earn 1 World of Hyatt Bonus Point per US$2, and Explorists, Globalists and Lifetime Globalists 1 per US$1, of eligible spend on qualifying premium cabin Delta flights (Delta Comfort, Premium Select, First Class and Delta One), in addition to Delta miles. Taxes and fees are excluded.",
+          "category": "other",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Ongoing while the accounts are linked and elite status is held.",
+          "sort_order": 150,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linking the two accounts."
+        },
+        "summary": "Airline partner benefit launched November 17, 2026.",
+        "effective_date": "2026-11-17",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/meanttobe",
+            "label": "Hyatt newsroom, November 17, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Aeroplan - Air Canada Flight Credit (Discoverist and above)",
+          "description": "Discoverists, Explorists, Globalists and Lifetime Globalists receive one Air Canada flight credit per calendar year while eligible and linked, including if they first attain status after linking. The credit discounts a new eligible direct Air Canada booking by CA$20 per passenger round-trip or CA$10 per passenger one-way.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": null,
+          "expiration_note": "Use the credit to book within 12 months of deposit to your Aeroplan account. In later years, Air Canada says it deposits the annual credit by April 5 if you remain eligible.",
+          "sort_order": 152,
+          "source_url": "https://world.hyatt.com/content/gp/en/landing/aeroplan-terms.html",
+          "notes": "Apply at booking. One credit per booking; not valid on multi-city bookings or Aeroplan flight rewards. The credit is in Canadian dollars, so no US dollar value is set."
+        },
+        "summary": "Partner benefit announced July 15, 2026 for elite members who link their Aeroplan account.",
+        "effective_date": "2026-07-15",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/aeroplan-terms.html",
+            "label": "World of Hyatt - Aeroplan terms",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.aircanada.com/ca/en/aco/home/aeroplan/partners/hyatt.html",
+            "label": "Air Canada: Aeroplan and World of Hyatt terms",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/aeroplan",
+            "label": "Hyatt newsroom, July 15, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "Peloton - 100 Bonus Points per Workout (up to 10 a month)",
+          "description": "Members with linked World of Hyatt and Peloton accounts earn 100 Bonus Points for each qualifying workout of at least 10 minutes on a Peloton Bike, Bike+ or Row in the fitness center of a participating Hyatt property during a stay.",
+          "category": "other",
+          "reset_cadence": "unlimited",
+          "uses_per_period": null,
+          "value_usd": 0,
+          "expiration_note": "Normally limited to 1 qualifying workout per day and 10 per calendar month, unless Hyatt permits otherwise in a promotion. Allow up to 3 weeks for points to post.",
+          "sort_order": 154,
+          "source_url": "https://www.hyatt.com/help/faqs/peloton-frequently-asked-questions"
+        },
+        "summary": "Partner benefit open to all members who link a Peloton account.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/faqs/peloton-frequently-asked-questions",
+            "label": "Hyatt Peloton FAQ",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)",
+          "description": "Reaching 20 qualifying nights or 35,000 Base Points in a calendar year earns this Milestone Reward. You choose one of: 2 Club Access Awards, a 2K Next Stay Award, a $25 FIND Experience Credit, or 2 American Airlines Preferred Seat coupons. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited.",
+          "sort_order": 160,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Reaching both the night and the Base Point threshold does not give a second reward."
+        },
+        "summary": "Gate row for the 20-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "20 Nights Choice - 2 Club Access Awards",
+          "description": "Two Club Lounge Access Awards. Each gives Club lounge access for one whole stay of up to 7 consecutive nights at a participating hotel with an open Club lounge, on eligible paid nights, standard-room or suite free nights booked with points, or Points + Cash. Each award can be transferred once to another member.",
+          "category": "lounge_access",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid for the rest of the calendar year earned plus 14 months; the stay must check out by the expiry date. Must be applied before check-in.",
+          "sort_order": 170,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "summary": "One of the options at the 20-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "20 Nights Choice - 2K Next Stay Award",
+          "description": "2,000 Bonus Points after the next eligible stay, on an eligible rate or a Free Night Award, at a Hyatt House, Hyatt Place, Me and All Hotels, Hyatt Studios, Hyatt Select, Unscripted by Hyatt, Caption by Hyatt or UrCove hotel. One award per stay; it cannot be applied to a past stay.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The qualifying stay must check out within 180 days of choosing this award.",
+          "sort_order": 180,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "summary": "One of the options at the 20-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "20 Nights Choice - $25 FIND Experience Credit",
+          "description": "A code for a US$25 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 25,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 190,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "summary": "One of the options at the 20-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "20 Nights Choice - 2 American Airlines Preferred Seat Coupons",
+          "description": "Two AAdvantage Preferred Seat coupons for American Airlines-operated flights, for the member or people traveling with the member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each coupon is valid 365 days from issuance.",
+          "sort_order": 200,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "summary": "One of the options at the 20-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)",
+          "description": "Reaching 30 qualifying nights or 50,000 Base Points in a calendar year earns this Milestone Reward. You receive a Category 1-4 Free Night Award automatically and choose one of: 2 Club Access Awards, a 2K Next Stay Award, a $25 FIND Experience Credit, or 2 American Airlines Preferred Seat coupons. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 210,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Reaching both the night and the Base Point threshold does not give a second reward.",
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "summary": "Gate row for the 30-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Nights - Category 1-4 Free Night Award (automatic)",
+          "description": "One standard-room Free Night Award at a Category 1-4 hotel. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 220,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 30-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Nights Choice - 2 Club Access Awards",
+          "description": "Two Club Lounge Access Awards. Each gives Club lounge access for one whole stay of up to 7 consecutive nights at a participating hotel with an open Club lounge, on eligible paid nights, standard-room or suite free nights booked with points, or Points + Cash. Each award can be transferred once to another member.",
+          "category": "lounge_access",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid for the rest of the calendar year earned plus 14 months; the stay must check out by the expiry date. Must be applied before check-in.",
+          "sort_order": 230,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "One of the options at the 30-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Nights Choice - 2K Next Stay Award",
+          "description": "2,000 Bonus Points after the next eligible stay, on an eligible rate or a Free Night Award, at a Hyatt House, Hyatt Place, Me and All Hotels, Hyatt Studios, Hyatt Select, Unscripted by Hyatt, Caption by Hyatt or UrCove hotel. One award per stay; it cannot be applied to a past stay.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The qualifying stay must check out within 180 days of choosing this award.",
+          "sort_order": 240,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "One of the options at the 30-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Nights Choice - $25 FIND Experience Credit",
+          "description": "A code for a US$25 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 25,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 250,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "One of the options at the 30-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "30 Nights Choice - 2 American Airlines Preferred Seat Coupons",
+          "description": "Two AAdvantage Preferred Seat coupons for American Airlines-operated flights, for the member or people traveling with the member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each coupon is valid 365 days from issuance.",
+          "sort_order": 260,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "One of the options at the 30-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)",
+          "description": "Reaching 40 qualifying nights or 65,000 Base Points in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 5,000 Bonus Points, a $150 FIND Experience Credit, or 2 American Airlines Main Cabin Extra seat coupons. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 270,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Reaching both the night and the Base Point threshold does not give a second reward.",
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "summary": "Gate row for the 40-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 280,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 40-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 290,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "One of the options at the 40-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Nights Choice - 5,000 Bonus Points",
+          "description": "5,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 300,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "One of the options at the 40-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Nights Choice - $150 FIND Experience Credit",
+          "description": "A code for a US$150 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 150,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 310,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "One of the options at the 40-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "40 Nights Choice - 2 American Airlines Main Cabin Extra Seat Coupons",
+          "description": "Two AAdvantage Main Cabin Extra seat coupons for American Airlines-operated flights, for the member or people traveling with the member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each coupon is valid 365 days from issuance.",
+          "sort_order": 320,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "One of the options at the 40-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)",
+          "description": "Reaching 50 qualifying nights or 80,000 Base Points in a calendar year earns this Milestone Reward. You choose one of: 2 Suite Upgrade Awards, 5,000 Bonus Points, a $150 FIND Experience Credit, or 2 American Airlines Main Cabin Extra seat coupons. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited.",
+          "sort_order": 330,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Reaching both the night and the Base Point threshold does not give a second reward.",
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "summary": "Gate row for the 50-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "50 Nights Choice - 2 Suite Upgrade Awards",
+          "description": "Two Complimentary Suite Upgrade Awards. Each confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. Each award can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 340,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "summary": "One of the options at the 50-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "50 Nights Choice - 5,000 Bonus Points",
+          "description": "5,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 350,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "summary": "One of the options at the 50-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "50 Nights Choice - $150 FIND Experience Credit",
+          "description": "A code for a US$150 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 150,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 360,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "summary": "One of the options at the 50-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "50 Nights Choice - 2 American Airlines Main Cabin Extra Seat Coupons",
+          "description": "Two AAdvantage Main Cabin Extra seat coupons for American Airlines-operated flights, for the member or people traveling with the member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each coupon is valid 365 days from issuance.",
+          "sort_order": 370,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "summary": "One of the options at the 50-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)",
+          "description": "Reaching 60 qualifying nights or 100,000 Base Points in a calendar year earns this Milestone Reward. All four awards are issued automatically: 2 Guest of Honor Awards, 2 Suite Upgrade Awards, a Category 1-7 Free Night Award and My Hyatt Concierge access. There is nothing to choose at this level. Log this milestone once you reach it.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "All four awards are issued automatically; there is no selection deadline. See each award row for how long it is valid.",
+          "sort_order": 380,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Reaching both the night and the Base Point threshold does not give a second reward.",
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "summary": "Gate row for the 60-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "60 Nights - 2 Guest of Honor Awards (automatic)",
+          "description": "Two Guest of Honor Awards. For each, the registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 390,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 60-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "60 Nights - 2 Suite Upgrade Awards (automatic)",
+          "description": "Two Complimentary Suite Upgrade Awards. Each confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. Each award can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 400,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 60-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "60 Nights - Category 1-7 Free Night Award (automatic)",
+          "description": "One standard-room Free Night Award at a Category 1-7 hotel or a Category A-D all-inclusive resort. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 410,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 60-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "60 Nights - My Hyatt Concierge (automatic)",
+          "description": "Access to a dedicated My Hyatt Concierge agent for reservations and service.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Access lasts for the rest of the calendar year earned plus 14 months.",
+          "sort_order": 420,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "summary": "Issued automatically at the 60-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 70 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a $300 FIND Experience Credit, or AAdvantage Gold status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 430,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "summary": "Gate row for the 70-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 440,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 70-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 450,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 70-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 460,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 70-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Nights Choice - $300 FIND Experience Credit",
+          "description": "A code for a US$300 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 300,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 470,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 70-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "70 Nights Choice - AAdvantage Gold Status",
+          "description": "AAdvantage Gold status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 480,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 70-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 80 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a $300 FIND Experience Credit, or AAdvantage Gold status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 490,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 80-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 500,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 80-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 510,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 80-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 520,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 80-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Nights Choice - $300 FIND Experience Credit",
+          "description": "A code for a US$300 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 300,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 530,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 80-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "80 Nights Choice - AAdvantage Gold Status",
+          "description": "AAdvantage Gold status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 540,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 80-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 90 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a $300 FIND Experience Credit, or AAdvantage Gold status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 550,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 90-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 560,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 90-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 570,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 90-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 580,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 90-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Nights Choice - $300 FIND Experience Credit",
+          "description": "A code for a US$300 credit toward a FIND experience. The code is sent by email.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 300,
+          "expiration_note": "Valid for the rest of the calendar year issued plus 14 months; it must be applied to a FIND booking before it expires.",
+          "sort_order": 590,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Hyatt's terms do not list the credit code among the awards that can be transferred to another member.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 90-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "90 Nights Choice - AAdvantage Gold Status",
+          "description": "AAdvantage Gold status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 600,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 90-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 100 qualifying nights in a calendar year earns this Milestone Reward. You receive a Category 1-7 Free Night Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 610,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 100-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Nights - Category 1-7 Free Night Award (automatic)",
+          "description": "One standard-room Free Night Award at a Category 1-7 hotel or a Category A-D all-inclusive resort. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 620,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 100-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 630,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 100-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 640,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 100-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 650,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 100-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "100 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 660,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 100-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 110 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 670,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 110-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 680,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 110-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 690,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 110-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 700,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 110-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 710,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 110-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "110 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 720,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 110-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 120 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 730,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 120-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 740,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 120-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 750,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 120-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 760,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 120-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 770,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 120-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "120 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 780,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 120-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 130 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 790,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 130-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 800,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 130-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 810,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 130-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 820,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 130-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 830,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 130-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "130 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 840,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 130-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 140 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 850,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 140-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Nights - Guest of Honor Award (automatic)",
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 consecutive nights on an eligible paid stay, a standard-room or suite free night booked with points, or Points + Cash. After the gifted stay is completed, the member who originally gifted the award earns 1 Tier-Qualifying Night. Using your own award for your own stay does not earn this extra credit.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date.",
+          "sort_order": 860,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 140-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 870,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 140-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 880,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 140-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 890,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 140-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "140 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 900,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 140-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Qualifying Nights - Milestone Reward unlocked",
+          "description": "Reaching 150 qualifying nights in a calendar year earns this Milestone Reward. You receive an Ultimate Free Night Award automatically and choose one of: a Suite Upgrade Award, 10,000 Bonus Points, a Miraval Extra Night Award, or AAdvantage Platinum status. The American Airlines option is offered only to members who linked their World of Hyatt and AAdvantage accounts by November 15, 2026, and only for milestones earned in 2026. Log this milestone once you reach it, then tick the option you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Choose within 90 days after Hyatt sends the milestone notification email, or the choice is forfeited. The automatic award needs no selection.",
+          "sort_order": 910,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear.",
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Gate row for the 150-night Milestone Reward (2026 chart). The awards under it appear only after you log this level.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Nights - Ultimate Free Night Award (automatic)",
+          "description": "One standard-room Free Night Award at a Category 1-8 hotel, a Category A-F all-inclusive resort or a Miraval resort. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 920,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "Issued automatically at the 150-night milestone; no selection needed.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 consecutive nights, on eligible paid nights, a standard-room or Club free night booked with points, or standard-room Points + Cash. The suite must be available for the whole stay; some properties are excluded. It can be transferred once to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid through the end of the year earned plus 14 months; the stay must check out by the expiry date. Must be applied when the reservation is made.",
+          "sort_order": 930,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 150-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Nights Choice - 10,000 Bonus Points",
+          "description": "10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 940,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 150-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Nights Choice - Miraval Extra Night Award",
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay. Standard room, up to double occupancy. The extra night does not come with the nightly resort credit and cannot be combined with a room upgrade award. It can be transferred once to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 180 days from issuance; the stay must check out by the expiry date.",
+          "sort_order": 950,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 150-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/tiers-and-benefits.html",
+            "label": "World of Hyatt Tiers & Benefits",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "program_id": "hyatt_status",
+        "after": {
+          "title": "150 Nights Choice - AAdvantage Platinum Status",
+          "description": "AAdvantage Platinum status in the member's own AAdvantage account. No added benefit if the member already holds that status or higher.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts for the AAdvantage membership year tied to the qualification period in which the milestone was reached, not when the reward is selected.",
+          "sort_order": 960,
+          "source_url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+          "notes": "Available only for a milestone earned in 2026, with World of Hyatt and AAdvantage accounts linked by 11:59 p.m. Central Time on November 15, 2026. The selection can be made in 2027 if it falls within the 90-day selection window. Not offered for milestones earned in 2027.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "summary": "One of the options at the 150-night milestone. Tick it if this is the reward you chose.",
+        "effective_date": null,
+        "sources": [
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/landing/american-airlines-program-announcement.html",
+            "label": "Hyatt notice on American Airlines benefits",
+            "source_type": "official"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "cc-benefit-tracker-refresh",
+    "format_version": 1,
     "proposal_id": "2026-11-benefit-refresh",
     "title": "November 2026 benefit refresh",
     "prepared_on": "2026-11-22",
@@ -2706,6 +5832,3123 @@ export const BUNDLED_REFRESH_PROPOSALS: RefreshProposal[] = [
             "url": "https://frequentmiler.com/all-the-existing-ihg-credit-cards-have-been-refreshed-here-are-the-changes/",
             "label": "Frequent Miler",
             "source_type": "secondary"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "cc-benefit-tracker-refresh",
+    "format_version": 1,
+    "proposal_id": "2027-01-01-world-of-hyatt-milestones",
+    "title": "World of Hyatt: Milestone Rewards chart for 2027",
+    "prepared_on": "2026-11-23",
+    "not_before": "2027-01-01",
+    "changes": [
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "Globalist - Free Parking on Free Night Awards",
+        "after": {
+          "description": "Legacy benefit for members who were Globalist on December 31, 2026: free parking, valet or self-parking where offered, on nights stayed on a Free Night Award, where the parking charge can be billed to the room. Globalist status earned in 2027 does not include it. Not valid at Hyatt Vacation Club. Instead, a Free Parking Award valid on eligible paid and award nights can first be chosen at 60 qualifying nights or 100,000 Base Points.",
+          "expiration_note": "The eligible Free Night Award stay must check out by the earlier of your tier expiration date and February 29, 2028. Lifetime Globalists as of December 31, 2026 keep the legacy benefit for eligible stays checking out by February 29, 2028."
+        },
+        "program_id": "hyatt_status",
+        "summary": "From January 1, 2027 free parking on award nights is no longer part of Globalist status; it is honored only for members who were Globalist on December 31, 2026.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "Lifetime Globalist Status (1,000,000 lifetime Base Points)",
+        "after": {
+          "expiration_note": "No requalification; lasts for life or until the program or membership ends. Check the expiration of each annual award in your Hyatt account. Members who were Lifetime Globalist on December 31, 2026 also receive one complimentary Free Parking Award in March 2028, valid 365 days from issuance."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Lifetime Globalists as of December 31, 2026 receive one complimentary Free Parking Award in March 2028, valid for 365 days from issuance.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "20 Nights Choice - $25 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "20 Nights Choice - 2 American Airlines Preferred Seat Coupons",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "30 Nights - Category 1-4 Free Night Award (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "30 Nights Choice - $25 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "30 Nights Choice - 2 American Airlines Preferred Seat Coupons",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "40 Nights Choice - $150 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "40 Nights Choice - 2 American Airlines Main Cabin Extra Seat Coupons",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "50 Nights Choice - 2 Suite Upgrade Awards",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "50 Nights Choice - $150 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "50 Nights Choice - 2 American Airlines Main Cabin Extra Seat Coupons",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "60 Nights - 2 Suite Upgrade Awards (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "60 Nights - Category 1-7 Free Night Award (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "60 Nights - My Hyatt Concierge (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "70 Nights Choice - $300 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "70 Nights Choice - AAdvantage Gold Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "80 Nights Choice - $300 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "80 Nights Choice - AAdvantage Gold Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "90 Nights Choice - $300 FIND Experience Credit",
+        "program_id": "hyatt_status",
+        "summary": "This option is not offered at this level on the 2027 chart. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "90 Nights Choice - AAdvantage Gold Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "100 Nights - Category 1-7 Free Night Award (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "100 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "110 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "120 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "130 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "140 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "150 Nights - Ultimate Free Night Award (automatic)",
+        "program_id": "hyatt_status",
+        "summary": "On the 2027 chart this award is one of the choices at this level instead of being issued automatically; the choice is added as its own row. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "removed",
+        "match_title": "150 Nights Choice - AAdvantage Platinum Status",
+        "program_id": "hyatt_status",
+        "summary": "American Airlines options are not available for milestones earned in 2027. Eligible 2026 milestones keep their original 90-day selection window, even if it extends into 2027. Retiring the row keeps its history. Reject this change if you still want to see the row.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "10 Qualifying Nights - Milestone Reward unlocked (or 20,000 Base Points)",
+          "description": "Reaching 10 qualifying nights or 20,000 Base Points in a calendar year earns this Milestone Reward. You choose one of: a Tier-Qualifying Night Credit, a $25 FIND Experience Credit, or a $30 Inclusive Collection Spa Credit. Log this milestone once you reach it, then tick what you chose.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "sort_order": 155,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "New Milestone Reward level on the 2027 chart, at 10 qualifying nights.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "10 Nights Choice - Tier-Qualifying Night Credit",
+          "description": "1 Tier-Qualifying Night Credit, counted toward elite status and the next Milestone Rewards.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's announcement does not state a redemption window.",
+          "sort_order": 156,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "10 Qualifying Nights - Milestone Reward unlocked (or 20,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 10-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "10 Nights Choice - $25 FIND Experience Credit",
+          "description": "A US$25 credit toward a FIND experience.",
+          "category": "entertainment_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 25,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 157,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "10 Qualifying Nights - Milestone Reward unlocked (or 20,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 10-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "10 Nights Choice - $30 Inclusive Collection Spa Credit",
+          "description": "US$30 off the final bill for a spa treatment of at least 30 minutes (hydrotherapy, hair and make-up services excluded) at a participating Hyatt Inclusive Collection resort. Give your World of Hyatt number on the spa check-in form and ask to redeem the award; it does not need to be attached to a stay. Only one US$30 credit can be used per spa visit. It can be given to another member.",
+          "category": "wellness_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 30,
+          "expiration_note": "The treatment must be completed within 365 days of choosing the award.",
+          "sort_order": 158,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "10 Qualifying Nights - Milestone Reward unlocked (or 20,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 10-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)",
+        "after": {
+          "description": "Reaching 20 qualifying nights or 35,000 Base Points in a calendar year earns this Milestone Reward. You choose one of: 2 Tier-Qualifying Night Credits, a $30 Inclusive Collection Spa Credit, a $25 Delta Air Lines eCertificate, a 2K Next Stay Award, or 2 Club Access Awards. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027.",
+          "prerequisite_benefit_title": "10 Qualifying Nights - Milestone Reward unlocked (or 20,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart. It now follows the new 10-night level.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "20 Nights Choice - 2 Club Access Awards",
+        "after": {
+          "description": "Two Club Lounge Access Awards. Each gives Club lounge access for one stay at a participating hotel with an open Club lounge, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can be combined with a Suite Upgrade Award, a Free Parking Award or a $500 Premium Suite Credit, but not with a Guest of Honor Award.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "20 Nights Choice - 2K Next Stay Award",
+        "after": {
+          "description": "Earn 2,000 Bonus Points on your next stay at Hyatt House, Hyatt Place, Me and All Hotels, Hyatt Studios, Hyatt Select, Unscripted by Hyatt, Caption by Hyatt or UrCove.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "20 Nights Choice - 2 Tier-Qualifying Night Credits",
+          "description": "2 Tier-Qualifying Night Credits, counted toward elite status and the next Milestone Rewards.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's announcement does not state a redemption window.",
+          "sort_order": 181,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 20-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "20 Nights Choice - $30 Inclusive Collection Spa Credit",
+          "description": "US$30 off the final bill for a spa treatment of at least 30 minutes (hydrotherapy, hair and make-up services excluded) at a participating Hyatt Inclusive Collection resort. Give your World of Hyatt number on the spa check-in form and ask to redeem the award; it does not need to be attached to a stay. Only one US$30 credit can be used per spa visit. It can be given to another member.",
+          "category": "wellness_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 30,
+          "expiration_note": "The treatment must be completed within 365 days of choosing the award.",
+          "sort_order": 182,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 20-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "20 Nights Choice - $25 Delta Air Lines eCertificate",
+          "description": "A US$25 Delta Air Lines eCertificate, good for that amount off an eligible Delta fare. Delta's certificate terms apply.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 25,
+          "expiration_note": "Valid 1 year from the date of issuance.",
+          "sort_order": 183,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "20 Qualifying Nights - Milestone Reward unlocked (or 35,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 20-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)",
+        "after": {
+          "description": "Reaching 30 qualifying nights or 50,000 Base Points in a calendar year earns this Milestone Reward. You make two choices. First, one of: 10,000 Bonus Points or a Category 1-4 Free Night Award. Second, one of: 2 Tier-Qualifying Night Credits, a $30 Inclusive Collection Spa Credit, a $25 Delta Air Lines eCertificate, a 2K Next Stay Award, or 2 Club Access Awards. Nothing is issued automatically. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "30 Nights Choice - 10,000 Bonus Points",
+          "description": "First choice (pick one): 10,000 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 211,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 30-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "30 Nights Choice - Category 1-4 Free Night Award",
+          "description": "First choice (pick one): One standard-room Free Night Award at a Category 1-4 hotel. It can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 212,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 30-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "30 Nights Choice - 2 Club Access Awards",
+        "after": {
+          "description": "Second choice (pick one): Two Club Lounge Access Awards. Each gives Club lounge access for one stay at a participating hotel with an open Club lounge, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can be combined with a Suite Upgrade Award, a Free Parking Award or a $500 Premium Suite Credit, but not with a Guest of Honor Award.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "30 Nights Choice - 2K Next Stay Award",
+        "after": {
+          "description": "Second choice (pick one): Earn 2,000 Bonus Points on your next stay at Hyatt House, Hyatt Place, Me and All Hotels, Hyatt Studios, Hyatt Select, Unscripted by Hyatt, Caption by Hyatt or UrCove.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "30 Nights Choice - 2 Tier-Qualifying Night Credits",
+          "description": "Second choice (pick one): 2 Tier-Qualifying Night Credits, counted toward elite status and the next Milestone Rewards.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's announcement does not state a redemption window.",
+          "sort_order": 241,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 30-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "30 Nights Choice - $30 Inclusive Collection Spa Credit",
+          "description": "Second choice (pick one): US$30 off the final bill for a spa treatment of at least 30 minutes (hydrotherapy, hair and make-up services excluded) at a participating Hyatt Inclusive Collection resort. Give your World of Hyatt number on the spa check-in form and ask to redeem the award; it does not need to be attached to a stay. Only one US$30 credit can be used per spa visit. It can be given to another member.",
+          "category": "wellness_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 30,
+          "expiration_note": "The treatment must be completed within 365 days of choosing the award.",
+          "sort_order": 242,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 30-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "30 Nights Choice - $25 Delta Air Lines eCertificate",
+          "description": "Second choice (pick one): A US$25 Delta Air Lines eCertificate, good for that amount off an eligible Delta fare. Delta's certificate terms apply.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 25,
+          "expiration_note": "Valid 1 year from the date of issuance.",
+          "sort_order": 243,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "30 Qualifying Nights - Milestone Reward unlocked (or 50,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 30-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)",
+        "after": {
+          "description": "Reaching 40 qualifying nights or 65,000 Base Points in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: 5 Tier-Qualifying Night Credits, a $200 Thompson Hotels Credit, a $75 Delta Air Lines eCertificate, 5,000 Bonus Points, or a Suite Upgrade Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "40 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "40 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "40 Nights Choice - 5 Tier-Qualifying Night Credits",
+          "description": "5 Tier-Qualifying Night Credits, counted toward elite status and the next Milestone Rewards.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's announcement does not state a redemption window.",
+          "sort_order": 301,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 40-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "40 Nights Choice - $200 Thompson Hotels Credit",
+          "description": "A US$200 credit toward an eligible rate, and eligible incidentals charged to the room, at participating Thompson Hotels. One credit per stay; single use, so any unused amount is forfeited. It cannot be combined with a Free Night Award and may not cover alcohol in some places. Apply it when booking, or call a Global Care Center before check-in. It can be given to another member.",
+          "category": "hotel_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 200,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 302,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 40-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "40 Nights Choice - $75 Delta Air Lines eCertificate",
+          "description": "A US$75 Delta Air Lines eCertificate, good for that amount off an eligible Delta fare. Delta's certificate terms apply.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 75,
+          "expiration_note": "Valid 1 year from the date of issuance.",
+          "sort_order": 303,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "40 Qualifying Nights - Milestone Reward unlocked (or 65,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 40-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)",
+        "after": {
+          "description": "Reaching 50 qualifying nights or 80,000 Base Points in a calendar year earns this Milestone Reward. You choose one of: a $200 Thompson Hotels Credit, a $75 Delta Air Lines eCertificate, 5,000 Bonus Points, or a Suite Upgrade Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "50 Nights Choice - 1 Suite Upgrade Award",
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account.",
+          "sort_order": 351,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 50-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "50 Nights Choice - $200 Thompson Hotels Credit",
+          "description": "A US$200 credit toward an eligible rate, and eligible incidentals charged to the room, at participating Thompson Hotels. One credit per stay; single use, so any unused amount is forfeited. It cannot be combined with a Free Night Award and may not cover alcohol in some places. Apply it when booking, or call a Global Care Center before check-in. It can be given to another member.",
+          "category": "hotel_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 200,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 352,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 50-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "50 Nights Choice - $75 Delta Air Lines eCertificate",
+          "description": "A US$75 Delta Air Lines eCertificate, good for that amount off an eligible Delta fare. Delta's certificate terms apply.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 75,
+          "expiration_note": "Valid 1 year from the date of issuance.",
+          "sort_order": 353,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "50 Qualifying Nights - Milestone Reward unlocked (or 80,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 50-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)",
+        "after": {
+          "description": "Reaching 60 qualifying nights or 100,000 Base Points in a calendar year earns this Milestone Reward. You receive 2 Guest of Honor Awards automatically. Choose one option from the first group and two options from the second group. First group: 2 Category 1-4 Free Night Awards or a Category 1-7 Free Night Award. Second group: 7,500 Bonus Points, a Free Parking Award, a $100 Delta Air Lines eCertificate, 2 Suite Upgrade Awards, or My Hyatt Concierge. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "60 Nights - 2 Guest of Honor Awards (automatic)",
+        "after": {
+          "description": "Two Guest of Honor Awards. For each, the registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - 2 Category 1-4 Free Night Awards",
+          "description": "First choice (pick one): Two standard-room Free Night Awards, each valid for one night at a Category 1-4 hotel. Each can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 391,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - Category 1-7 Free Night Award",
+          "description": "First choice (pick one): One standard-room Free Night Award at a Category 1-7 hotel or a Category A-D all-inclusive resort. It can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 392,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - 7,500 Bonus Points",
+          "description": "Second choice (pick two): 7,500 World of Hyatt Bonus Points added to the account.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Points are kept as long as the account has activity at least once every 24 months.",
+          "sort_order": 393,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - Free Parking Award",
+          "description": "Second choice (pick two): One Free Parking Award: free parking for one qualifying stay of up to 7 nights, on eligible paid or award nights. It can be combined with other eligible awards and given to another member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 394,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - $100 Delta Air Lines eCertificate",
+          "description": "Second choice (pick two): A US$100 Delta Air Lines eCertificate, good for that amount off an eligible Delta fare. Delta's certificate terms apply.",
+          "category": "airline_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 100,
+          "expiration_note": "Valid 1 year from the date of issuance.",
+          "sort_order": 395,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - 2 Suite Upgrade Awards",
+          "description": "Second choice (pick two): Two Complimentary Suite Upgrade Awards. Each confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. Each can be given to another member.",
+          "category": "upgrade",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account.",
+          "sort_order": 396,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "60 Nights Choice - My Hyatt Concierge",
+          "description": "Second choice (pick two): Access to a dedicated My Hyatt Concierge agent for personalized service.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Hyatt's 2027 summary does not say how long access lasts. Under the 2026 terms it was the rest of the calendar year earned plus 14 months.",
+          "sort_order": 397,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "60 Qualifying Nights - Milestone Reward unlocked (or 100,000 Base Points)"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 60-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "70 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 70 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Free Parking Award, 2 Single Visit Delta Sky Club passes, 10,000 Bonus Points, or a Suite Upgrade Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "70 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "70 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "70 Nights Choice - Free Parking Award",
+          "description": "One Free Parking Award: free parking for one qualifying stay of up to 7 nights, on eligible paid or award nights. It can be combined with other eligible awards and given to another member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 461,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 70-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "70 Nights Choice - 2 Single Visit Delta Sky Club Passes",
+          "description": "Two Single Visit Delta Sky Club passes. Each admits one guest once to a Delta Sky Club, subject to availability, with a qualifying same-day boarding pass and access to the Delta concourse. Partner lounges and Delta Main Basic fares are excluded.",
+          "category": "lounge_access",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each pass is valid 1 year from the date of issuance.",
+          "sort_order": 462,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "70 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 70-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "80 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 80 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Free Parking Award, 2 Single Visit Delta Sky Club passes, 10,000 Bonus Points, or a Suite Upgrade Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "80 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "80 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "80 Nights Choice - Free Parking Award",
+          "description": "One Free Parking Award: free parking for one qualifying stay of up to 7 nights, on eligible paid or award nights. It can be combined with other eligible awards and given to another member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 521,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 80-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "80 Nights Choice - 2 Single Visit Delta Sky Club Passes",
+          "description": "Two Single Visit Delta Sky Club passes. Each admits one guest once to a Delta Sky Club, subject to availability, with a qualifying same-day boarding pass and access to the Delta concourse. Partner lounges and Delta Main Basic fares are excluded.",
+          "category": "lounge_access",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each pass is valid 1 year from the date of issuance.",
+          "sort_order": 522,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "80 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 80-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "90 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 90 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: a Free Parking Award, 2 Single Visit Delta Sky Club passes, 10,000 Bonus Points, or a Suite Upgrade Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "90 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "90 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "90 Nights Choice - Free Parking Award",
+          "description": "One Free Parking Award: free parking for one qualifying stay of up to 7 nights, on eligible paid or award nights. It can be combined with other eligible awards and given to another member.",
+          "category": "other",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 581,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 90-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "90 Nights Choice - 2 Single Visit Delta Sky Club Passes",
+          "description": "Two Single Visit Delta Sky Club passes. Each admits one guest once to a Delta Sky Club, subject to availability, with a qualifying same-day boarding pass and access to the Delta concourse. Partner lounges and Delta Main Basic fares are excluded.",
+          "category": "lounge_access",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Each pass is valid 1 year from the date of issuance.",
+          "sort_order": 582,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "90 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 90-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "100 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 100 qualifying nights in a calendar year earns this Milestone Reward. You make two choices. First, one of: a Category 1-7 Free Night Award, 2 Category 1-4 Free Night Awards, or a $500 Premium Suite Credit. Second, one of: Delta SkyMiles Gold Medallion status, 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Nothing is issued automatically. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "100 Nights Choice - Category 1-7 Free Night Award",
+          "description": "First choice (pick one): One standard-room Free Night Award at a Category 1-7 hotel or a Category A-D all-inclusive resort. It can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 611,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 100-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "100 Nights Choice - 2 Category 1-4 Free Night Awards",
+          "description": "First choice (pick one): Two standard-room Free Night Awards, each valid for one night at a Category 1-4 hotel. Each can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 612,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 100-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "100 Nights Choice - $500 Premium Suite Credit",
+          "description": "First choice (pick one): A US$500 credit toward a premium suite booked on an eligible rate for at least 2 nights at participating hotels with Premium Suites, and eligible incidentals charged to the room. One credit per stay; single use, so any unused amount is forfeited. It cannot be combined with a Free Night Award and may not cover alcohol in some places. It must be added before check-in. It can be given to another member.",
+          "category": "hotel_credit",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 500,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 613,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 100-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "100 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "Second choice (pick one): One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "100 Nights Choice - 10,000 Bonus Points",
+        "after": {
+          "description": "Second choice (pick one): 10,000 World of Hyatt Bonus Points added to the account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Second choice (pick one) on the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "100 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "Second choice (pick one): One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "100 Nights Choice - Delta SkyMiles Gold Medallion Status",
+          "description": "Second choice (pick one): Delta SkyMiles Gold Medallion status in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 651,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "100 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 100-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "110 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 110 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: Delta SkyMiles Gold Medallion status, 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "110 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "110 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "110 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "110 Nights Choice - Delta SkyMiles Gold Medallion Status",
+          "description": "Delta SkyMiles Gold Medallion status in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 711,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "110 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 110-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "120 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 120 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: Delta SkyMiles Gold Medallion status, 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "120 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "120 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "120 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "120 Nights Choice - Delta SkyMiles Gold Medallion Status",
+          "description": "Delta SkyMiles Gold Medallion status in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 771,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "120 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 120-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "130 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 130 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: Delta SkyMiles Gold Medallion status, 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "130 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "130 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "130 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "130 Nights Choice - Delta SkyMiles Gold Medallion Status",
+          "description": "Delta SkyMiles Gold Medallion status in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 831,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "130 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 130-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "140 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 140 qualifying nights in a calendar year earns this Milestone Reward. You receive a Guest of Honor Award automatically and choose one of: Delta SkyMiles Gold Medallion status, 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "140 Nights - Guest of Honor Award (automatic)",
+        "after": {
+          "description": "One Guest of Honor Award. The registered guest (the member, or another member the award is given to) receives Globalist in-hotel benefits for one stay of up to 7 nights, on eligible paid or award stays. It cannot be combined with a Club Access Award. Free parking on Free Night Award nights is included only for stays that check out by February 29, 2028.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "140 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "140 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "140 Nights Choice - Delta SkyMiles Gold Medallion Status",
+          "description": "Delta SkyMiles Gold Medallion status in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 891,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "140 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 140-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "150 Qualifying Nights - Milestone Reward unlocked",
+        "after": {
+          "description": "Reaching 150 qualifying nights in a calendar year earns this Milestone Reward. You make two choices. First, one of: 2 Category 1-7 Free Night Awards or an Ultimate Free Night Award. Second, one of: Delta SkyMiles Platinum Medallion status (without Choice Benefits), 10,000 Bonus Points, a Suite Upgrade Award, or a Miraval Extra Night Award. Nothing is issued automatically. Delta options require linked World of Hyatt and Delta SkyMiles accounts. Log this milestone once you reach it, then tick what you chose.",
+          "expiration_note": "Hyatt's 2027 summary does not give the deadline for choosing (it was 90 days in 2026); check the milestone email. Once chosen, an award cannot be exchanged for another.",
+          "notes": "Milestone gate. Log usage on this row once you reach the level; the rows under it then appear. Chart in effect from January 1, 2027."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "150 Nights Choice - 2 Category 1-7 Free Night Awards",
+          "description": "First choice (pick one): Two standard-room Free Night Awards, each valid for one night at a Category 1-7 hotel. Each can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 2,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 911,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 150-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "150 Nights Choice - Ultimate Free Night Award",
+          "description": "First choice (pick one): One standard-room Free Night Award at a Category 1-8 hotel, a Category A-F all-inclusive resort or a Miraval resort. It can be given to another member.",
+          "category": "free_night",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "Valid 365 days from issuance.",
+          "sort_order": 912,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 150-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://newsroom.hyatt.com/worldofhyatt2027",
+            "label": "Hyatt newsroom, November 18, 2026",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "150 Nights Choice - 1 Suite Upgrade Award",
+        "after": {
+          "description": "Second choice (pick one): One Complimentary Suite Upgrade Award. It confirms a standard suite at booking for one stay of up to 7 nights, on eligible paid nights, free nights booked with points, or Points + Cash. From 2027 it can also be combined with Category 1-4, Category 1-7, Ultimate and promotional Free Night Awards. Some properties are excluded. It can be given to another member.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated for 2027: new validity period and the rules Hyatt announced for combining awards.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "150 Nights Choice - 10,000 Bonus Points",
+        "after": {
+          "description": "Second choice (pick one): 10,000 World of Hyatt Bonus Points added to the account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Second choice (pick one) on the 2027 Milestone Rewards chart.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "modified",
+        "match_title": "150 Nights Choice - Miraval Extra Night Award",
+        "after": {
+          "description": "Second choice (pick one): One complimentary extra consecutive night at a Miraval resort when the member pays an eligible rate, or redeems a Free Night Award or Points + Cash, for a night on the same stay.",
+          "expiration_note": "Valid 365 days from issuance for awards issued on or after January 1, 2027. An award issued earlier keeps the expiry date shown in your account."
+        },
+        "program_id": "hyatt_status",
+        "summary": "Updated to the 2027 Milestone Rewards chart, including the new award validity period.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
+          },
+          {
+            "url": "https://www.hyatt.com/help/en-US/terms/world-of-hyatt?icamp=woh_terms_overviewfooter",
+            "label": "World of Hyatt terms (effective October 15, 2026)",
+            "source_type": "official"
+          }
+        ]
+      },
+      {
+        "scope": "benefit",
+        "change_type": "added",
+        "after": {
+          "title": "150 Nights Choice - Delta SkyMiles Platinum Medallion Status",
+          "description": "Second choice (pick one): Delta SkyMiles Platinum Medallion status (without Choice Benefits) in the member's own SkyMiles account. No added benefit if the member already holds that status or higher, or chooses it more than once in a Medallion qualification year.",
+          "category": "status_boost",
+          "reset_cadence": "annual",
+          "uses_per_period": 1,
+          "value_usd": 0,
+          "expiration_note": "The status lasts as long as Medallion status earned in the SkyMiles qualification period in which the milestone is reached, not when the award is selected.",
+          "sort_order": 951,
+          "source_url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+          "notes": "Requires linked World of Hyatt and Delta SkyMiles accounts.",
+          "is_choice_option": 1,
+          "prerequisite_benefit_title": "150 Qualifying Nights - Milestone Reward unlocked"
+        },
+        "program_id": "hyatt_status",
+        "summary": "New option at the 150-night milestone on the 2027 chart. Tick it if this is the reward you chose.",
+        "effective_date": "2027-01-01",
+        "sources": [
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/delta-skymiles.html",
+            "label": "World of Hyatt and Delta SkyMiles",
+            "source_type": "official"
+          },
+          {
+            "url": "https://world.hyatt.com/content/gp/en/rewards/world-of-hyatt-enhancements.html",
+            "label": "World of Hyatt 2027 enhancements",
+            "source_type": "official"
           }
         ]
       }

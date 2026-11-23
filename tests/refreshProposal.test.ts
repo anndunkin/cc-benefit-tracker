@@ -14,6 +14,7 @@ import {
   importProposalText, MAX_PROPOSAL_BYTES, PROPOSAL_FORMAT,
 } from '../electron/refreshProposal';
 import { BUNDLED_REFRESH_PROPOSALS } from '../electron/refreshProposalData';
+import { isMilestone } from '../electron/benefitRules';
 import type { RefreshProposal } from '../electron/types';
 
 /** A fully seeded + migrated database, i.e. what a real install looks like. */
@@ -506,3 +507,421 @@ describe('The refresh bundled with this release', () => {
     expect(dup).toEqual([]);
   });
 });
+
+describe('A refresh that adds a loyalty program (v1.0.27)', () => {
+  const GATE = '20 Qualifying Nights - Milestone Reward unlocked';
+  function programProposal(): RefreshProposal {
+    return validateProposal({
+      format: PROPOSAL_FORMAT, format_version: 1, proposal_id: 'test-new-program',
+      title: 'New program', prepared_on: '2026-11-23',
+      changes: [
+        // Deliberately listed before the program row: order in the file must not matter.
+        { scope: 'benefit', change_type: 'added', program_id: 'test_hotel_status',
+          after: { title: GATE, category: 'other', reset_cadence: 'annual', uses_per_period: 1, value_usd: 0, sort_order: 10 },
+          summary: 'Milestone gate.', sources: SRC },
+        { scope: 'program', change_type: 'added', program_id: 'test_hotel_status',
+          after: { name: 'Test Hotel Status', program_type: 'hotel_elite_status', source_url: 'https://example.com/program', notes: 'Program notes' },
+          summary: 'Adds the program.', sources: SRC },
+        { scope: 'benefit', change_type: 'added', program_id: 'test_hotel_status',
+          after: { title: '20 Nights Choice - 2 Club Access Awards', category: 'lounge_access', reset_cadence: 'annual',
+            uses_per_period: 2, value_usd: 0, sort_order: 20, is_choice_option: 1, prerequisite_benefit_title: GATE },
+          summary: 'Choice option.', sources: SRC },
+      ],
+    });
+  }
+  const programIds = (db: Database.Database) => (db.prepare('SELECT id FROM programs ORDER BY id').all() as { id: string }[]).map(r => r.id);
+  const rowsFor = (db: Database.Database) => benefitsGetAll(db).filter(b => b.program_id === 'test_hotel_status');
+
+  it('validates the program row strictly', () => {
+    const base = { format: PROPOSAL_FORMAT, format_version: 1, proposal_id: 'test-program-validate', title: 'Program validation', prepared_on: '2026-11-23' };
+    const row = (over: Record<string, unknown>) => ({ ...base, changes: [{
+      scope: 'program', change_type: 'added', program_id: 'new_prog',
+      after: { name: 'New', program_type: 'hotel_elite_status' }, summary: 's', sources: SRC, ...over }] });
+    expect(validateProposal(row({})).changes[0]).toMatchObject({ scope: 'program', program_id: 'new_prog', card_id: null });
+    expect(() => validateProposal(row({ change_type: 'removed' }))).toThrow(/only "added"/);
+    expect(() => validateProposal(row({ change_type: 'modified' }))).toThrow(/only "added"/);
+    expect(() => validateProposal(row({ program_id: undefined }))).toThrow();
+    expect(() => validateProposal(row({ program_id: 'bad id; DROP' }))).toThrow();
+    expect(() => validateProposal(row({ after: { name: 'New' } }))).toThrow(/program_type is required/);
+    expect(() => validateProposal(row({ after: { program_type: 'hotel_elite_status' } }))).toThrow(/name is required/);
+    expect(() => validateProposal(row({ after: { name: 'New', program_type: 'casino' } }))).toThrow();
+    expect(() => validateProposal(row({ after: { name: 'New', program_type: 'hotel_elite_status', source_url: 'http://example.com' } }))).toThrow();
+    expect(() => validateProposal(row({ after: { name: 'New', program_type: 'hotel_elite_status', is_active: 0 } }))).toThrow();
+  });
+
+  it('proposes the program with its benefits and adds nothing until it is applied', () => {
+    const db = liveDb();
+    const before = { programs: programIds(db), benefits: benefitsGetAll(db).length };
+    const r = createRunFromProposal(db, programProposal());
+    expect(r).toMatchObject({ state: 'created', proposed: 3, unmatched: [] });
+    expect(programIds(db)).toEqual(before.programs);
+    expect(benefitsGetAll(db).length).toBe(before.benefits);
+
+    approveAll(db, r.run_id!);
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 3, skipped: 0 });
+    const prog = db.prepare('SELECT * FROM programs WHERE id = ?').get('test_hotel_status') as Record<string, unknown>;
+    expect(prog).toMatchObject({ name: 'Test Hotel Status', program_type: 'hotel_elite_status', source_url: 'https://example.com/program', notes: 'Program notes', is_active: 1 });
+    const rows = rowsFor(db);
+    expect(rows.map(b => b.title).sort()).toEqual(['20 Nights Choice - 2 Club Access Awards', GATE].sort());
+    const gate = rows.find(b => b.title === GATE)!;
+    const option = rows.find(b => b.is_choice_option === 1)!;
+    expect(option.prerequisite_benefit_id).toBe(gate.id);
+    expect(rows.every(b => b.is_user_modified === 0)).toBe(true);
+    // Nothing else changed, and a second pass has nothing left to propose.
+    expect(benefitsGetAll(db).length).toBe(before.benefits + 2);
+    expect(diffProposal(db, programProposal()).changes).toEqual([]);
+  });
+
+  it('leaves the benefits out when the program itself is rejected or undecided', () => {
+    for (const decision of ['reject', 'leave'] as const) {
+      const db = liveDb();
+      const before = { programs: programIds(db), benefits: benefitsGetAll(db).length };
+      const r = createRunFromProposal(db, programProposal());
+      for (const c of refreshPendingChanges(db, r.run_id!)) {
+        const isProgram = JSON.parse(c.after_json!)._meta.scope === 'program';
+        if (!isProgram) refreshApproveChange(db, c.id);
+        else if (decision === 'reject') refreshRejectChange(db, c.id);
+      }
+      expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 0, skipped: 3 });
+      expect(programIds(db)).toEqual(before.programs);
+      expect(benefitsGetAll(db).length).toBe(before.benefits);
+      expect(db.prepare('SELECT COUNT(*) n FROM benefits WHERE program_id = ?').get('test_hotel_status')).toEqual({ n: 0 });
+    }
+  });
+
+  it('adds only the approved benefits when the program is approved', () => {
+    const db = liveDb();
+    const r = createRunFromProposal(db, programProposal());
+    for (const c of refreshPendingChanges(db, r.run_id!)) {
+      const a = JSON.parse(c.after_json!);
+      if (a.is_choice_option === 1) refreshRejectChange(db, c.id); else refreshApproveChange(db, c.id);
+    }
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 2, skipped: 1 });
+    expect(rowsFor(db).map(b => b.title)).toEqual([GATE]);
+  });
+
+  it('does not propose a program that is already in the file, only its missing benefits', () => {
+    const db = liveDb();
+    db.prepare(`INSERT INTO programs (id, name, program_type) VALUES ('test_hotel_status', 'My own name', 'hotel')`).run();
+    benefitCreate(db, { card_id: null, program_id: 'test_hotel_status', title: GATE, category: 'other', reset_cadence: 'annual', uses_per_period: 1, value_usd: 0 }, false);
+    const d = diffProposal(db, programProposal());
+    expect(d.already_current).toBe(2);
+    expect(d.changes.map(c => JSON.parse(c.after_json!).title)).toEqual(['20 Nights Choice - 2 Club Access Awards']);
+    const r = createRunFromProposal(db, programProposal());
+    approveAll(db, r.run_id!);
+    refreshApplyRun(db, r.run_id!);
+    expect(db.prepare('SELECT name, program_type FROM programs WHERE id = ?').get('test_hotel_status')).toEqual({ name: 'My own name', program_type: 'hotel' });
+  });
+
+  it('still reports benefits for a program that nobody proposes as unmatched', () => {
+    const db = liveDb();
+    const p = programProposal();
+    const d = diffProposal(db, { ...p, changes: p.changes.filter(c => c.scope !== 'program') });
+    expect(d.changes).toEqual([]);
+    expect(d.unmatched.map(u => u.reason)).toEqual(['This program is not in your file.', 'This program is not in your file.']);
+  });
+
+  it('is applied directly on a brand-new database and is not re-offered after the user deletes the program', () => {
+    const db = liveDb();
+    const opts = { proposals: [programProposal()], now: new Date(2026, 10, 23) };
+    expect(offerBundledProposals(db, { ...opts, fresh: true }).state).toBe('applied');
+    expect(rowsFor(db)).toHaveLength(2);
+    db.prepare('DELETE FROM benefits WHERE program_id = ?').run('test_hotel_status');
+    db.prepare('DELETE FROM programs WHERE id = ?').run('test_hotel_status');
+    expect(offerBundledProposals(db, opts).state).toBe('up_to_date');   // automatic check: already offered
+    expect(programIds(db)).not.toContain('test_hotel_status');
+    // A manual "Check for benefit changes" may offer it again, as a draft to review.
+    expect(offerBundledProposals(db, { ...opts, force: true })).toMatchObject({ state: 'created', proposed: 3 });
+    expect(programIds(db)).not.toContain('test_hotel_status');
+  });
+
+  it('carries a half-reviewed program refresh through export and import', () => {
+    const db = liveDb();
+    const r = createRunFromProposal(db, programProposal());
+    approveAll(db, r.run_id!);
+    const payload = JSON.parse(JSON.stringify(buildFilePayload(db)));
+    const db2 = liveDb();
+    importFilePayload(db2, payload);
+    const run = refreshGetStatus(db2).pending_run_id!;
+    expect(refreshApplyRun(db2, run)).toEqual({ applied: 3, skipped: 0 });
+    expect(rowsFor(db2)).toHaveLength(2);
+  });
+
+  // A later chart can put a new first level in front of an existing one.
+  const NEW_FIRST = '10 Qualifying Nights - Milestone Reward unlocked';
+  function moveProposal(withParent = true, parent = NEW_FIRST): RefreshProposal {
+    return validateProposal({
+      format: PROPOSAL_FORMAT, format_version: 1, proposal_id: 'test-move-gate', title: 'New first level', prepared_on: '2026-11-23',
+      changes: [
+        // The move is listed before the row it points at: order in the file must not matter.
+        { scope: 'benefit', change_type: 'modified', program_id: 'test_hotel_status', match_title: GATE,
+          after: { prerequisite_benefit_title: parent }, summary: 'Now follows the 10-night level.', sources: SRC },
+        ...(withParent ? [{ scope: 'benefit', change_type: 'added', program_id: 'test_hotel_status',
+          after: { title: NEW_FIRST, category: 'other', reset_cadence: 'annual', uses_per_period: 1, value_usd: 0, sort_order: 5 },
+          summary: 'New first level.', sources: SRC }] : []),
+      ],
+    });
+  }
+  function withProgram(): Database.Database {
+    const db = liveDb();
+    const r = createRunFromProposal(db, programProposal());
+    approveAll(db, r.run_id!);
+    refreshApplyRun(db, r.run_id!);
+    return db;
+  }
+  const gateRow = (db: Database.Database) => rowsFor(db).find(b => b.title === GATE)!;
+
+  it('can move an existing row under a row added by the same refresh, keeping its identity and history', () => {
+    const db = withProgram();
+    const before = gateRow(db);
+    usageCreate(db, { benefit_id: before.id, used_on: '2026-12-01', notes: 'reached 20 nights' });
+    const d = diffProposal(db, moveProposal());
+    const move = d.changes.find(c => c.change_type === 'modified')!;
+    expect(JSON.parse(move.before_json!)).toMatchObject({ prerequisite_benefit_title: null });
+    expect(JSON.parse(move.after_json!).prerequisite_benefit_title).toBe(NEW_FIRST);
+
+    const r = createRunFromProposal(db, moveProposal());
+    expect(gateRow(db).prerequisite_benefit_id).toBeNull();          // nothing moves before approval
+    approveAll(db, r.run_id!);
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 2, skipped: 0 });
+    const first = rowsFor(db).find(b => b.title === NEW_FIRST)!;
+    const after = gateRow(db);
+    expect(after.id).toBe(before.id);
+    expect(after.prerequisite_benefit_id).toBe(first.id);
+    expect(after.is_user_modified).toBe(0);
+    expect(after.description).toBe(before.description);
+    expect(usagesForBenefit(db, before.id)).toHaveLength(1);
+    // The option under the moved row still hangs off it, and nothing is left to propose.
+    expect(rowsFor(db).find(b => b.is_choice_option === 1)!.prerequisite_benefit_id).toBe(before.id);
+    expect(diffProposal(db, moveProposal()).changes).toEqual([]);
+  });
+
+  it('leaves the row where it is when the row it should follow was rejected or does not exist', () => {
+    const db = withProgram();
+    const r = createRunFromProposal(db, moveProposal());
+    for (const c of refreshPendingChanges(db, r.run_id!)) {
+      if (c.change_type === 'added') refreshRejectChange(db, c.id); else refreshApproveChange(db, c.id);
+    }
+    refreshApplyRun(db, r.run_id!);
+    expect(gateRow(db).prerequisite_benefit_id).toBeNull();
+    expect(rowsFor(db).some(b => b.title === NEW_FIRST)).toBe(false);
+
+    const db2 = withProgram();
+    const r2 = createRunFromProposal(db2, moveProposal(false));
+    approveAll(db2, r2.run_id!);
+    refreshApplyRun(db2, r2.run_id!);
+    expect(gateRow(db2).prerequisite_benefit_id).toBeNull();
+  });
+
+  it('never links a row to itself, into a loop, or to a row on another card or program', () => {
+    const db = withProgram();
+    const option = '20 Nights Choice - 2 Club Access Awards';
+    // The option already depends on the gate; asking the gate to follow the option would make a loop.
+    for (const parent of [GATE, option]) {
+      const r = createRunFromProposal(db, moveProposal(false, parent));
+      approveAll(db, r.run_id!);
+      refreshApplyRun(db, r.run_id!);
+      expect(gateRow(db).prerequisite_benefit_id).toBeNull();
+    }
+    // A row with the same title on a different program is not a valid parent.
+    db.prepare(`INSERT INTO programs (id, name, program_type) VALUES ('other_prog', 'Other', 'hotel')`).run();
+    benefitCreate(db, { card_id: null, program_id: 'other_prog', title: NEW_FIRST, category: 'other', reset_cadence: 'annual', uses_per_period: 1, value_usd: 0 }, false);
+    const r = createRunFromProposal(db, moveProposal(false));
+    approveAll(db, r.run_id!);
+    refreshApplyRun(db, r.run_id!);
+    expect(gateRow(db).prerequisite_benefit_id).toBeNull();
+  });
+
+  it('does not move a hand-edited row without consent, and only accepts a real title for the move', () => {
+    const db = withProgram();
+    benefitUpdate(db, gateRow(db).id, { notes: 'my own note' });
+    const r = createRunFromProposal(db, moveProposal());
+    approveAll(db, r.run_id!);
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 1, skipped: 1 });
+    expect(gateRow(db).prerequisite_benefit_id).toBeNull();
+    expect(gateRow(db).notes).toBe('my own note');
+
+    const bad = (after: Record<string, unknown>) => () => validateProposal({
+      format: PROPOSAL_FORMAT, format_version: 1, proposal_id: 'test-bad-move', title: 't', prepared_on: '2026-11-23',
+      changes: [{ scope: 'benefit', change_type: 'modified', program_id: 'test_hotel_status', match_title: GATE, after, summary: 's', sources: SRC }] });
+    expect(bad({ prerequisite_benefit_title: null })).toThrow();
+    expect(bad({ prerequisite_benefit_title: 7 })).toThrow();
+    expect(bad({ prerequisite_benefit_id: 7 })).toThrow();
+    expect(bad({ sort_order: 3 })).toThrow();
+    expect(bad({ is_choice_option: 1 })).toThrow();
+  });
+});
+
+describe('The World of Hyatt program refresh bundled with v1.0.27', () => {
+  const HYATT = BUNDLED_REFRESH_PROPOSALS.find(p => p.proposal_id === '2026-11-23-world-of-hyatt-program')!;
+  const HYATT_2027 = BUNDLED_REFRESH_PROPOSALS.find(p => p.proposal_id === '2027-01-01-world-of-hyatt-milestones')!;
+  const hyattRows = (db: Database.Database) => benefitsGetAll(db).filter(b => b.program_id === 'hyatt_status');
+  const active = (db: Database.Database) => hyattRows(db).filter(b => b.is_active === 1);
+  const hasProgram = (db: Database.Database) => !!db.prepare(`SELECT 1 FROM programs WHERE id = 'hyatt_status'`).get();
+  function applyAll(db: Database.Database, p: RefreshProposal) {
+    const r = createRunFromProposal(db, p);
+    expect(r.state).toBe('created');
+    approveAll(db, r.run_id!);
+    return { r, result: refreshApplyRun(db, r.run_id!) };
+  }
+
+  it('proposes the program first and all of its benefits, and changes nothing until approved', () => {
+    expect(HYATT.changes[0]).toMatchObject({ scope: 'program', change_type: 'added', program_id: 'hyatt_status' });
+    expect(HYATT.changes.slice(1).every(c => c.scope === 'benefit' && c.change_type === 'added' && c.program_id === 'hyatt_status')).toBe(true);
+    const db = liveDb();
+    const before = { benefits: benefitsGetAll(db).length, card: benefitsGetAll(db).filter(b => b.card_id === 'hyatt').length };
+    expect(hasProgram(db)).toBe(false);
+    const r = createRunFromProposal(db, HYATT);
+    expect(r).toMatchObject({ state: 'created', proposed: HYATT.changes.length, unmatched: [] });
+    expect(hasProgram(db)).toBe(false);
+    expect(benefitsGetAll(db).length).toBe(before.benefits);
+
+    approveAll(db, r.run_id!);
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: HYATT.changes.length, skipped: 0 });
+    expect(db.prepare(`SELECT name, program_type, is_active FROM programs WHERE id = 'hyatt_status'`).get())
+      .toEqual({ name: 'World of Hyatt Elite Status & Milestone Rewards', program_type: 'hotel_elite_status', is_active: 1 });
+    expect(hyattRows(db)).toHaveLength(HYATT.changes.length - 1);
+    // The World of Hyatt Credit Card keeps its own benefits; nothing is copied or moved.
+    expect(benefitsGetAll(db).filter(b => b.card_id === 'hyatt').length).toBe(before.card);
+    expect(benefitsGetAll(db).length).toBe(before.benefits + HYATT.changes.length - 1);
+  });
+
+  it('builds a milestone ladder the dashboard can gate: every reward hangs off its level', () => {
+    const db = liveDb();
+    applyAll(db, HYATT);
+    const rows = hyattRows(db);
+    const byId = new Map(rows.map(b => [b.id, b]));
+    const gates = rows.filter(isMilestone);
+    expect(gates.map(g => Number(g.title.split(' ')[0]))).toEqual([20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]);
+    expect(gates.every(g => g.uses_per_period === 1)).toBe(true);
+    // Each level after the first unlocks only once the level below is logged.
+    for (const g of gates.slice(1)) {
+      expect(byId.get(g.prerequisite_benefit_id!)!.title.startsWith(`${Number(g.title.split(' ')[0]) - 10} Qualifying Nights`)).toBe(true);
+    }
+    expect(gates[0].prerequisite_benefit_id).toBeNull();
+    // Every proposed prerequisite resolved to a real row, and rewards point at their own level.
+    for (const c of HYATT.changes.slice(1)) {
+      const a = c.after as Record<string, unknown>;
+      const row = rows.find(b => b.title === a.title)!;
+      if (a.prerequisite_benefit_title) expect(byId.get(row.prerequisite_benefit_id!)!.title).toBe(a.prerequisite_benefit_title);
+      else expect(row.prerequisite_benefit_id).toBeNull();
+    }
+    const rewards = rows.filter(b => /^\d+ Nights (Choice )?- /.test(b.title));
+    expect(rewards.length).toBeGreaterThan(50);
+    for (const b of rewards) {
+      const gate = byId.get(b.prerequisite_benefit_id!)!;
+      expect(isMilestone(gate)).toBe(true);
+      expect(gate.title.split(' ')[0]).toBe(b.title.split(' ')[0]);
+      expect(b.is_choice_option).toBe(b.title.includes(' Choice - ') ? 1 : 0);
+      expect(b.uses_per_period).toBeGreaterThan(0);
+    }
+    // Nothing lands on the Bonus Categories tab, and sort numbers are unique so the order is stable.
+    expect(rows.some(b => b.category === 'earning_multiplier')).toBe(false);
+    expect(new Set(rows.map(b => b.sort_order)).size).toBe(rows.length);
+    expect(rows.every(b => b.is_user_modified === 0 && (b.source_url ?? '').startsWith('https://'))).toBe(true);
+  });
+
+  it('adds nothing when the program row is rejected, and does not ask again on its own', () => {
+    const db = liveDb();
+    const before = benefitsGetAll(db).length;
+    const opts = { proposals: [HYATT, HYATT_2027], now: new Date(2027, 0, 5) };
+    const r = offerBundledProposals(db, opts);
+    expect(r).toMatchObject({ state: 'created', proposed: HYATT.changes.length });
+    for (const c of refreshPendingChanges(db, r.run_id!)) {
+      if (JSON.parse(c.after_json!)._meta.scope === 'program') refreshRejectChange(db, c.id); else refreshApproveChange(db, c.id);
+    }
+    expect(refreshApplyRun(db, r.run_id!)).toEqual({ applied: 0, skipped: HYATT.changes.length });
+    expect(hasProgram(db)).toBe(false);
+    expect(benefitsGetAll(db).length).toBe(before);
+    // The 2027 chart has nothing to attach to, so no further draft appears.
+    const next = offerBundledProposals(db, opts);
+    expect(next.state).toBe('up_to_date');
+    expect(next.unmatched.length).toBe(HYATT_2027.changes.length);
+    expect(refreshGetStatus(db).pending_run_id).toBeNull();
+  });
+
+  it('holds the 2027 chart until January 1, 2027, then offers it after the program is in place', () => {
+    const db = liveDb();
+    const proposals = [HYATT, HYATT_2027];
+    const first = offerBundledProposals(db, { proposals, now: new Date(2026, 10, 23) });
+    approveAll(db, first.run_id!);
+    refreshApplyRun(db, first.run_id!);
+    expect(offerBundledProposals(db, { proposals, now: new Date(2026, 11, 31) }).state).toBe('up_to_date');
+    const second = offerBundledProposals(db, { proposals, now: new Date(2027, 0, 1) });
+    expect(second).toMatchObject({ state: 'created', proposed: HYATT_2027.changes.length, unmatched: [] });
+  });
+
+  it('turns the 2026 rows into the 2027 chart: old options retired, new ones under the right level', () => {
+    const db = liveDb();
+    applyAll(db, HYATT);
+    const usedGate = hyattRows(db).find(b => b.title.startsWith('20 Qualifying Nights'))!;
+    const usedOption = hyattRows(db).find(b => b.title === '20 Nights Choice - $25 FIND Experience Credit')!;
+    usageCreate(db, { benefit_id: usedGate.id, used_on: '2026-12-01', notes: 'reached 20 nights' });
+    usageCreate(db, { benefit_id: usedOption.id, used_on: '2026-12-05', amount_usd: 25, notes: 'tour' });
+    const { result } = applyAll(db, HYATT_2027);
+    expect(result).toEqual({ applied: HYATT_2027.changes.length, skipped: 0 });
+
+    const now = active(db);
+    const titles = now.map(b => b.title);
+    const removed = HYATT_2027.changes.filter(c => c.change_type === 'removed').length;
+    const added = HYATT_2027.changes.filter(c => c.change_type === 'added').length;
+    expect(now.length).toBe(HYATT.changes.length - 1 - removed + added);
+    expect(titles.some(t => /American Airlines|AAdvantage/.test(t))).toBe(false);
+    expect(titles.filter(t => t.includes('FIND'))).toEqual(['10 Nights Choice - $25 FIND Experience Credit']);
+    expect(titles.some(t => /\(automatic\)/.test(t) && !/Guest of Honor/.test(t))).toBe(false);
+    const gates = now.filter(isMilestone);
+    expect(gates.map(g => Number(g.title.split(' ')[0])).sort((a, b) => a - b)).toEqual([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150]);
+    const byId = new Map(hyattRows(db).map(b => [b.id, b]));
+    for (const b of now.filter(x => /^\d+ Nights (Choice )?- /.test(x.title))) {
+      const gate = byId.get(b.prerequisite_benefit_id!)!;
+      expect(gate.is_active).toBe(1);
+      expect(gate.title.split(' ')[0]).toBe(b.title.split(' ')[0]);
+    }
+    // The ladder is one chain again: 10 nights is the only root and each level follows the one before it.
+    for (const g of gates) {
+      const n = Number(g.title.split(' ')[0]);
+      if (n === 10) expect(g.prerequisite_benefit_id).toBeNull();
+      else expect(byId.get(g.prerequisite_benefit_id!)!.title.startsWith(`${n - 10} Qualifying Nights`)).toBe(true);
+    }
+    expect(hyattRows(db).find(b => b.title.startsWith('20 Qualifying Nights'))!.id).toBe(usedGate.id);
+    // Within a level the rows keep a stable, unique order.
+    expect(new Set(now.map(b => b.sort_order)).size).toBe(now.length);
+    const level = (n: number) => now.filter(b => b.title.startsWith(`${n} Nights`)).sort((a, b) => a.sort_order - b.sort_order).map(b => b.title.replace(/^\d+ Nights (Choice )?- /, ''));
+    expect(level(60)).toEqual(['2 Guest of Honor Awards (automatic)', '2 Category 1-4 Free Night Awards', 'Category 1-7 Free Night Award',
+      '7,500 Bonus Points', 'Free Parking Award', '$100 Delta Air Lines eCertificate', '2 Suite Upgrade Awards', 'My Hyatt Concierge']);
+    expect(level(10)).toEqual(['Tier-Qualifying Night Credit', '$25 FIND Experience Credit', '$30 Inclusive Collection Spa Credit']);
+    // Retired rows keep their history, and usage on surviving rows is untouched.
+    expect(hyattRows(db).find(b => b.id === usedOption.id)!.is_active).toBe(0);
+    expect(usagesForBenefit(db, usedOption.id)).toHaveLength(1);
+    expect(usagesForBenefit(db, usedGate.id)).toHaveLength(1);
+    // A second look finds nothing left to do.
+    expect(diffProposal(db, HYATT_2027).changes).toEqual([]);
+  });
+
+  it('leaves a hand-edited Hyatt row alone in 2027 unless replacing it is approved', () => {
+    const db = liveDb();
+    applyAll(db, HYATT);
+    const row = hyattRows(db).find(b => b.title === '40 Nights - Guest of Honor Award (automatic)')!;
+    benefitUpdate(db, row.id, { notes: 'gave this one to Sam' });
+    const { result } = applyAll(db, HYATT_2027);
+    expect(result).toEqual({ applied: HYATT_2027.changes.length - 1, skipped: 1 });
+    const after = hyattRows(db).find(b => b.id === row.id)!;
+    expect(after.notes).toBe('gave this one to Sam');
+    expect(after.expiration_note).toBe(row.expiration_note);
+  });
+
+  it('gives a brand-new file the program, on the chart that applies on the day it is created', () => {
+    const y2026 = liveDb();
+    expect(offerBundledProposals(y2026, { fresh: true, now: new Date(2026, 10, 23) }).state).toBe('applied');
+    expect(active(y2026)).toHaveLength(HYATT.changes.length - 1);
+    expect(active(y2026).some(b => b.title.startsWith('10 Qualifying Nights'))).toBe(false);
+    expect(refreshGetStatus(y2026).pending_run_id).toBeNull();
+
+    const y2027 = liveDb();
+    expect(offerBundledProposals(y2027, { fresh: true, now: new Date(2027, 0, 2) }).state).toBe('applied');
+    expect(active(y2027).some(b => b.title.startsWith('10 Qualifying Nights'))).toBe(true);
+    expect(active(y2027).some(b => /American Airlines|AAdvantage/.test(b.title))).toBe(false);
+    expect(active(y2027).filter(b => isMilestone(b) && b.prerequisite_benefit_id === null).map(b => b.title.split(' ')[0])).toEqual(['10']);
+  });
+});
+

@@ -14,6 +14,7 @@ interface ChangeMeta {
 const FIELD_LABELS: Record<string, string> = {
   title: 'Name',
   name: 'Name',
+  program_type: 'Program type',
   description: 'Description',
   category: 'Category',
   reset_cadence: 'Resets',
@@ -35,7 +36,22 @@ const FIELD_LABELS: Record<string, string> = {
   network: 'Network',
   value_cents_per_point: 'Value per point',
   source_name: 'Valuation source',
+  prerequisite_benefit_title: 'Unlocked by',
+  sort_order: 'List position',
+  is_choice_option: 'Choice option',
 };
+
+const PROGRAM_TYPE_LABELS: Record<string, string> = {
+  airline: 'Airline',
+  hotel: 'Hotel',
+  airline_elite_status: 'Airline elite status',
+  hotel_elite_status: 'Hotel elite status',
+  hotel_paid_membership: 'Hotel paid membership',
+  other: 'Other',
+};
+
+/** A loyalty program that the open refresh proposes to add (v1.0.27). */
+interface ProposedProgram { name: string; approved: boolean; benefits: number }
 
 function formatField(key: string, v: unknown): string {
   if (v === null || v === undefined || v === '') return '—';
@@ -45,6 +61,7 @@ function formatField(key: string, v: unknown): string {
   if (key === 'value_cents_per_point') return `${v}¢`;
   if (key === 'multiplier_rate') return `${v}x`;
   if (key === 'reset_cadence') return cadenceLabel(String(v));
+  if (key === 'program_type') return PROGRAM_TYPE_LABELS[String(v)] ?? String(v);
   if (key === 'category' || key === 'spend_category') return categoryLabel(String(v));
   return String(v);
 }
@@ -102,18 +119,32 @@ export default function Refresh() {
       setPending([]);
     }
   }
-  useEffect(() => {
-    reload();
-    (async () => {
-      const names: Record<string, string> = {};
-      try {
-        for (const c of await window.api.cards.getAll()) names[c.id] = c.name;
-        for (const p of await window.api.programs.getAll()) names[p.id] = p.name;
-        for (const pc of await window.api.pointsCurrencies.getAll()) names[pc.id] = pc.name;
-      } catch { /* names are a display nicety only */ }
-      setOwners(names);
-    })();
-  }, []);
+  async function loadOwners() {
+    const names: Record<string, string> = {};
+    try {
+      for (const c of await window.api.cards.getAll()) names[c.id] = c.name;
+      for (const p of await window.api.programs.getAll()) names[p.id] = p.name;
+      for (const pc of await window.api.pointsCurrencies.getAll()) names[pc.id] = pc.name;
+    } catch { /* names are a display nicety only */ }
+    setOwners(names);
+  }
+  useEffect(() => { reload(); loadOwners(); }, []);
+
+  // Programs this refresh proposes to add, and how many benefits ride on each.
+  const proposedPrograms = useMemo(() => {
+    const map: Record<string, ProposedProgram> = {};
+    for (const c of pending) {
+      const a = parseJson(c.after_json);
+      const scope = a && typeof a._meta === 'object' && a._meta ? (a._meta as ChangeMeta).scope : undefined;
+      if (scope === 'program' && c.change_type === 'added' && c.program_id) {
+        map[c.program_id] = { name: String(a?.name ?? c.program_id), approved: c.review_status === 'approved', benefits: 0 };
+      }
+    }
+    for (const c of pending) {
+      if (c.program_id && map[c.program_id] && c.change_type === 'added' && !isProgramChange(c)) map[c.program_id].benefits++;
+    }
+    return map;
+  }, [pending]);
 
   async function approve(id: number, overwrite = false) {
     await window.api.refresh.approveChange(id, undefined, overwrite);
@@ -143,6 +174,7 @@ export default function Refresh() {
       const r = await window.api.refresh.applyRun(status.pending_run_id);
       setMsg(`Applied ${r.applied} change${r.applied === 1 ? '' : 's'}; skipped ${r.skipped}.`);
       await reload();
+      await loadOwners();
     } catch (e) { setMsg(String(e)); }
     setBusy(false);
   }
@@ -209,7 +241,7 @@ export default function Refresh() {
           <div className="card divide-y divide-slate-200 dark:divide-slate-800">
             {pending.map(ch => (
               <ChangeRow
-                key={ch.id} change={ch} owners={owners}
+                key={ch.id} change={ch} owners={owners} proposedPrograms={proposedPrograms}
                 onApprove={(overwrite) => approve(ch.id, overwrite)} onReject={() => reject(ch.id)}
               />
             ))}
@@ -252,6 +284,11 @@ export default function Refresh() {
   );
 }
 
+function isProgramChange(c: RefreshChange): boolean {
+  const a = parseJson(c.after_json);
+  return !!a && typeof a._meta === 'object' && !!a._meta && (a._meta as ChangeMeta).scope === 'program';
+}
+
 function SourceLinks({ sources }: { sources?: RefreshProposalSource[] }) {
   const links = (sources ?? []).map(s => ({ ...s, safe: safeHttps(s.url) })).filter(s => s.safe);
   if (!links.length) return null;
@@ -272,9 +309,10 @@ function SourceLinks({ sources }: { sources?: RefreshProposalSource[] }) {
 }
 
 function ChangeRow({
-  change, owners, onApprove, onReject,
+  change, owners, proposedPrograms, onApprove, onReject,
 }: {
   change: RefreshChange; owners: Record<string, string>;
+  proposedPrograms?: Record<string, ProposedProgram>;
   onApprove: (overwriteUserEdit: boolean) => void; onReject: () => void;
 }) {
   const before = parseJson(change.before_json);
@@ -287,7 +325,14 @@ function ChangeRow({
 
   const title = String(after.title ?? before?.title ?? after.name ?? before?.name ?? '(untitled)');
   const ownerId = change.card_id ?? change.program_id ?? change.points_currency_id ?? '';
-  const owner = owners[ownerId] ?? ownerId;
+  const isProgram = meta.scope === 'program';
+  // A program this same refresh proposes to add (not in the file yet).
+  const newProgram = !owners[ownerId] && change.program_id ? proposedPrograms?.[change.program_id] : undefined;
+  const owner = isProgram
+    ? `New loyalty program${newProgram && newProgram.benefits > 0 ? ` · ${newProgram.benefits} benefit${newProgram.benefits === 1 ? '' : 's'} proposed with it` : ''}`
+    : owners[ownerId] ?? newProgram?.name ?? ownerId;
+  // Benefits of a new program are only added if the program itself is approved.
+  const needsProgram = !isProgram && !!newProgram && !newProgram.approved && change.review_status !== 'rejected';
   const handEdited = change.target_user_modified === 1 && change.change_type !== 'added';
   const badge = change.change_type === 'added' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
               : change.change_type === 'modified' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
@@ -347,6 +392,18 @@ function ChangeRow({
       )}
 
       <div className="mt-2"><SourceLinks sources={meta.sources} /></div>
+
+      {isProgram && (
+        <p className="text-xs text-slate-500 mt-2">
+          Approving adds this program to your Programs list. The benefits proposed for it are added only if this
+          row is approved.
+        </p>
+      )}
+      {needsProgram && (
+        <p className="text-xs text-amber-700 dark:text-amber-300 mt-2" data-testid="needs-program">
+          This benefit is added only if the new program "{newProgram!.name}" is also approved.
+        </p>
+      )}
 
       {handEdited && (
         <div className="mt-2 text-xs rounded border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 p-2">

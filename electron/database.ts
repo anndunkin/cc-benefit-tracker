@@ -2890,6 +2890,17 @@ const REFRESH_CARD_COLS: Record<string, boolean> = {
   name: false, issuer: false, network: false, annual_fee_usd: true, source_url: true, notes: true,
 };
 
+/** True when `targetId` is `startId` itself or one of the rows it (transitively) depends on. */
+function prerequisiteChainIncludes(database: Database.Database, startId: number, targetId: number): boolean {
+  const next = database.prepare('SELECT prerequisite_benefit_id AS p FROM benefits WHERE id = ?');
+  let cur: number | null = startId;
+  for (let i = 0; cur !== null && i < 200; i++) {
+    if (cur === targetId) return true;
+    cur = (next.get(cur) as { p: number | null } | undefined)?.p ?? null;
+  }
+  return cur !== null;   // absurdly long chain: treat as unsafe
+}
+
 function parseAfter(json: string | null): { payload: Record<string, unknown>; meta: Record<string, unknown> | null } {
   if (!json) return { payload: {}, meta: null };
   const parsed = JSON.parse(json);
@@ -2918,10 +2929,32 @@ function refreshAssignments(payload: Record<string, unknown>, cols: Record<strin
 export function refreshApplyRun(database: Database.Database, runId: number): { applied: number; skipped: number } {
   const changes = refreshPendingChanges(database, runId);
   let applied = 0, skipped = 0;
+  const isProgramAdd = (c: RefreshChange, meta: Record<string, unknown> | null): boolean =>
+    meta?.scope === 'program' && c.change_type === 'added' && !!c.program_id && !c.card_id && !c.benefit_id && !c.points_currency_id;
   const tx = database.transaction(() => {
+    // ── New loyalty programs (v1.0.27) ── created first, so that benefits
+    // proposed for them in the same run have somewhere to go.
     for (const c of changes) {
-      if (c.review_status !== 'approved') { skipped++; continue; }
       const { payload, meta } = parseAfter(c.after_json);
+      if (!isProgramAdd(c, meta) || c.review_status !== 'approved') continue;
+      if (!programGetById(database, c.program_id as string)) {
+        const p = payload as Record<string, unknown>;
+        programCreate(database, {
+          id: c.program_id as string,
+          name: String(p.name ?? c.program_id),
+          program_type: p.program_type as ProgramInput['program_type'],
+          source_url: typeof p.source_url === 'string' ? p.source_url : null,
+          notes: typeof p.notes === 'string' ? p.notes : null,
+        } as ProgramInput);
+      }
+      applied++;
+    }
+
+    const relink: { benefitId: number; parentTitle: string }[] = [];
+    for (const c of changes) {
+      const { payload, meta } = parseAfter(c.after_json);
+      if (isProgramAdd(c, meta)) { if (c.review_status !== 'approved') skipped++; continue; }
+      if (c.review_status !== 'approved') { skipped++; continue; }
 
       // ── Points currencies ──
       if (c.points_currency_id) {
@@ -2976,6 +3009,12 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
 
       // ── Benefits ──
       if (c.change_type === 'added' && c.after_json) {
+        // The card or program must exist: a new program that was proposed in
+        // this run but not approved (or an owner deleted since) leaves its
+        // benefits out rather than failing the whole run.
+        const ownerThere = c.card_id ? !!cardGetById(database, c.card_id)
+          : c.program_id ? !!programGetById(database, c.program_id) : false;
+        if (!ownerThere) { skipped++; continue; }
         const { prerequisite_benefit_title, ...row } = payload as Record<string, unknown>;
         const created = benefitCreate(database, row as unknown as BenefitInput, false);
         if (typeof prerequisite_benefit_title === 'string' && prerequisite_benefit_title) {
@@ -2994,10 +3033,19 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
         const keepUserFlag = b.is_user_modified === 1;
         if (keepUserFlag && c.overwrite_user_edit !== 1) { skipped++; continue; }
         const { sets, values } = refreshAssignments(payload, REFRESH_BENEFIT_COLS);
-        if (sets.length === 0) { skipped++; continue; }
-        database.prepare(`
-          UPDATE benefits SET ${sets.join(', ')}, is_user_modified = ?, updated_at = datetime('now') WHERE id = ?
-        `).run(...values, keepUserFlag ? 1 : 0, c.benefit_id);
+        // v1.0.27: a change may move the row under another benefit of the same
+        // card or program, named by title (e.g. a new first milestone level).
+        // The link is made after every change in the run has been applied, so
+        // that it can point at a row this same run adds.
+        const parentTitle = (payload as Record<string, unknown>).prerequisite_benefit_title;
+        const wantsLink = typeof parentTitle === 'string' && parentTitle.trim() !== '';
+        if (sets.length === 0 && !wantsLink) { skipped++; continue; }
+        if (sets.length > 0) {
+          database.prepare(`
+            UPDATE benefits SET ${sets.join(', ')}, is_user_modified = ?, updated_at = datetime('now') WHERE id = ?
+          `).run(...values, keepUserFlag ? 1 : 0, c.benefit_id);
+        }
+        if (wantsLink) relink.push({ benefitId: c.benefit_id, parentTitle: parentTitle as string });
         applied++;
       } else if (c.change_type === 'removed' && c.benefit_id) {
         // Removed benefits are deactivated (soft-delete). Preserves usage history.
@@ -3011,6 +3059,20 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
       } else {
         skipped++;
       }
+    }
+    // Links requested by modified rows. Left as they are if the row to hang
+    // under does not exist (its own addition was rejected), has been retired,
+    // or the move would make a loop.
+    for (const { benefitId, parentTitle } of relink) {
+      const b = benefitGetById(database, benefitId);
+      if (!b) continue;
+      const parent = database.prepare(`
+        SELECT id FROM benefits
+        WHERE card_id IS ? AND program_id IS ? AND is_active = 1 AND id <> ? AND lower(trim(title)) = lower(trim(?))
+        ORDER BY id LIMIT 1
+      `).get(b.card_id, b.program_id, b.id, parentTitle) as { id: number } | undefined;
+      if (!parent || prerequisiteChainIncludes(database, parent.id, b.id)) continue;
+      database.prepare(`UPDATE benefits SET prerequisite_benefit_id = ?, updated_at = datetime('now') WHERE id = ?`).run(parent.id, b.id);
     }
     database.prepare(`UPDATE refresh_runs SET status = 'applied', completed_at = datetime('now') WHERE id = ?`).run(runId);
     database.prepare(`DELETE FROM app_meta WHERE key = ?`).run(`refresh_unmatched:${runId}`);

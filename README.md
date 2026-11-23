@@ -5,7 +5,7 @@ Windows desktop application that tracks the credit card and airline/hotel status
 ## Highlights
 
 - **Yearly usage tracking** for benefits that reset (annual, semiannual, quarterly, monthly credits and choice benefits).
-- **Separate "Programs" section** for status-driven benefits (Delta Medallion, Marriott Bonvoy, AAdvantage, IHG Ambassador) so complimentary upgrades and elite bonuses don't clutter the card list.
+- **Separate "Programs" section** for status-driven benefits (Delta Medallion, Marriott Bonvoy, AAdvantage, IHG Ambassador, World of Hyatt) so complimentary upgrades and elite bonuses don't clutter the card list.
 - **Unlimited benefits** (award-flight discounts, priority boarding, free bags, etc.) are tracked separately from consumable credits.
 - **Diff & review quarterly refresh workflow** — each release carries a researched list of published benefit changes; the app compares it with your data and proposes a change set with sources and effective dates. You approve or reject each row before it touches your saved benefits. Any benefit you have edited by hand is never overwritten by a refresh unless you choose "Approve and replace my edit" for that row.
 - **Full file management** — save your database anywhere, load it back, export a portable JSON payload. The File menu has New File, Open File, Save, Save As, Save a Backup Copy, Export to JSON, Import from JSON and Show File in Folder (the same commands are on the Settings page), and the app reopens the file you used last.
@@ -20,6 +20,8 @@ Hilton Aspire · IHG One Rewards Premier · Amex Platinum · Delta SkyMiles Rese
 ## Seeded programs
 
 Delta SkyMiles Medallion · American AAdvantage · IHG One Rewards Ambassador · Marriott Bonvoy Elite.
+
+The World of Hyatt program (elite tiers and Milestone Rewards) is not in the seed list. It is added by the refresh bundled with v1.0.27: an existing file is asked to approve it on the Quarterly Refresh screen, and a new file starts with it.
 
 ## Quick start
 
@@ -46,7 +48,7 @@ is updated to the latest stable 12.x release; it intentionally does not use
 - **Benefits** — belong to exactly one card OR one program. Each has a title, category, reset cadence, uses per period, dollar value, optional spend threshold, expiration note, and a source URL back to the official page.
 - **Usages** — a row per redemption: benefit, date, dollar amount, optional note. The app tags each row with the correct period key at insert time so "used this quarter" queries never do calendar math on the fly.
 - **Refresh runs** — a diff between the current database and the newly proposed benefit list. Each pending change is `pending`, then `approved` or `rejected`. Applying a run skips any benefit whose `is_user_modified` flag is set. The exception is a row you explicitly approved with "Approve and replace my edit".
-- **Refresh proposals** — the prepared change lists behind a refresh run, kept as JSON in `refresh-proposals/` and compiled into the app by `scripts/build-refresh-proposals.mjs`. A proposal can carry a `not_before` date so that changes are offered on the day they take effect. The same JSON can be loaded by hand with **Load refresh file...** on the Quarterly Refresh screen.
+- **Refresh proposals** — the prepared change lists behind a refresh run, kept as JSON in `refresh-proposals/` and compiled into the app by `scripts/build-refresh-proposals.mjs`. A proposal can carry a `not_before` date so that changes are offered on the day they take effect. The same JSON can be loaded by hand with **Load refresh file...** on the Quarterly Refresh screen. Since v1.0.27 a proposal can also add a whole loyalty program (`scope: "program"`, `change_type: "added"`) together with its benefits; the benefits are created only if the program row is approved. A `modified` benefit change can also name the row it now follows (`prerequisite_benefit_title`), which is how a new first milestone level is put in front of an existing one.
 
 ## File format
 
@@ -75,7 +77,7 @@ tests/print-ui.test.tsx     · Print Expiring Credits screen: options, per-row t
 tests/localDate.test.tsx    · "Today" follows the computer's local date, not UTC
 ```
 
-Run `npm run test` to see the full suite. All 390 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 410 tests pass on a clean checkout.
 
 ## License
 
