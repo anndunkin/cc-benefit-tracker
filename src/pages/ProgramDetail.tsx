@@ -4,6 +4,7 @@ import type { Benefit, Program, BenefitProjection } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor } from '../lib/format';
 import BenefitEditor from '../components/BenefitEditor';
 import LogUsageModal from '../components/LogUsageModal';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 export default function ProgramDetail() {
   const { id } = useParams<{ id: string }>();
@@ -42,8 +43,8 @@ export default function ProgramDetail() {
         <h1 className="text-2xl font-bold">{prog.name}</h1>
         <div className="text-sm text-slate-500 mt-1">{prog.program_type.replace(/_/g, ' ')}</div>
         {prog.notes && <div className="text-sm text-slate-500 mt-2">{prog.notes}</div>}
-        {prog.source_url && (
-          <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={prog.source_url} target="_blank" rel="noreferrer">
+        {safeWebLinkOrNull(prog.source_url) && (
+          <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={safeWebLinkOrNull(prog.source_url)!} target="_blank" rel="noreferrer noopener">
             Official page ↗
           </a>
         )}

@@ -12,6 +12,7 @@ import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights, valueAtD
 import { ensureRelease20Schema, migrateRelease20 } from './release20';
 import { periodKeyFor, periodLabelFor, nextResetIso, uses_max_for } from './periods';
 import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS, SEED_POINTS_CURRENCIES } from './benefitsSeed';
+import { requireWebLinkOrBlank, safeWebLinkOrNull } from './linkPolicy';
 
 let db: Database.Database | null = null;
 
@@ -2133,7 +2134,7 @@ export function cardCreate(database: Database.Database, input: CardInput): Card 
     input.is_visible ?? 1,
     input.color_hex ?? null,
     input.notes ?? null,
-    input.source_url ?? null,
+    requireWebLinkOrBlank('Link', input.source_url),
   );
   return cardGetById(database, id)!;
 }
@@ -2162,7 +2163,7 @@ export function cardUpdate(database: Database.Database, id: string, patch: Parti
     is_visible: patch.is_visible ?? null,
     color_hex: patch.color_hex ?? current.color_hex,
     notes: patch.notes ?? current.notes,
-    source_url: patch.source_url ?? current.source_url,
+    source_url: patch.source_url == null ? safeWebLinkOrNull(current.source_url) : requireWebLinkOrBlank('Link', patch.source_url),
   });
   return cardGetById(database, id)!;
 }
@@ -2196,7 +2197,7 @@ export function programCreate(database: Database.Database, input: ProgramInput):
     id, input.name, input.program_type,
     input.is_active ?? 1,
     input.notes ?? null,
-    input.source_url ?? null,
+    requireWebLinkOrBlank('Link', input.source_url),
   );
   return programGetById(database, id)!;
 }
@@ -2217,7 +2218,7 @@ export function programUpdate(database: Database.Database, id: string, patch: Pa
     program_type: patch.program_type ?? null,
     is_active: patch.is_active ?? null,
     notes: patch.notes ?? current.notes,
-    source_url: patch.source_url ?? current.source_url,
+    source_url: patch.source_url == null ? safeWebLinkOrNull(current.source_url) : requireWebLinkOrBlank('Link', patch.source_url),
   });
   return programGetById(database, id)!;
 }
@@ -2250,7 +2251,7 @@ export function pointsCurrencyCreate(database: Database.Database, input: PointsC
   `).run(
     id, input.name, input.currency_type, input.value_cents_per_point,
     input.source_name ?? 'One Mile at a Time',
-    input.source_url ?? null,
+    requireWebLinkOrBlank('Link', input.source_url),
     input.notes ?? null,
     input.is_active ?? 1,
   );
@@ -2277,7 +2278,7 @@ export function pointsCurrencyUpdate(database: Database.Database, id: string, pa
     currency_type: patch.currency_type ?? null,
     value_cents_per_point: patch.value_cents_per_point ?? null,
     source_name: patch.source_name ?? null,
-    source_url: patch.source_url ?? current.source_url,
+    source_url: patch.source_url == null ? safeWebLinkOrNull(current.source_url) : requireWebLinkOrBlank('Link', patch.source_url),
     notes: patch.notes ?? current.notes,
     is_active: patch.is_active ?? null,
   });
@@ -2343,7 +2344,7 @@ export function benefitCreate(database: Database.Database, input: BenefitInput, 
     input.choice_selected ?? 0,
     input.is_active ?? 1,
     input.sort_order ?? 0,
-    input.source_url ?? null,
+    requireWebLinkOrBlank('Link', input.source_url),
     input.notes ?? null,
     markUserModified ? 1 : 0,
     input.is_hidden ?? 0,
@@ -2408,7 +2409,7 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
     choice_selected: patch.choice_selected ?? null,
     is_active: patch.is_active ?? null,
     sort_order: patch.sort_order ?? null,
-    source_url: patch.source_url ?? current.source_url,
+    source_url: patch.source_url == null ? safeWebLinkOrNull(current.source_url) : requireWebLinkOrBlank('Link', patch.source_url),
     notes: patch.notes ?? current.notes,
   });
   return benefitGetById(database, id)!;
@@ -2901,6 +2902,25 @@ function prerequisiteChainIncludes(database: Database.Database, startId: number,
   return cur !== null;   // absurdly long chain: treat as unsafe
 }
 
+/**
+ * v1.0.29: a refresh change carried in an imported data file may only point at
+ * web links. Unsafe links are dropped; the rest of the change is kept.
+ */
+function cleanChangeLinks(json: string | null | undefined): string | null {
+  if (json === null || json === undefined) return null;
+  let parsed: unknown;
+  try { parsed = JSON.parse(json); } catch { return null; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const obj = parsed as Record<string, unknown>;
+  if ('source_url' in obj) obj.source_url = safeWebLinkOrNull(obj.source_url);
+  const meta = obj._meta as Record<string, unknown> | undefined;
+  if (meta && typeof meta === 'object' && Array.isArray(meta.sources)) {
+    meta.sources = (meta.sources as unknown[]).filter(src =>
+      !!src && typeof src === 'object' && safeWebLinkOrNull((src as Record<string, unknown>).url) !== null);
+  }
+  return JSON.stringify(obj);
+}
+
 function parseAfter(json: string | null): { payload: Record<string, unknown>; meta: Record<string, unknown> | null } {
   if (!json) return { payload: {}, meta: null };
   const parsed = JSON.parse(json);
@@ -2920,7 +2940,7 @@ function refreshAssignments(payload: Record<string, unknown>, cols: Record<strin
     if (v === null && !nullable) continue;
     if (v !== null && typeof v !== 'string' && typeof v !== 'number') continue;
     sets.push(`${col} = ?`);
-    values.push(v);
+    values.push(col === 'source_url' ? safeWebLinkOrNull(v) : v);
   }
   return { sets, values };
 }
@@ -2943,7 +2963,7 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
           id: c.program_id as string,
           name: String(p.name ?? c.program_id),
           program_type: p.program_type as ProgramInput['program_type'],
-          source_url: typeof p.source_url === 'string' ? p.source_url : null,
+          source_url: safeWebLinkOrNull(p.source_url),
           notes: typeof p.notes === 'string' ? p.notes : null,
         } as ProgramInput);
       }
@@ -2986,7 +3006,7 @@ export function refreshApplyRun(database: Database.Database, runId: number): { a
           `).run(
             p.value_cents_per_point ?? null,
             p.source_name ?? null,
-            p.source_url ?? cur.source_url,
+            p.source_url === undefined ? cur.source_url : safeWebLinkOrNull(p.source_url),
             p.notes ?? cur.notes,
             keepUserFlag ? 1 : 0,
             c.points_currency_id,
@@ -3119,12 +3139,12 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
       INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, is_visible, color_hex, notes, source_url, created_at)
       VALUES (@id, @name, @issuer, @network, @annual_fee_usd, @is_active, @is_visible, @color_hex, @notes, @source_url, @created_at)
     `);
-    for (const c of payload.cards) insCard.run({ ...c, is_visible: c.is_visible ?? 1 });
+    for (const c of payload.cards) insCard.run({ ...c, is_visible: c.is_visible ?? 1, source_url: safeWebLinkOrNull(c.source_url) });
     const insProg = database.prepare(`
       INSERT INTO programs (id, name, program_type, is_active, notes, source_url, created_at)
       VALUES (@id, @name, @program_type, @is_active, @notes, @source_url, @created_at)
     `);
-    for (const p of payload.programs) insProg.run(p);
+    for (const p of payload.programs) insProg.run({ ...p, source_url: safeWebLinkOrNull(p.source_url) });
     const insBen = database.prepare(`
       INSERT INTO benefits (id, card_id, program_id, title, description, category, reset_cadence,
         uses_per_period, value_usd, spend_threshold_usd, expiration_note, expiration_date, reset_years,
@@ -3142,6 +3162,7 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
       insBen.run({
       ...b,
       is_hidden: b.is_hidden ?? 0,
+      source_url: safeWebLinkOrNull(b.source_url),
       previous_value_usd: b.previous_value_usd ?? null,
       value_effective_date: b.value_effective_date ?? null,
       expiration_date: b.expiration_date ?? null,
@@ -3176,7 +3197,7 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
         @points_currency_id, @before_json, @after_json, @review_status, @review_notes, @created_at, @overwrite_user_edit)
     `);
     for (const c of payload.refresh_changes) {
-      insCh.run({ ...c, points_currency_id: c.points_currency_id ?? null, overwrite_user_edit: c.overwrite_user_edit === 1 ? 1 : 0 });
+      insCh.run({ ...c, points_currency_id: c.points_currency_id ?? null, overwrite_user_edit: c.overwrite_user_edit === 1 ? 1 : 0, after_json: cleanChangeLinks(c.after_json) });
     }
     const insPc = database.prepare(`
       INSERT INTO points_currencies (id, name, currency_type, value_cents_per_point, source_name,
@@ -3184,7 +3205,7 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
       VALUES (@id, @name, @currency_type, @value_cents_per_point, @source_name,
         @source_url, @notes, @is_active, @is_user_modified, @updated_at, @created_at)
     `);
-    for (const pc of (payload.points_currencies ?? [])) insPc.run(pc);
+    for (const pc of (payload.points_currencies ?? [])) insPc.run({ ...pc, source_url: safeWebLinkOrNull(pc.source_url) });
     if (!payload.seed_version || parseVersion(payload.seed_version)[2] < 20) migrateRelease20(database);
     metaSet(database, 'seed_version', '1.0.20');
   });

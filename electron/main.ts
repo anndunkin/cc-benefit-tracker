@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, shell, dialog } from 'electron';
+import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, shell, dialog, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import {
@@ -9,7 +9,7 @@ import {
   benefitCreate, benefitUpdate, benefitDelete, benefitGetChoices, benefitSetChoices,
   usagesForBenefit, usageCreate, usageUpdate, usageDelete,
   computeProjections,
-  refreshGetStatus, refreshStartRun, refreshPendingChanges,
+  refreshGetStatus, refreshPendingChanges,
   refreshApproveChange, refreshRejectChange, refreshApplyRun, refreshDiscardRun,
   applyDataMigrations,
   pointsCurrenciesGetAll, pointsCurrencyGetById, pointsCurrencyCreate,
@@ -24,6 +24,8 @@ import { chooseStartupPath, writeLastDbPath } from './fileStore';
 import { createFileOps } from './fileOps';
 import type { FileOpResult, PickOptions } from './fileOps';
 import { buildFileMenu } from './fileMenu';
+import { isAppPageUrl, isSafeWebLink } from './linkPolicy';
+import { pathToFileURL } from 'url';
 import { resolveIconPath } from './iconPath';
 import { offerBundledProposals, importProposalText, MAX_PROPOSAL_BYTES } from './refreshProposal';
 import type { RefreshProposalResult } from './types';
@@ -63,6 +65,32 @@ function offerBundledRefresh(fresh: boolean): void {
   } catch (err) { logError(`bundled refresh failed: ${err}`); }
 }
 
+const DEV_ORIGIN: string | null = isDev ? 'http://localhost:5173' : null;
+function appIndexPath(): string { return path.join(app.getAppPath(), 'dist', 'index.html'); }
+
+/**
+ * v1.0.29: every request for data must come from the app's own page in the
+ * app's own window. Anything else (another page, a frame) is refused.
+ */
+function handleIpc(channel: string, listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown): void {
+  ipcMain.handle(channel, (event, ...args) => {
+    const frame = event.senderFrame;
+    const fromApp = !!frame && frame === event.sender.mainFrame
+      && isAppPageUrl(frame.url, pathToFileURL(appIndexPath()).href, DEV_ORIGIN);
+    if (!fromApp) {
+      logError(`blocked request ${channel} from ${frame?.url?.slice(0, 200) ?? 'unknown'}`);
+      throw new Error('Request refused');
+    }
+    return listener(event, ...args);
+  });
+}
+
+/** Open a web link in the user's browser; refuse anything else. */
+function openExternalLink(url: string): void {
+  if (!isSafeWebLink(url)) { logError(`blocked link: ${String(url).slice(0, 200)}`); return; }
+  shell.openExternal(url).catch(err => logError(`openExternal failed: ${err}`));
+}
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     title: 'Credit Card Benefit Tracker',
@@ -75,8 +103,12 @@ function createWindow(): BrowserWindow {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: false,
+      // v1.0.29: the page runs in Chromium's sandbox. The preload script only
+      // needs contextBridge and ipcRenderer, which work inside it.
+      sandbox: true,
       webSecurity: true,
+      webviewTag: false,
+      spellcheck: false,
     },
     backgroundColor: '#0f172a',
     show: false,
@@ -84,43 +116,53 @@ function createWindow(): BrowserWindow {
 
   win.once('ready-to-show', () => win.show());
 
+  const indexPath = appIndexPath();
+  const appPageUrl = pathToFileURL(indexPath).href;
+  const devOrigin = DEV_ORIGIN;
   if (isDev) {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    const indexPath = path.join(app.getAppPath(), 'dist', 'index.html');
     logError(`Loading: ${indexPath} (exists: ${fs.existsSync(indexPath)})`);
     win.loadFile(indexPath).catch(err => logError(`loadFile error: ${err}`));
   }
 
+  // v1.0.29: no inline scripts in the installed app, no plug-ins, frames, forms
+  // or <base> changes. The development server needs inline scripts for reloading.
+  const scriptSrc = isDev ? "script-src 'self' 'unsafe-inline' file:; " : "script-src 'self' file:; ";
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self' file:; " +
-          "script-src 'self' 'unsafe-inline' file:; " +
+          scriptSrc +
           "style-src 'self' 'unsafe-inline' file:; " +
           "font-src 'self' file: data:; " +
           "img-src 'self' file: data:; " +
-          "connect-src 'self' file:;",
+          "connect-src 'self' file:" + (isDev ? ' ws://localhost:5173' : '') + "; " +
+          "object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none';",
         ],
       },
     });
   });
 
+  // v1.0.29: the window only ever shows the app's own page. Web links open in
+  // the browser; every other kind of address is refused and logged.
   win.webContents.on('will-navigate', (event, url) => {
-    try {
-      const parsedUrl = new URL(url);
-      if (isDev && parsedUrl.origin === 'http://localhost:5173') return;
-      if (parsedUrl.protocol === 'file:') return;
-    } catch { /* ignore */ }
+    if (isAppPageUrl(url, appPageUrl, devOrigin)) return;
     event.preventDefault();
-    shell.openExternal(url);
+    openExternalLink(url);
   });
+  win.webContents.on('will-redirect', (event, url) => {
+    if (isAppPageUrl(url, appPageUrl, devOrigin)) return;
+    event.preventDefault();
+    logError(`blocked redirect: ${url.slice(0, 200)}`);
+  });
+  win.webContents.on('will-attach-webview', event => event.preventDefault());
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    openExternalLink(url);
     return { action: 'deny' };
   });
 
@@ -266,6 +308,9 @@ app.whenReady().then(() => {
     copyright: 'Dunkin Global Advisors',
     website: 'https://github.com/anndunkin/cc-benefit-tracker',
   });
+  // v1.0.29: the app never needs the camera, microphone, location, notifications and so on.
+  session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+  session.defaultSession.setPermissionCheckHandler(() => false);
   buildAppMenu();
   let startupProblem: StartupProblem | null;
   try { startupProblem = openStartupFile(); }
@@ -298,61 +343,62 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => { closeDatabase(); });
 
 // ─── Cards ───────────────────────────────────────────────────────────────────
-ipcMain.handle('cards:getAll', () => cardsGetAll(getDatabase()));
-ipcMain.handle('cards:getById', (_e, id: string) => cardGetById(getDatabase(), id));
-ipcMain.handle('cards:create', (_e, data: CardInput) => cardCreate(getDatabase(), data));
-ipcMain.handle('cards:update', (_e, id: string, data: Partial<CardInput>) => cardUpdate(getDatabase(), id, data));
-ipcMain.handle('cards:delete', (_e, id: string) => { cardDelete(getDatabase(), id); return { ok: true }; });
-ipcMain.handle('cards:setVisible', (_e, id: string, visible: boolean) => cardSetVisible(getDatabase(), id, visible));
+handleIpc('cards:getAll', () => cardsGetAll(getDatabase()));
+handleIpc('cards:getById', (_e, id: string) => cardGetById(getDatabase(), id));
+handleIpc('cards:create', (_e, data: CardInput) => cardCreate(getDatabase(), data));
+handleIpc('cards:update', (_e, id: string, data: Partial<CardInput>) => cardUpdate(getDatabase(), id, data));
+handleIpc('cards:delete', (_e, id: string) => { cardDelete(getDatabase(), id); return { ok: true }; });
+handleIpc('cards:setVisible', (_e, id: string, visible: boolean) => cardSetVisible(getDatabase(), id, visible));
 
 // ─── Programs ────────────────────────────────────────────────────────────────
-ipcMain.handle('programs:getAll', () => programsGetAll(getDatabase()));
-ipcMain.handle('programs:getById', (_e, id: string) => programGetById(getDatabase(), id));
-ipcMain.handle('programs:create', (_e, data: ProgramInput) => programCreate(getDatabase(), data));
-ipcMain.handle('programs:update', (_e, id: string, data: Partial<ProgramInput>) => programUpdate(getDatabase(), id, data));
-ipcMain.handle('programs:delete', (_e, id: string) => { programDelete(getDatabase(), id); return { ok: true }; });
+handleIpc('programs:getAll', () => programsGetAll(getDatabase()));
+handleIpc('programs:getById', (_e, id: string) => programGetById(getDatabase(), id));
+handleIpc('programs:create', (_e, data: ProgramInput) => programCreate(getDatabase(), data));
+handleIpc('programs:update', (_e, id: string, data: Partial<ProgramInput>) => programUpdate(getDatabase(), id, data));
+handleIpc('programs:delete', (_e, id: string) => { programDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── Benefits ────────────────────────────────────────────────────────────────
-ipcMain.handle('benefits:getAll', () => benefitsGetAll(getDatabase()));
-ipcMain.handle('benefits:getChoices', (_e, id: number, year: number) => benefitGetChoices(getDatabase(), id, year));
-ipcMain.handle('benefits:setChoices', (_e, id: number, year: number, choices: number[]) => benefitSetChoices(getDatabase(), id, year, choices));
-ipcMain.handle('benefits:forCard', (_e, cardId: string) => benefitsForCard(getDatabase(), cardId));
-ipcMain.handle('benefits:forProgram', (_e, programId: string) => benefitsForProgram(getDatabase(), programId));
-ipcMain.handle('benefits:getById', (_e, id: number) => benefitGetById(getDatabase(), id));
-ipcMain.handle('benefits:create', (_e, data: BenefitInput) => benefitCreate(getDatabase(), data));
-ipcMain.handle('benefits:update', (_e, id: number, data: Partial<BenefitInput>) => benefitUpdate(getDatabase(), id, data));
-ipcMain.handle('benefits:delete', (_e, id: number) => { benefitDelete(getDatabase(), id); return { ok: true }; });
+handleIpc('benefits:getAll', () => benefitsGetAll(getDatabase()));
+handleIpc('benefits:getChoices', (_e, id: number, year: number) => benefitGetChoices(getDatabase(), id, year));
+handleIpc('benefits:setChoices', (_e, id: number, year: number, choices: number[]) => benefitSetChoices(getDatabase(), id, year, choices));
+handleIpc('benefits:forCard', (_e, cardId: string) => benefitsForCard(getDatabase(), cardId));
+handleIpc('benefits:forProgram', (_e, programId: string) => benefitsForProgram(getDatabase(), programId));
+handleIpc('benefits:getById', (_e, id: number) => benefitGetById(getDatabase(), id));
+handleIpc('benefits:create', (_e, data: BenefitInput) => benefitCreate(getDatabase(), data));
+handleIpc('benefits:update', (_e, id: number, data: Partial<BenefitInput>) => benefitUpdate(getDatabase(), id, data));
+handleIpc('benefits:delete', (_e, id: number) => { benefitDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── Usages ──────────────────────────────────────────────────────────────────
-ipcMain.handle('usages:forBenefit', (_e, id: number) => usagesForBenefit(getDatabase(), id));
-ipcMain.handle('usages:create', (_e, data: UsageInput) => usageCreate(getDatabase(), data));
-ipcMain.handle('usages:update', (_e, id: number, data: Partial<UsageInput>) => usageUpdate(getDatabase(), id, data));
-ipcMain.handle('usages:delete', (_e, id: number) => { usageDelete(getDatabase(), id); return { ok: true }; });
+handleIpc('usages:forBenefit', (_e, id: number) => usagesForBenefit(getDatabase(), id));
+handleIpc('usages:create', (_e, data: UsageInput) => usageCreate(getDatabase(), data));
+handleIpc('usages:update', (_e, id: number, data: Partial<UsageInput>) => usageUpdate(getDatabase(), id, data));
+handleIpc('usages:delete', (_e, id: number) => { usageDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── Projection ──────────────────────────────────────────────────────────────
 // v1.0.26: "today" is the user's local calendar date. It used to be the UTC
 // date, which in US time zones moved to the next day (and so the next month or
 // year) during the evening.
-ipcMain.handle('projection:all', (_e, refYear?: number) => {
+handleIpc('projection:all', (_e, refYear?: number) => {
   const today = localIsoDate();
   return computeProjections(getDatabase(), refYear ?? parseInt(today.slice(0, 4), 10), utcDateFor(today));
 });
 
 // ─── Refresh ─────────────────────────────────────────────────────────────────
-ipcMain.handle('refresh:getStatus', () => refreshGetStatus(getDatabase()));
-ipcMain.handle('refresh:startRun', (_e, sourceNotes: string, changes: any[]) =>
-  refreshStartRun(getDatabase(), sourceNotes, changes));
-ipcMain.handle('refresh:getPendingChanges', (_e, runId: number) => refreshPendingChanges(getDatabase(), runId));
-ipcMain.handle('refresh:approveChange', (_e, id: number, notes?: string, overwrite?: boolean) =>
+handleIpc('refresh:getStatus', () => refreshGetStatus(getDatabase()));
+// v1.0.29: there is no request for starting a refresh from the page. Refreshes come
+// only from the files bundled with the app or a refresh file the user picks, and
+// both are checked field by field before anything is proposed.
+handleIpc('refresh:getPendingChanges', (_e, runId: number) => refreshPendingChanges(getDatabase(), runId));
+handleIpc('refresh:approveChange', (_e, id: number, notes?: string, overwrite?: boolean) =>
   refreshApproveChange(getDatabase(), id, notes, overwrite === true));
-ipcMain.handle('refresh:rejectChange',  (_e, id: number, notes?: string) => refreshRejectChange(getDatabase(), id, notes));
+handleIpc('refresh:rejectChange',  (_e, id: number, notes?: string) => refreshRejectChange(getDatabase(), id, notes));
 // After a run is finished, offer the next bundled refresh that has come due (if any).
-ipcMain.handle('refresh:applyRun',      (_e, runId: number) => {
+handleIpc('refresh:applyRun',      (_e, runId: number) => {
   const result = refreshApplyRun(getDatabase(), runId);
   offerBundledRefresh(false);
   return result;
 });
-ipcMain.handle('refresh:discardRun',    (_e, runId: number) => {
+handleIpc('refresh:discardRun',    (_e, runId: number) => {
   refreshDiscardRun(getDatabase(), runId);
   offerBundledRefresh(false);
   return { ok: true };
@@ -362,7 +408,7 @@ const NO_PROPOSAL: RefreshProposalResult = { state: 'cancelled', run_id: null, t
 
 // Manual "check again": re-compare the refresh bundled with this version,
 // including one that was applied or discarded earlier.
-ipcMain.handle('refresh:checkBundled', (): RefreshProposalResult => {
+handleIpc('refresh:checkBundled', (): RefreshProposalResult => {
   try { return offerBundledProposals(getDatabase(), { force: true }); }
   catch (err) { logError(`refresh:checkBundled ${err}`); return { ...NO_PROPOSAL, error: String(err instanceof Error ? err.message : err) }; }
 });
@@ -370,7 +416,7 @@ ipcMain.handle('refresh:checkBundled', (): RefreshProposalResult => {
 // Load a refresh file chosen by the user. The file is untrusted: it is size
 // limited, parsed as JSON only, and validated field by field before anything
 // is written. It can only create a draft run for review.
-ipcMain.handle('refresh:importProposal', async (): Promise<RefreshProposalResult> => {
+handleIpc('refresh:importProposal', async (): Promise<RefreshProposalResult> => {
   try {
     const { canceled, filePaths } = await dialog.showOpenDialog(activeWindow(), {
       title: 'Load Benefit Refresh File',
@@ -391,11 +437,11 @@ ipcMain.handle('refresh:importProposal', async (): Promise<RefreshProposalResult
 });
 
 // ─── Points currencies ───────────────────────────────────────────────────────
-ipcMain.handle('pointsCurrencies:getAll', () => pointsCurrenciesGetAll(getDatabase()));
-ipcMain.handle('pointsCurrencies:getById', (_e, id: string) => pointsCurrencyGetById(getDatabase(), id));
-ipcMain.handle('pointsCurrencies:create', (_e, data: PointsCurrencyInput) => pointsCurrencyCreate(getDatabase(), data));
-ipcMain.handle('pointsCurrencies:update', (_e, id: string, data: Partial<PointsCurrencyInput>) => pointsCurrencyUpdate(getDatabase(), id, data));
-ipcMain.handle('pointsCurrencies:delete', (_e, id: string) => { pointsCurrencyDelete(getDatabase(), id); return { ok: true }; });
+handleIpc('pointsCurrencies:getAll', () => pointsCurrenciesGetAll(getDatabase()));
+handleIpc('pointsCurrencies:getById', (_e, id: string) => pointsCurrencyGetById(getDatabase(), id));
+handleIpc('pointsCurrencies:create', (_e, data: PointsCurrencyInput) => pointsCurrencyCreate(getDatabase(), data));
+handleIpc('pointsCurrencies:update', (_e, id: string, data: Partial<PointsCurrencyInput>) => pointsCurrencyUpdate(getDatabase(), id, data));
+handleIpc('pointsCurrencies:delete', (_e, id: string) => { pointsCurrencyDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── File management ─────────────────────────────────────────────────────────
 
@@ -533,20 +579,20 @@ async function fromSettings(op: () => Promise<FileOpResult>): Promise<FileResult
 }
 
 // Paths are never accepted from the renderer; each handler shows its own dialog.
-ipcMain.handle('file:currentPath', () => fileOps.currentPath());
-ipcMain.handle('file:newDb', () => fromSettings(fileOps.newFile));
-ipcMain.handle('file:openDb', () => fromSettings(fileOps.openFile));
-ipcMain.handle('file:save', () => fromSettings(fileOps.save));
-ipcMain.handle('file:saveAs', () => fromSettings(fileOps.saveAs));
-ipcMain.handle('file:saveCopy', () => fromSettings(fileOps.saveCopy));
-ipcMain.handle('file:exportJson', () => fromSettings(fileOps.exportJson));
-ipcMain.handle('file:importJson', () => fromSettings(fileOps.importJson));
-ipcMain.handle('file:showInFolder', () => fromSettings(fileOps.showInFolder));
+handleIpc('file:currentPath', () => fileOps.currentPath());
+handleIpc('file:newDb', () => fromSettings(fileOps.newFile));
+handleIpc('file:openDb', () => fromSettings(fileOps.openFile));
+handleIpc('file:save', () => fromSettings(fileOps.save));
+handleIpc('file:saveAs', () => fromSettings(fileOps.saveAs));
+handleIpc('file:saveCopy', () => fromSettings(fileOps.saveCopy));
+handleIpc('file:exportJson', () => fromSettings(fileOps.exportJson));
+handleIpc('file:importJson', () => fromSettings(fileOps.importJson));
+handleIpc('file:showInFolder', () => fromSettings(fileOps.showInFolder));
 
 // ─── Expiring credits and printing (v1.0.26) ───────────────────────────────────
 // The list is built for the user's local calendar date, so a credit that ends
 // on the last day of the month is still listed that evening.
-ipcMain.handle('expiring:list', (event): ExpiringReport => {
+handleIpc('expiring:list', (event): ExpiringReport => {
   if (!fromAppWindow(event)) throw new Error('Not available from this page.');
   const today = localIsoDate();
   const year = parseInt(today.slice(0, 4), 10);
@@ -577,7 +623,7 @@ function onPrintScreen(url: string): boolean {
   try { return new URL(url).hash.split('?')[0] === '#/print-expiring'; } catch { return false; }
 }
 
-ipcMain.handle('app:print', (event): Promise<PrintResult> => new Promise(resolve => {
+handleIpc('app:print', (event): Promise<PrintResult> => new Promise(resolve => {
   if (!fromAppWindow(event) || !onPrintScreen(event.sender.getURL())) return resolve({ success: false, error: 'Printing is not available from this page.' });
   if (printDialogOpen) return resolve({ success: false, cancelled: true });
   printDialogOpen = true;
@@ -597,5 +643,5 @@ ipcMain.handle('app:print', (event): Promise<PrintResult> => new Promise(resolve
 }));
 
 // ─── App metadata / About ───────────────────────────────────────
-ipcMain.handle('app:getVersion', () => app.getVersion());
-ipcMain.handle('app:showAbout', () => { showAboutDialog(); });
+handleIpc('app:getVersion', () => app.getVersion());
+handleIpc('app:showAbout', () => { showAboutDialog(); });

@@ -3,6 +3,7 @@ import type {
   RefreshChange, RefreshProposalResult, RefreshProposalSource, RefreshStatusInfo, RefreshUnmatched,
 } from '../../electron/types';
 import { cadenceLabel, categoryLabel, fmtUsd } from '../lib/format';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 interface ChangeMeta {
   scope?: string;
@@ -76,8 +77,8 @@ function parseJson(json: string | null): Record<string, unknown> | null {
 
 /** Only https links are ever rendered as links; anything else shows as text. */
 function safeHttps(url: unknown): string | null {
-  if (typeof url !== 'string') return null;
-  try { return new URL(url).protocol === 'https:' ? url : null; } catch { return null; }
+  const safe = safeWebLinkOrNull(url);
+  return safe && safe.toLowerCase().startsWith('https:') ? safe : null;
 }
 function hostOf(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }

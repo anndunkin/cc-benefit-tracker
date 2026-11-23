@@ -143,6 +143,20 @@ try {
       return { off, rows, height: Math.round(h.getBoundingClientRect().height), sideways: document.documentElement.scrollWidth > W }; })()`);
     assert(header.off.length === 0, 'Header controls off screen at 1000x640: ' + header.off.join(', '));
     assert(header.rows === 1 && !header.sideways && header.height <= 110, 'Header does not fit at 1000x640: ' + JSON.stringify(header));
+    // v1.0.29 security checks on the installed app: the page has no Node access,
+    // inline scripts are blocked, and the window cannot be sent to a local file.
+    const sec = await evaluate(`(async () => {
+      const node = typeof require !== 'undefined' || typeof process !== 'undefined';
+      const s = document.createElement('script'); s.textContent = 'window.__inlineRan = 1'; document.head.appendChild(s);
+      await new Promise(r => setTimeout(r, 200));
+      const start = location.href;
+      const a = document.createElement('a'); a.href = 'file:///C:/Windows/win.ini'; document.body.appendChild(a); a.click();
+      await new Promise(r => setTimeout(r, 800));
+      const popup = window.open('file:///C:/Windows/System32/calc.exe', '_blank');
+      return { node, inline: window.__inlineRan === 1, stayed: location.href === start, popup: popup !== null, api: typeof window.api };
+    })()`);
+    assert(!sec.node && !sec.inline && sec.stayed && !sec.popup && sec.api === 'object', 'Installed-app security checks failed: ' + JSON.stringify(sec));
+    fs.writeFileSync('release-evidence/security-check.json', JSON.stringify(sec, null, 2));
     const review = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('release-evidence/refresh-review-1000x640.png', Buffer.from(review.data, 'base64'));
     // v1.0.25: every file command must be reachable on the Settings page at a small window size.

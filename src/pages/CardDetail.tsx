@@ -4,6 +4,7 @@ import type { Benefit, Card, BenefitProjection } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor } from '../lib/format';
 import BenefitEditor from '../components/BenefitEditor';
 import LogUsageModal from '../components/LogUsageModal';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 export default function CardDetail() {
   const { id } = useParams<{ id: string }>();
@@ -47,8 +48,8 @@ export default function CardDetail() {
             <h1 className="text-2xl font-bold">{card.name}</h1>
             <div className="text-sm text-slate-500 mt-1">{card.issuer} · {card.network}</div>
             {card.notes && <div className="text-sm text-slate-500 mt-2">{card.notes}</div>}
-            {card.source_url && (
-              <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={card.source_url} target="_blank" rel="noreferrer">
+            {safeWebLinkOrNull(card.source_url) && (
+              <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={safeWebLinkOrNull(card.source_url)!} target="_blank" rel="noreferrer noopener">
                 Official page ↗
               </a>
             )}

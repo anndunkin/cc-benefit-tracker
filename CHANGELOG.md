@@ -2,6 +2,22 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.29 - 2026-11-23
+
+### Security
+A security review of the 1.0.27 and 1.0.28 changes, and of the app's window settings, found no problems in the new refresh code. Changes are written only to approved fields, hand-edited rows stay protected, and a benefit cannot be linked under itself. It found five older weaknesses, all fixed here:
+- **Links could open more than web pages.** A link saved in a card, program, benefit or points value, typed by hand or arriving in an imported data file, was handed to Windows as is. A `file:` link or an app protocol such as `ms-msdt:` could therefore open or run something on the computer when clicked. Now only `https://` and `http://` links are opened. Anything else is refused and logged, and shown as plain text instead of a link. Links you type are checked when you save, with a message if one is refused. Unsafe links in an imported data file, including a half-reviewed refresh inside it, are dropped; the rest of the file is imported as before. All 1,164 links bundled with the app pass the new rule, so none are hidden.
+- **The window could be sent to another local file.** Following a `file:` link would have loaded that file in the app window, with the same access to your data as the app itself. The window now only ever shows the app's own page.
+- **The page ran outside Chromium's sandbox.** It now runs inside it. The page already had no Node.js access; the sandbox adds operating-system level isolation.
+- **The content policy allowed inline scripts in the installed app.** It no longer does. It also now blocks plug-ins, frames, forms and `<base>` changes. Requests for the camera, microphone, location, notifications and similar are denied.
+- **The page could submit refresh changes of its own.** The app had an unused request that accepted a refresh list without the field-by-field checks applied to refresh files. It has been removed. Every request the page makes is now also checked to come from the app's own page in the app's own window.
+
+### Verified
+- TypeScript checks, production build and all 426 tests pass (15 new, covering the link rule against 17 kinds of unsafe address, the window lock, the sandbox, the content policy, request checks, link checks on save, link cleaning on import and unsafe links shown as text).
+- Checked in the running app with the sandbox on: the data loads and every page works; a web link opens in the browser while the app stays put; local files, `ms-msdt:` and other addresses are refused and logged; no new windows open; location and notification requests are denied; a frame gets no access to the app's data.
+- The Windows installer test now also checks the installed app: no Node.js access in the page, inline scripts blocked, and the window cannot be sent to a local file or open one in a new window.
+- `npm audit`: no high or critical issues, and none in the parts of the app that ship. Six moderate issues remain in build tools only.
+
 ## v1.0.28 - 2026-11-23
 
 ### Window header

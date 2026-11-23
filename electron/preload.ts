@@ -39,7 +39,6 @@ const api: WindowApi = {
   },
   refresh: {
     getStatus:         ()               => ipcRenderer.invoke('refresh:getStatus'),
-    startRun:          (notes, changes) => ipcRenderer.invoke('refresh:startRun', notes, changes),
     getPendingChanges: (runId)          => ipcRenderer.invoke('refresh:getPendingChanges', runId),
     approveChange:     (id, notes, overwrite) => ipcRenderer.invoke('refresh:approveChange', id, notes, overwrite),
     rejectChange:      (id, notes)      => ipcRenderer.invoke('refresh:rejectChange', id, notes),

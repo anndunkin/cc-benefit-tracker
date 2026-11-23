@@ -525,8 +525,6 @@ export interface WindowApi {
   };
   refresh: {
     getStatus: () => Promise<RefreshStatusInfo>;
-    startRun: (sourceNotes: string, changes: Array<Omit<RefreshChange, 'id' | 'refresh_run_id' | 'created_at' | 'review_status' | 'review_notes'>>) =>
-      Promise<{ run_id: number }>;
     getPendingChanges: (runId: number) => Promise<RefreshChange[]>;
     approveChange: (changeId: number, notes?: string, overwriteUserEdit?: boolean) => Promise<RefreshChange>;
     rejectChange: (changeId: number, notes?: string) => Promise<RefreshChange>;

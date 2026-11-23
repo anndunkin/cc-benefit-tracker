@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Benefit, Card, PointsCurrency } from '../../electron/types';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 import {
   ALL_SPEND_CATEGORIES, spendCategoryLabel,
   MULTIPLIER_CURRENCY_TO_POINTS_CURRENCY_ID, perDollarValue, fmtPerDollarValue,
@@ -126,8 +127,8 @@ export default function BonusCategories() {
                       {b.spend_category_note && (
                         <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">{b.spend_category_note}</div>
                       )}
-                      {b.source_url && (
-                        <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={b.source_url} target="_blank" rel="noreferrer">
+                      {safeWebLinkOrNull(b.source_url) && (
+                        <a className="text-xs text-primary-600 hover:underline mt-1 inline-block" href={safeWebLinkOrNull(b.source_url)!} target="_blank" rel="noreferrer noopener">
                           Official source ↗
                         </a>
                       )}

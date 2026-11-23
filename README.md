@@ -75,13 +75,23 @@ tests/file-ui.test.tsx      · Settings file buttons and the notice shown after 
 tests/expiringCredits.test.ts · Expiring list: use-by dates, month/year boundaries, travel selection, amount remaining
 tests/print-ui.test.tsx     · Print Expiring Credits screen: options, per-row ticks, partly used wording, printing
 tests/localDate.test.tsx    · "Today" follows the computer's local date, not UTC
+tests/linkSafety.test.ts    · Link rule, window locked to the app page, sandbox, content policy, request checks, link cleaning on import
+tests/link-ui.test.tsx      · Unsafe links are shown as text, never as links
 ```
 
-Run `npm run test` to see the full suite. All 411 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 426 tests pass on a clean checkout.
 
 ## License
 
 Private — for personal use by the copyright holder.
+
+## Security design
+
+- **The page is sandboxed.** It runs with Chromium's sandbox on, no Node.js access and context isolation. It talks to the app only through the functions in `electron/preload.ts`, and the app answers only requests that come from its own page in its own window.
+- **Only web links open.** A link opens in your browser only if it starts with `https://` or `http://` (`electron/linkPolicy.ts`). File paths, `file:`, `javascript:`, `data:` and app protocols such as `ms-msdt:` are refused, logged, and shown as plain text rather than as links. Links you type are checked when you save. Links in an imported data file, including a half-reviewed refresh inside it, are dropped if unsafe; everything else in the file is kept.
+- **The window stays on the app.** It cannot be sent to another local file or a web page, and it cannot open new windows, frames or embedded views.
+- **Content policy.** The installed app allows no inline scripts, plug-ins, frames, forms or `<base>` changes. Requests for the camera, microphone, location, notifications and similar are denied.
+- **Refreshes are checked files only.** A refresh comes from the files bundled with the app or from a refresh file you pick. Both are checked field by field, and links in them must be `https://`. The page cannot submit refresh changes of its own.
 
 ## Security note: pinned dependencies
 

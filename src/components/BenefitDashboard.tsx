@@ -5,6 +5,7 @@ import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../
 import LogUsageModal from './LogUsageModal';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 type SectionKey = 'all' | 'cards' | 'programs';
 type CadenceFilter = 'all' | 'annual' | 'semiannual' | 'quarterly' | 'monthly' | 'other';
@@ -593,8 +594,8 @@ function ConsumableTile({
           catch (e) { alert(`Unable to change visibility: ${e}`); }
           finally { setBusy(false); }
         }}>{b.is_hidden === 1 ? 'Unhide' : 'Hide'}</button>
-        {b.source_url && (
-          <a href={b.source_url} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
+        {safeWebLinkOrNull(b.source_url) && (
+          <a href={safeWebLinkOrNull(b.source_url)!} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
             Source ↗
           </a>
         )}
@@ -652,8 +653,8 @@ function OngoingTile({
       )}
 
       <div className="flex items-center gap-2 mt-auto pt-1 flex-wrap">
-        {b.source_url && (
-          <a href={b.source_url} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
+        {safeWebLinkOrNull(b.source_url) && (
+          <a href={safeWebLinkOrNull(b.source_url)!} target="_blank" rel="noreferrer noopener" className="text-xs text-slate-500 hover:text-primary-600">
             Source ↗
           </a>
         )}

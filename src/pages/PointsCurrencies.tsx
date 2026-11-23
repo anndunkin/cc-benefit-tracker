@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { PointsCurrency, PointsCurrencyInput, PointsCurrencyType } from '../../electron/types';
 import { fmtCentsPerPoint, currencyTypeLabel } from '../lib/format';
+import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 /**
  * Points Currency Values tab — lists every PointsCurrency row grouped by
@@ -34,7 +35,7 @@ export default function PointsCurrencies() {
         <p className="text-sm text-slate-500 mt-1">
           Estimated redemption value per point/mile for every currency earned by your cards and programs.
           Values are sourced from{' '}
-          <a className="text-primary-600 hover:underline" href="https://onemileatatime.com/guides/value-miles-points/" target="_blank" rel="noreferrer">
+          <a className="text-primary-600 hover:underline" href="https://onemileatatime.com/guides/value-miles-points/" target="_blank" rel="noreferrer noopener">
             One Mile at a Time
           </a>{' '}
           and refreshed quarterly. Edit a value to override it — your override is preserved across future refreshes.
@@ -60,8 +61,8 @@ export default function PointsCurrencies() {
                       {c.is_user_modified === 1 && <span className="ml-2 text-xs text-amber-600" title="User modified">✎</span>}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {c.source_url ? (
-                        <a className="text-primary-600 hover:underline" href={c.source_url} target="_blank" rel="noreferrer">{c.source_name}</a>
+                      {safeWebLinkOrNull(c.source_url) ? (
+                        <a className="text-primary-600 hover:underline" href={safeWebLinkOrNull(c.source_url)!} target="_blank" rel="noreferrer noopener">{c.source_name}</a>
                       ) : c.source_name}
                     </div>
                     {c.notes && <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">{c.notes}</div>}
