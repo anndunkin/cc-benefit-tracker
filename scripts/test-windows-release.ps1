@@ -16,9 +16,10 @@ function Stop-App {
   Get-Process -Name $product -ErrorAction SilentlyContinue | Stop-Process -Force
   Start-Sleep -Seconds 2
 }
-function Smoke([switch]$Legacy) {
+function Smoke([switch]$Legacy, [string]$ExpectDb) {
   Start-Process -FilePath $exe -ArgumentList '--remote-debugging-port=9222','--remote-debugging-address=127.0.0.1'
   if ($Legacy) { node scripts/installed-smoke.mjs --legacy }
+  elseif ($ExpectDb) { node scripts/installed-smoke.mjs --expect-db $ExpectDb }
   else { node scripts/installed-smoke.mjs }
   if ($LASTEXITCODE -ne 0) { throw 'Installed app runtime smoke failed' }
 }
@@ -59,6 +60,25 @@ try {
   Smoke
   Stop-App
   Write-Host 'PASS: repair, fresh install after uninstall, and preserved usage on relaunch'
+  # v1.0.25 file management on the installed app: the file used last is reopened at launch,
+  # and a file that has gone missing falls back to the default file without being forgotten.
+  $settingsPath = Join-Path (Split-Path $dataPath) 'cc-benefit-tracker-settings.json'
+  $movedDir = Join-Path $env:RUNNER_TEMP 'Moved Tracker Files'
+  $moved = Join-Path $movedDir 'My Tracker.db'
+  New-Item -ItemType Directory -Path $movedDir -Force | Out-Null
+  Copy-Item $dataPath $moved -Force
+  foreach ($suffix in '-wal','-shm') { if (Test-Path "$dataPath$suffix") { Copy-Item "$dataPath$suffix" "$moved$suffix" -Force } }
+  [System.IO.File]::WriteAllText($settingsPath, (@{ last_db_path = $moved } | ConvertTo-Json))
+  Smoke -ExpectDb $moved
+  Stop-App
+  Write-Host 'PASS: the file used last time is reopened at launch, with its data, and Save completes the .db file'
+  Remove-Item "$moved*" -Force
+  Smoke -ExpectDb $dataPath
+  Stop-App
+  $remembered = (Get-Content $settingsPath -Raw | ConvertFrom-Json).last_db_path
+  if ($remembered -ne $moved) { throw 'A missing file was forgotten without the user being asked' }
+  Remove-Item $settingsPath -Force
+  Write-Host 'PASS: a missing remembered file falls back to the default file and is not forgotten'
   Get-FileHash $setup -Algorithm SHA256 | Format-List
 } finally {
   Stop-App

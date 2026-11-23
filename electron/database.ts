@@ -25,15 +25,70 @@ export function getDatabase(): Database.Database {
   return db!;
 }
 
-export function openDatabaseAt(dbPath: string): Database.Database {
-  if (db) { try { db.close(); } catch { /* ignore */ } }
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  initSchema(db);
-  lastOpenSeeded = seedIfFresh(db);
-  applyDataMigrations(db);
+export function openDatabaseAt(dbPath: string, options: { mustExist?: boolean } = {}): Database.Database {
+  // v1.0.25: open and prepare the new file BEFORE letting go of the current
+  // one. If the new file cannot be opened or migrated, the error is thrown and
+  // the database that was open stays open and usable.
+  // `mustExist` is for a file the user picked: if it has vanished since it was
+  // checked, fail rather than quietly create a new, empty tracker in its place.
+  const next = new Database(dbPath, { fileMustExist: options.mustExist === true });
+  let seeded = false;
+  try {
+    // SQLite opens a file it cannot write to as read-only without complaint.
+    // Find out now, while the previous file is still open.
+    // The probe really writes (a table that is immediately rolled back);
+    // starting a transaction alone does not reveal a read-only file.
+    try {
+      next.exec('BEGIN IMMEDIATE');
+      try { next.exec('CREATE TABLE cct_write_probe (x)'); }
+      finally { next.exec('ROLLBACK'); }
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? '';
+      if (code.startsWith('SQLITE_READONLY') || code === 'SQLITE_CANTOPEN') {
+        throw new Error(`The file cannot be changed (it or its folder is read-only): ${dbPath}`);
+      }
+      throw err;
+    }
+    next.pragma('journal_mode = WAL');
+    next.pragma('foreign_keys = ON');
+    initSchema(next);
+    seeded = seedIfFresh(next);
+    applyDataMigrations(next);
+  } catch (err) {
+    try { next.close(); } catch { /* ignore */ }
+    throw err;
+  }
+  const previous = db;
+  db = next;
+  lastOpenSeeded = seeded;
+  if (previous && previous !== next) { try { previous.close(); } catch { /* ignore */ } }
   return db;
+}
+
+/**
+ * Build a brand-new, fully prepared tracker file at `dbPath` without touching
+ * the open database. The result is one complete .db file (v1.0.25, New File).
+ */
+export function createFreshDatabaseFile(dbPath: string): void {
+  const fresh = new Database(dbPath);
+  try {
+    fresh.pragma('journal_mode = WAL');
+    fresh.pragma('foreign_keys = ON');
+    initSchema(fresh);
+    seedIfFresh(fresh);
+    applyDataMigrations(fresh);
+    fresh.pragma('wal_checkpoint(TRUNCATE)');
+  } finally {
+    try { fresh.close(); } catch { /* ignore */ }
+  }
+}
+
+/** Close the open database (used when the app quits). */
+export function closeDatabase(): void {
+  if (!db) return;
+  try { db.pragma('wal_checkpoint(TRUNCATE)'); } catch { /* ignore */ }
+  try { db.close(); } catch { /* ignore */ }
+  db = null;
 }
 
 let lastOpenSeeded = false;
@@ -233,8 +288,15 @@ function seedVersionLt(database: Database.Database, target: string): boolean {
 // v1.0.12: seedIfFresh currently stamps the newest version. Any per-version
 // data migration lives in applyDataMigrations below.
 export function seedIfFresh(database: Database.Database): boolean {
-  const cardCount = (database.prepare('SELECT COUNT(*) AS n FROM cards').get() as { n: number }).n;
-  if (cardCount > 0) return false;
+  // v1.0.25: a file is "fresh" only if it has never been seeded and holds
+  // nothing. Counting cards alone treated a file whose cards had all been
+  // deleted as new, and reseeding it then failed on the programs still there,
+  // which left the file impossible to open.
+  if (metaGet(database, 'seed_version') !== null) return false;
+  for (const table of ['cards', 'programs', 'benefits', 'points_currencies']) {
+    const n = (database.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+    if (n > 0) return false;
+  }
 
   const insertCard = database.prepare(`
     INSERT INTO cards (id, name, issuer, network, annual_fee_usd, is_active, color_hex, notes, source_url)

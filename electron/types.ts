@@ -405,6 +405,19 @@ export interface FileResult {
   filePath?: string;
   error?: string;
   payload?: AppFilePayload;
+  /** Plain-language description of what happened (v1.0.25). */
+  message?: string;
+}
+
+/** Sent to the window after a file command succeeds (v1.0.25). */
+export interface FileChangeInfo {
+  /** The file now open. */
+  path: string;
+  /** True when a different file was opened or the data was replaced. */
+  reload: boolean;
+  /** Where the command came from; Settings reports its own results. */
+  source: 'menu' | 'settings';
+  message?: string;
 }
 
 // ─── Renderer <-> Main IPC contract ──────────────────────────────────────────
@@ -470,9 +483,16 @@ export interface WindowApi {
     currentPath: () => Promise<string>;
     newDb: () => Promise<FileResult>;
     openDb: () => Promise<FileResult>;
+    /** Fold pending writes into the one .db file. Changes are already stored as they are made. */
+    save: () => Promise<FileResult>;
     saveAs: () => Promise<FileResult>;
+    /** Write a copy elsewhere and keep working in the current file. */
+    saveCopy: () => Promise<FileResult>;
     exportJson: () => Promise<FileResult>;
     importJson: () => Promise<FileResult>;
+    showInFolder: () => Promise<FileResult>;
+    /** Subscribe to file changes; returns a function that unsubscribes. */
+    onChanged: (listener: (info: FileChangeInfo) => void) => () => void;
   };
   app: {
     getVersion: () => Promise<string>;

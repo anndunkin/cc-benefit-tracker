@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { WindowApi } from './types';
+import type { WindowApi, FileChangeInfo } from './types';
 
 const api: WindowApi = {
   cards: {
@@ -59,9 +59,17 @@ const api: WindowApi = {
     currentPath:  ()  => ipcRenderer.invoke('file:currentPath'),
     newDb:        ()  => ipcRenderer.invoke('file:newDb'),
     openDb:       ()  => ipcRenderer.invoke('file:openDb'),
+    save:         ()  => ipcRenderer.invoke('file:save'),
     saveAs:       ()  => ipcRenderer.invoke('file:saveAs'),
+    saveCopy:     ()  => ipcRenderer.invoke('file:saveCopy'),
     exportJson:   ()  => ipcRenderer.invoke('file:exportJson'),
     importJson:   ()  => ipcRenderer.invoke('file:importJson'),
+    showInFolder: ()  => ipcRenderer.invoke('file:showInFolder'),
+    onChanged:    (listener) => {
+      const handler = (_event: unknown, info: FileChangeInfo) => listener(info);
+      ipcRenderer.on('file:changed', handler);
+      return () => { ipcRenderer.removeListener('file:changed', handler); };
+    },
   },
   app: {
     getVersion:   ()  => ipcRenderer.invoke('app:getVersion'),

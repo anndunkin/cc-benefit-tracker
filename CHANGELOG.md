@@ -2,6 +2,30 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.25 - 2026-11-22
+
+### File management
+- **File menu.** The File menu previously held only Exit, and the file commands existed only as buttons on the Settings page. The menu now has **New File…** (Ctrl+N), **Open File…** (Ctrl+O), **Save** (Ctrl+S), **Save As…** (Ctrl+Shift+S), **Save a Backup Copy…**, **Export to JSON…**, **Import from JSON…** and **Show File in Folder**. The same commands, with the same names, are on the Settings page.
+- **Save.** Entries are still written to the file as soon as you save them in the app, so nothing is lost if you never press Save. Save makes sure the single `.db` file on disk is complete at that moment, which is useful before copying or backing it up, and reports a problem if the file has been moved or deleted or is locked by another program.
+- **Save As… and Save a Backup Copy….** Save As writes the file to a new location and keeps working there; the earlier file stays where it was. Save a Backup Copy writes a copy elsewhere and keeps working in the current file.
+- **The last file is reopened.** The Settings page said the app would remember a new location, but it did not: every launch went back to the default file. The location is now recorded in `cc-benefit-tracker-settings.json` beside the default file. If that file is missing at launch (moved, renamed, or on a drive or sync folder that is not available), the app opens the default file, says so, and asks whether to try again next time or use the default file from now on. It does not recreate the missing file or forget it unless you choose that.
+- **The window follows the file.** After New, Open or Import the screen reloads with that file's data, the path in the header updates, and a short notice confirms what happened. Failures are shown in a dialog.
+
+### Safety
+- **Import asks first.** Import from JSON replaces everything in the open file. It now checks the file (type, size, format and version) and asks for confirmation, with Cancel as the default, before changing anything. The import is all-or-nothing.
+- **Open checks the file before switching.** A file that is not a Credit Card Benefit Tracker file, is damaged, is missing, or cannot be written to is refused, and the file you had open stays open. Opening a file never creates or alters a file that turns out to be the wrong kind.
+- **Nothing is replaced until its replacement is complete.** New File, Save As and Save a Backup Copy write to a temporary file in the destination folder, verify it, and only then put it in place; Export is also written to a temporary file first. New File and Save a Backup Copy refuse the file you have open as their destination, including when it is reached through a linked folder, symbolic link or hard link, and Save As to the open file simply saves it. A destination that is in use by another program, or was not closed cleanly, is left alone.
+- **Closing the app** now finishes writing and closes the file, leaving a single `.db` file.
+- **Fixed:** a file from which every card had been deleted could fail to reopen. The app treated it as brand new and tried to add the starting programs a second time.
+- File locations come only from the system file dialogs; the window cannot pass a path to these commands.
+
+### Notes
+- Opening or creating a file from the menu while an edit form is open discards the unsaved text in that form.
+- If you keep the file in a synced folder (OneDrive, iCloud), use it on one computer at a time and close the app so syncing can finish. A safer habit is to keep the working file on the computer and use Save a Backup Copy into the synced folder.
+
+### Verified
+- TypeScript checks, production build and all 344 tests pass (78 new, most of them running the file commands against real files). The installer test now also confirms that Save leaves a single complete file, that a file in another folder is reopened at the next launch, that the app falls back to the default file without forgetting the other one when it is missing, and that every file command on Settings is reachable at 1000 x 640.
+
 ## v1.0.24 - 2026-11-22
 
 ### Benefit refresh

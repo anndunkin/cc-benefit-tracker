@@ -8,7 +8,7 @@ Windows desktop application that tracks the credit card and airline/hotel status
 - **Separate "Programs" section** for status-driven benefits (Delta Medallion, Marriott Bonvoy, AAdvantage, IHG Ambassador) so complimentary upgrades and elite bonuses don't clutter the card list.
 - **Unlimited benefits** (award-flight discounts, priority boarding, free bags, etc.) are tracked separately from consumable credits.
 - **Diff & review quarterly refresh workflow** — each release carries a researched list of published benefit changes; the app compares it with your data and proposes a change set with sources and effective dates. You approve or reject each row before it touches your saved benefits. Any benefit you have edited by hand is never overwritten by a refresh unless you choose "Approve and replace my edit" for that row.
-- **Full file management** — save your database anywhere, load it back, export a portable JSON payload.
+- **Full file management** — save your database anywhere, load it back, export a portable JSON payload. The File menu has New File, Open File, Save, Save As, Save a Backup Copy, Export to JSON, Import from JSON and Show File in Folder (the same commands are on the Settings page), and the app reopens the file you used last.
 - **Self-signed Windows installer** so the executable identifies itself as coming from Dunkin Global Advisors.
 - **13 seeded cards, 4 seeded loyalty programs, 176 seeded benefits** — every value is linked to its published source page for quick verification.
 
@@ -51,6 +51,8 @@ is updated to the latest stable 12.x release; it intentionally does not use
 
 The app can save and load a JSON file describing your entire benefit ledger. The file version is checked on import; older files migrate forward automatically.
 
+Your data itself lives in a single SQLite file (`cc-benefit-tracker.db`, by default in `%APPDATA%\cc-benefit-tracker`). Entries are written to it as you save them in the app. **File > Save** makes sure that one file is complete on disk; **Save As** moves your work to a new location, which the app records in `cc-benefit-tracker-settings.json` in the same default folder and reopens next time; **Save a Backup Copy** writes a copy without switching to it. Importing a JSON file replaces the open file's contents and asks for confirmation first.
+
 ## Windows installer
 
 The signing certificate is a fresh self-signed key generated specifically for this application (`CN=Ann Dunkin, O=Dunkin Global Advisors, OU=Software, C=US`). Windows will still show a SmartScreen warning on first install — that's expected for any self-signed executable.
@@ -64,9 +66,12 @@ tests/boundary.test.ts      · Period math, unicode, extreme values, 100+ benefi
 tests/functionality.test.ts · CRUD, seed idempotence, refresh workflow, export/import round-trip
 tests/refreshProposal.test.ts · Refresh proposals: validation of untrusted files, diffing, hand-edit protection, bundled refresh data
 tests/refresh-ui.test.tsx   · Quarterly Refresh screen: review, approve, replace-my-edit consent, discard confirmation
+tests/fileStore.test.ts     · Data files: identifying a tracker file, safe copy and replace, remembered location
+tests/fileOps.test.ts       · File commands: New, Open, Save, Save As, backup copy, export, import confirmation, refusals
+tests/file-ui.test.tsx      · Settings file buttons and the notice shown after a File menu command
 ```
 
-Run `npm run test` to see the full suite. All 139 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 344 tests pass on a clean checkout.
 
 ## License
 

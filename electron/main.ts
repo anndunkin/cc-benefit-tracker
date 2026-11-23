@@ -2,7 +2,7 @@ import { app, BrowserWindow, Menu, MenuItemConstructorOptions, ipcMain, shell, d
 import path from 'path';
 import fs from 'fs';
 import {
-  getDatabase, openDatabaseAt, lastOpenWasFresh,
+  getDatabase, closeDatabase, lastOpenWasFresh,
   cardsGetAll, cardGetById, cardCreate, cardUpdate, cardDelete, cardSetVisible,
   programsGetAll, programGetById, programCreate, programUpdate, programDelete,
   benefitsGetAll, benefitsForCard, benefitsForProgram, benefitGetById,
@@ -11,23 +11,24 @@ import {
   computeProjections,
   refreshGetStatus, refreshStartRun, refreshPendingChanges,
   refreshApproveChange, refreshRejectChange, refreshApplyRun, refreshDiscardRun,
-  buildFilePayload, importFilePayload,
   applyDataMigrations,
   pointsCurrenciesGetAll, pointsCurrencyGetById, pointsCurrencyCreate,
   pointsCurrencyUpdate, pointsCurrencyDelete,
 } from './database';
 import type {
-  CardInput, ProgramInput, BenefitInput, UsageInput, AppFilePayload, FileResult,
+  CardInput, ProgramInput, BenefitInput, UsageInput, FileResult, FileChangeInfo,
   PointsCurrencyInput,
 } from './types';
+import { chooseStartupPath, writeLastDbPath } from './fileStore';
+import { createFileOps } from './fileOps';
+import type { FileOpResult, PickOptions } from './fileOps';
+import { buildFileMenu } from './fileMenu';
 import { resolveIconPath } from './iconPath';
 import { offerBundledProposals, importProposalText, MAX_PROPOSAL_BYTES } from './refreshProposal';
 import type { RefreshProposalResult } from './types';
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const APP_USER_MODEL_ID = 'com.dunkinglobal.ccbenefittracker';
-
-let currentDbPath = '';
 
 function appIconPath(): string {
   return resolveIconPath({
@@ -61,7 +62,7 @@ function offerBundledRefresh(fresh: boolean): void {
   } catch (err) { logError(`bundled refresh failed: ${err}`); }
 }
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     title: 'Credit Card Benefit Tracker',
     icon: appIconPath(),
@@ -128,6 +129,7 @@ function createWindow(): void {
   win.webContents.on('did-fail-load', (_e, code, desc, url) => {
     logError(`did-fail-load: ${code} ${desc} url=${url}`);
   });
+  return win;
 }
 
 function showAboutDialog(): void {
@@ -186,12 +188,16 @@ function buildAppMenu(): void {
         { role: 'quit' as const },
       ],
     }] : []),
-    {
-      label: '&File',
-      submenu: [
-        isMac ? { role: 'close' as const } : { role: 'quit' as const },
-      ],
-    },
+    buildFileMenu({
+      newFile: () => { void fromMenu(fileOps.newFile); },
+      openFile: () => { void fromMenu(fileOps.openFile); },
+      save: () => { void fromMenu(fileOps.save); },
+      saveAs: () => { void fromMenu(fileOps.saveAs); },
+      saveCopy: () => { void fromMenu(fileOps.saveCopy); },
+      exportJson: () => { void fromMenu(fileOps.exportJson); },
+      importJson: () => { void fromMenu(fileOps.importJson); },
+      showInFolder: () => { void fromMenu(fileOps.showInFolder); },
+    }, isMac),
     {
       label: '&Edit',
       submenu: [
@@ -259,11 +265,24 @@ app.whenReady().then(() => {
     website: 'https://github.com/anndunkin/cc-benefit-tracker',
   });
   buildAppMenu();
-  currentDbPath = defaultDbPath();
-  openDatabaseAt(currentDbPath);
+  let startupProblem: StartupProblem | null;
+  try { startupProblem = openStartupFile(); }
+  catch (err) {
+    logError(`could not open the data file: ${err}`);
+    dialog.showErrorBox('Credit Card Benefit Tracker',
+      `The data file could not be opened:\n${defaultDbPath()}\n\n${err instanceof Error ? err.message : String(err)}\n\n` +
+      'Details are in cc-benefit-tracker-error.log in the same folder.');
+    app.exit(1);
+    return;
+  }
   logError(`data migrations: ${JSON.stringify(applyDataMigrations(getDatabase()))}`);
   offerBundledRefresh(lastOpenWasFresh());
-  createWindow();
+  const win = createWindow();
+  if (startupProblem) {
+    const problem = startupProblem;
+    // Wait until the window is on screen so the message is not hidden behind it.
+    win.webContents.once('did-finish-load', () => reportStartupProblem(win, problem));
+  }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -272,6 +291,9 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+// Leave one complete .db file behind: fold the write-ahead log in and close.
+app.on('will-quit', () => { closeDatabase(); });
 
 // ─── Cards ───────────────────────────────────────────────────────────────────
 ipcMain.handle('cards:getAll', () => cardsGetAll(getDatabase()));
@@ -375,102 +397,145 @@ function activeWindow(): BrowserWindow {
 }
 
 function safeChosenPath(chosen: string, exts: string[]): boolean {
-  const resolved = path.resolve(chosen);
-  if (resolved !== chosen && path.normalize(chosen) !== resolved) { /* allow normalized */ }
-  const ext = path.extname(resolved).toLowerCase();
+  const ext = path.extname(path.resolve(chosen)).toLowerCase();
   return exts.includes(ext);
 }
 
-ipcMain.handle('file:currentPath', () => currentDbPath);
+function dialogFilters(o: PickOptions) {
+  return [{ name: o.filterName, extensions: [o.extension] }];
+}
 
-ipcMain.handle('file:newDb', async (): Promise<FileResult> => {
-  try {
+const fileOps = createFileOps({
+  pickSave: async (o) => {
     const { canceled, filePath } = await dialog.showSaveDialog(activeWindow(), {
-      title: 'New Benefit Tracker File',
-      defaultPath: 'cc-benefit-tracker.db',
-      filters: [{ name: 'Tracker Database', extensions: ['db'] }],
+      title: o.title, defaultPath: o.defaultPath, filters: dialogFilters(o),
     });
-    if (canceled || !filePath) return { success: false };
-    if (!safeChosenPath(filePath, ['.db'])) return { success: false, error: 'Invalid file path.' };
-    if (fs.existsSync(filePath)) fs.rmSync(filePath);
-    currentDbPath = filePath;
-    openDatabaseAt(filePath);
-    offerBundledRefresh(lastOpenWasFresh());
-    return { success: true, filePath };
-  } catch (err) { logError(`file:newDb ${err}`); return { success: false, error: String(err) }; }
-});
-
-ipcMain.handle('file:openDb', async (): Promise<FileResult> => {
-  try {
+    return canceled || !filePath ? null : filePath;
+  },
+  pickOpen: async (o) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(activeWindow(), {
-      title: 'Open Benefit Tracker File',
-      filters: [{ name: 'Tracker Database', extensions: ['db'] }],
-      properties: ['openFile'],
+      title: o.title, filters: dialogFilters(o), properties: ['openFile'],
     });
-    if (canceled || !filePaths.length) return { success: false };
-    const chosen = filePaths[0];
-    if (!fs.existsSync(chosen) || !safeChosenPath(chosen, ['.db'])) {
-      return { success: false, error: 'Invalid file path.' };
+    return canceled || !filePaths.length ? null : filePaths[0];
+  },
+  confirm: async (o) => {
+    const res = await dialog.showMessageBox(activeWindow(), {
+      type: 'warning',
+      title: o.title,
+      message: o.message,
+      detail: o.detail,
+      buttons: [o.confirmLabel, 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      noLink: true,
+    });
+    return res.response === 0;
+  },
+  showInFolder: (p) => shell.showItemInFolder(p),
+  get settingsDir() { return app.getPath('userData'); },
+  get defaultDbPath() { return defaultDbPath(); },
+  get suggestedDir() { return app.getPath('documents'); },
+  afterOpen: (fresh) => offerBundledRefresh(fresh),
+  log: logError,
+});
+
+interface StartupProblem { unavailable: string; reason: string; opened: string }
+
+/**
+ * Open the file used last time, or the default file. Returns a description for
+ * the user when the remembered file could not be used. The remembered file is
+ * only forgotten if the user says so (see reportStartupProblem).
+ */
+function openStartupFile(): StartupProblem | null {
+  const fallback = defaultDbPath();
+  const choice = chooseStartupPath(app.getPath('userData'), fallback);
+  let problem: StartupProblem | null = choice.unavailable
+    ? { unavailable: choice.unavailable, reason: choice.reason ?? '', opened: fallback }
+    : null;
+  if (choice.path !== fallback) {
+    try { fileOps.openAtStartup(choice.path); return null; }
+    catch (err) {
+      logError(`could not open remembered file ${choice.path}: ${err}`);
+      problem = { unavailable: choice.path, reason: 'It could not be opened as a Credit Card Benefit Tracker file.', opened: fallback };
     }
-    currentDbPath = chosen;
-    openDatabaseAt(chosen);
-    offerBundledRefresh(lastOpenWasFresh());
-    return { success: true, filePath: chosen };
-  } catch (err) { logError(`file:openDb ${err}`); return { success: false, error: String(err) }; }
-});
+  }
+  fileOps.openAtStartup(fallback);
+  return problem;
+}
 
-ipcMain.handle('file:saveAs', async (): Promise<FileResult> => {
-  try {
-    const { canceled, filePath } = await dialog.showSaveDialog(activeWindow(), {
-      title: 'Save Benefit Tracker File As…',
-      defaultPath: 'cc-benefit-tracker.db',
-      filters: [{ name: 'Tracker Database', extensions: ['db'] }],
-    });
-    if (canceled || !filePath) return { success: false };
-    if (!safeChosenPath(filePath, ['.db'])) return { success: false, error: 'Invalid file path.' };
-    try { getDatabase().pragma('wal_checkpoint(TRUNCATE)'); } catch { /* ignore */ }
-    fs.copyFileSync(currentDbPath, filePath);
-    currentDbPath = filePath;
-    openDatabaseAt(filePath);
-    return { success: true, filePath };
-  } catch (err) { logError(`file:saveAs ${err}`); return { success: false, error: String(err) }; }
-});
+function reportStartupProblem(win: BrowserWindow, problem: StartupProblem): void {
+  dialog.showMessageBox(win, {
+    type: 'warning',
+    title: 'Credit Card Benefit Tracker',
+    message: 'The file you used last time could not be opened',
+    detail:
+      `${problem.unavailable}\n\n${problem.reason}\n\n` +
+      `The default file is open instead:\n${problem.opened}\n\n` +
+      'Use File > Open File to choose another file at any time.',
+    buttons: ['Try my file again next time', 'Use the default file from now on'],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+  }).then(res => {
+    if (res.response !== 1) return;
+    // Only now, with the default file open and at the user's request, stop looking for the old file.
+    try { writeLastDbPath(app.getPath('userData'), problem.opened, problem.opened); }
+    catch (err) { logError(`could not reset remembered file: ${err}`); }
+  }).catch(err => logError(`startup notice error: ${err}`));
+}
 
-ipcMain.handle('file:exportJson', async (): Promise<FileResult> => {
-  try {
-    const { canceled, filePath } = await dialog.showSaveDialog(activeWindow(), {
-      title: 'Export Data as JSON',
-      defaultPath: `cc-benefit-tracker-export-${new Date().toISOString().slice(0, 10)}.json`,
-      filters: [{ name: 'JSON', extensions: ['json'] }],
-    });
-    if (canceled || !filePath) return { success: false };
-    if (!safeChosenPath(filePath, ['.json'])) return { success: false, error: 'Invalid file path.' };
-    const payload = buildFilePayload(getDatabase());
-    fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
-    return { success: true, filePath, payload };
-  } catch (err) { logError(`file:exportJson ${err}`); return { success: false, error: String(err) }; }
-});
+/** Tell every window which file is open and whether its data changed underneath it. */
+function announce(result: FileOpResult, source: FileChangeInfo['source']): void {
+  if (!result.success) return;
+  const info: FileChangeInfo = {
+    path: fileOps.currentPath(),
+    reload: result.reload === true,
+    source,
+    message: result.message,
+  };
+  for (const w of BrowserWindow.getAllWindows()) {
+    try { w.webContents.send('file:changed', info); } catch (err) { logError(`file:changed ${err}`); }
+  }
+}
+
+function toFileResult(r: FileOpResult): FileResult {
+  const { reload: _reload, ...rest } = r;
+  return rest;
+}
+
+/** A File menu command: the result is shown in the window; a failure gets a dialog. */
+async function fromMenu(op: () => Promise<FileOpResult>): Promise<void> {
+  const result = await op();
+  announce(result, 'menu');
+  if (!result.success && result.error) {
+    dialog.showMessageBox(activeWindow(), {
+      type: 'error',
+      title: 'Credit Card Benefit Tracker',
+      message: 'That did not work',
+      detail: result.error,
+      buttons: ['OK'],
+    }).catch(err => logError(`file error dialog: ${err}`));
+  }
+}
+
+/** The same command from the Settings page, which shows the result itself. */
+async function fromSettings(op: () => Promise<FileOpResult>): Promise<FileResult> {
+  const result = await op();
+  announce(result, 'settings');
+  return toFileResult(result);
+}
+
+// Paths are never accepted from the renderer; each handler shows its own dialog.
+ipcMain.handle('file:currentPath', () => fileOps.currentPath());
+ipcMain.handle('file:newDb', () => fromSettings(fileOps.newFile));
+ipcMain.handle('file:openDb', () => fromSettings(fileOps.openFile));
+ipcMain.handle('file:save', () => fromSettings(fileOps.save));
+ipcMain.handle('file:saveAs', () => fromSettings(fileOps.saveAs));
+ipcMain.handle('file:saveCopy', () => fromSettings(fileOps.saveCopy));
+ipcMain.handle('file:exportJson', () => fromSettings(fileOps.exportJson));
+ipcMain.handle('file:importJson', () => fromSettings(fileOps.importJson));
+ipcMain.handle('file:showInFolder', () => fromSettings(fileOps.showInFolder));
 
 // ─── App metadata / About ───────────────────────────────────────
 ipcMain.handle('app:getVersion', () => app.getVersion());
 ipcMain.handle('app:showAbout', () => { showAboutDialog(); });
-
-ipcMain.handle('file:importJson', async (): Promise<FileResult> => {
-  try {
-    const { canceled, filePaths } = await dialog.showOpenDialog(activeWindow(), {
-      title: 'Import Data from JSON',
-      filters: [{ name: 'JSON', extensions: ['json'] }],
-      properties: ['openFile'],
-    });
-    if (canceled || !filePaths.length) return { success: false };
-    const chosen = filePaths[0];
-    if (!fs.existsSync(chosen) || !safeChosenPath(chosen, ['.json'])) {
-      return { success: false, error: 'Invalid file path.' };
-    }
-    const raw = fs.readFileSync(chosen, 'utf-8');
-    const payload = JSON.parse(raw) as AppFilePayload;
-    importFilePayload(getDatabase(), payload);
-    offerBundledRefresh(false);
-    return { success: true, filePath: chosen, payload };
-  } catch (err) { logError(`file:importJson ${err}`); return { success: false, error: String(err) }; }
-});

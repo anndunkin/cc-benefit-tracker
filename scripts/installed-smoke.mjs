@@ -3,6 +3,9 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const legacy = process.argv.includes('--legacy');
+// v1.0.25: `--expect-db <path>` asserts which data file the installed app opened at launch.
+const expectDbAt = process.argv.indexOf('--expect-db');
+const expectDb = expectDbAt >= 0 ? process.argv[expectDbAt + 1] : null;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 let target;
 for (let i = 0; i < 120; i++) {
@@ -99,7 +102,22 @@ try {
     return {version:await window.api.app.getVersion(), dbPath:await window.api.file.currentPath(), refresh:refreshEvidence, notes:'installed native SQLite + preload IPC checks passed'};
   })()`);
   fs.mkdirSync('release-evidence', { recursive: true });
-  fs.writeFileSync('release-evidence/runtime.json', JSON.stringify(result, null, 2));
+  if (expectDb) {
+    assert.equal(result.dbPath.toLowerCase(), expectDb.toLowerCase(), 'The app did not open the expected data file at launch');
+  }
+  if (!legacy) {
+    // v1.0.25 file management: Save must leave one complete .db file on disk.
+    assert.equal(await evaluate('typeof window.api.file.onChanged'), 'function', 'File change notifications are not exposed');
+    const saved = await evaluate('window.api.file.save()');
+    assert.equal(saved.success, true, 'Save failed: ' + saved.error);
+    assert.equal(saved.filePath, result.dbPath);
+    assert.equal(saved.message, 'Saved to ' + result.dbPath);
+    const wal = result.dbPath + '-wal';
+    assert(!fs.existsSync(wal) || fs.statSync(wal).size === 0, 'Save left changes outside the .db file');
+    result.file = { saved: saved.message, opened: result.dbPath, expected: expectDb };
+  }
+  // Each run keeps its own evidence; runtime.json is always the latest default-file run.
+  fs.writeFileSync(expectDb ? 'release-evidence/runtime-file-check.json' : 'release-evidence/runtime.json', JSON.stringify(result, null, 2));
   if (!legacy) {
     await command('Emulation.setDeviceMetricsOverride', { width: 1000, height: 640, deviceScaleFactor: 1, mobile: false });
     await command('Page.reload');
@@ -117,6 +135,26 @@ try {
     assert(await evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent === 'Apply approved'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth; })()"), 'Apply approved is not visible at 1000x640');
     const review = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('release-evidence/refresh-review-1000x640.png', Buffer.from(review.data, 'base64'));
+    // v1.0.25: every file command must be reachable on the Settings page at a small window size.
+    await evaluate("location.hash = '#/settings'");
+    await delay(1500);
+    const fileButtons = ['New File…', 'Open File…', 'Save', 'Save As…', 'Save a Backup Copy…', 'Show File in Folder', 'Export to JSON…', 'Import from JSON…'];
+    const unreachable = await evaluate(`(() => {
+      const wanted = ${JSON.stringify(fileButtons)};
+      const missing = [];
+      for (const label of wanted) {
+        const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim() === label);
+        if (!b) { missing.push(label + ' (missing)'); continue; }
+        b.scrollIntoView({ block: 'center' });
+        const r = b.getBoundingClientRect();
+        if (b.disabled || r.width === 0 || r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth) missing.push(label + ' (not reachable)');
+      }
+      return missing;
+    })()`);
+    assert.deepEqual(unreachable, [], 'File commands unavailable on Settings at 1000x640');
+    assert(await evaluate(`document.body.innerText.includes(${JSON.stringify(result.dbPath)})`), 'Settings does not show the open file');
+    const settingsShot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('release-evidence/settings-file-1000x640.png', Buffer.from(settingsShot.data, 'base64'));
     await evaluate("location.hash = '#/'");
   }
   console.log(JSON.stringify(result));

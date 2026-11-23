@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './theme';
 import DashboardConsumable from './pages/DashboardConsumable';
 import DashboardOngoing from './pages/DashboardOngoing';
@@ -31,7 +31,33 @@ function Shell() {
   const [dbPath, setDbPath] = useState('');
   const [version, setVersion] = useState('');
 
+  // v1.0.25: file commands (File menu or Settings) report here so the header,
+  // the banner and the open page always show the file that is actually open.
+  const [fileEpoch, setFileEpoch] = useState(0);
+  const [pageEpoch, setPageEpoch] = useState(0);
+  const [fileNotice, setFileNotice] = useState<{ text: string; id: number } | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
   useEffect(() => { window.api.file.currentPath().then(setDbPath); }, []);
+  useEffect(() => {
+    return window.api.file.onChanged(info => {
+      setDbPath(info.path);
+      if (info.reload) setFileEpoch(n => n + 1);
+      if (info.source !== 'menu') return;          // Settings shows its own result
+      if (info.message) { const text = info.message; setFileNotice(prev => ({ text, id: (prev?.id ?? 0) + 1 })); }
+      if (info.reload) {
+        // A card or program page may point at something the new file does not have.
+        if (/^\/(cards|programs)\/./.test(location.pathname)) navigate('/');
+        setPageEpoch(n => n + 1);
+      }
+    });
+  }, [location.pathname, navigate]);
+  useEffect(() => {
+    if (!fileNotice) return;
+    const timer = setTimeout(() => setFileNotice(null), 8000);
+    return () => clearTimeout(timer);
+  }, [fileNotice]);
   useEffect(() => { window.api.app.getVersion().then(setVersion).catch(() => setVersion('')); }, []);
 
   return (
@@ -74,9 +100,9 @@ function Shell() {
         </div>
       </header>
 
-      <RefreshBanner />
+      <RefreshBanner key={`banner-${fileEpoch}`} />
 
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto p-6" key={`page-${pageEpoch}`}>
         <Routes>
           <Route path="/" element={<DashboardConsumable />} />
           <Route path="/ongoing" element={<DashboardOngoing />} />
@@ -91,6 +117,18 @@ function Shell() {
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
+
+      {fileNotice && (
+        <div
+          role="status"
+          className="pointer-events-none fixed bottom-4 right-4 z-[60] flex max-w-[min(32rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm shadow-lg"
+        >
+          <span className="[overflow-wrap:anywhere]">{fileNotice.text}</span>
+          <button className="btn-ghost pointer-events-auto text-xs shrink-0" onClick={() => setFileNotice(null)} aria-label="Dismiss">
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }

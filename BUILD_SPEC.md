@@ -20,6 +20,9 @@ cc-benefit-tracker/
 │   ├── main.ts              App lifecycle + window creation
 │   ├── preload.ts           Whitelisted IPC bridge (contextIsolation:true, nodeIntegration:false)
 │   ├── database.ts          SQLite schema + CRUD + refresh + projections + file I/O
+│   ├── fileStore.ts         Data-file handling: identify a tracker file, safe copy/replace, remembered location
+│   ├── fileOps.ts           File commands (New, Open, Save, Save As, backup copy, export, import) behind the menu and Settings
+│   ├── fileMenu.ts          File menu definition and shortcuts
 │   ├── periods.ts           Period bucket math for reset cadences
 │   ├── refreshProposal.ts   Refresh proposals: validation, diff against live data, draft-run creation
 │   ├── refreshProposalData.ts GENERATED from refresh-proposals/*.json by scripts/build-refresh-proposals.mjs
