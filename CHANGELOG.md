@@ -2,7 +2,7 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
-## v1.0.26 - 2026-11-22
+## v1.0.26 - 2026-11-23
 
 ### Print expiring credits
 - **Print Expiring Credits…** is on the File menu (Ctrl+P) and as a link on the Credits & Usages screen. It opens a screen showing the list exactly as it will print, with a **Print…** button that opens the Windows print dialog.
