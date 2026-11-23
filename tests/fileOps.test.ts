@@ -83,7 +83,9 @@ describe('Save', () => {
     expect(asked.save).toHaveLength(0);
   });
 
-  it('does not report success when the file has been moved or deleted behind the app', async () => {
+  // Windows refuses to rename or delete a database that is open (EBUSY), so the
+  // situation can only arise elsewhere (and on some network or synced folders).
+  it.skipIf(process.platform === 'win32')('does not report success when the file has been moved or deleted behind the app', async () => {
     setNote('orphaned');
     fs.renameSync(def(), p('renamed-elsewhere.db'));
     const r = await ops.save();

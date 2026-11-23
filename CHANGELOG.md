@@ -24,7 +24,7 @@ All notable changes to Credit Card Benefit Tracker follow this file. Versions fo
 - If you keep the file in a synced folder (OneDrive, iCloud), use it on one computer at a time and close the app so syncing can finish. A safer habit is to keep the working file on the computer and use Save a Backup Copy into the synced folder.
 
 ### Verified
-- TypeScript checks, production build and all 344 tests pass (78 new, most of them running the file commands against real files). The installer test now also confirms that Save leaves a single complete file, that a file in another folder is reopened at the next launch, that the app falls back to the default file without forgetting the other one when it is missing, and that every file command on Settings is reachable at 1000 x 640.
+- TypeScript checks, production build and all 344 tests pass (78 new, most of them running the file commands against real files; two of them cover situations Windows itself prevents, a read-only file set by Unix permissions and renaming a file that is open, and run on Linux only). The installer test now also confirms that Save leaves a single complete file, that a file in another folder is reopened at the next launch, that the app falls back to the default file without forgetting the other one when it is missing, and that every file command on Settings is reachable at 1000 x 640.
 
 ## v1.0.24 - 2026-11-22
 
