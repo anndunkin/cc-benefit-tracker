@@ -75,19 +75,37 @@ function Shell() {
 
   return (
     <div className="flex h-full flex-col print:block print:h-auto">
-      <header className="print:hidden flex items-center gap-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-primary-600">◈</span>
-          <span className="text-lg font-bold">Credit Card Benefit Tracker</span>
+      {/* Two rows so every control stays on screen down to the 1000 x 640 minimum window:
+          the title, open file, version and theme on top, the page links underneath. */}
+      <header className="print:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 pt-2.5 pb-2">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+            <span className="text-lg font-bold text-primary-600">◈</span>
+            <span className="text-lg font-bold">Credit Card Benefit Tracker</span>
+          </div>
+          <div className="ml-auto flex min-w-0 items-center gap-3">
+            {/* Long paths are shortened from the left so the file name stays visible; the full path is in the tooltip. */}
+            <span className="min-w-0 truncate text-left text-xs text-slate-400 [direction:rtl]" title={dbPath} data-testid="current-file-path"><bdi dir="ltr">{dbPath}</bdi></span>
+            <button
+              className="btn-ghost shrink-0 whitespace-nowrap text-xs"
+              onClick={() => window.api.app.showAbout()}
+              title="About Credit Card Benefit Tracker"
+            >
+              {version ? `v${version}` : 'About'}
+            </button>
+            <button className="btn-ghost shrink-0 whitespace-nowrap" onClick={toggle} title="Toggle theme">
+              {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
+            </button>
+          </div>
         </div>
-        <nav className="flex gap-1">
+        <nav className="mt-2 flex flex-wrap gap-0.5 xl:gap-1" aria-label="Pages">
           {NAV.map(n => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.end}
               className={({ isActive }) =>
-                `px-3 py-1.5 rounded-lg text-sm font-medium ${
+                `whitespace-nowrap px-2 xl:px-3 py-1.5 rounded-lg text-sm font-medium ${
                   isActive
                     ? 'bg-primary-600 text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -98,19 +116,6 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <span className="hidden md:inline text-xs text-slate-400 max-w-xs truncate" title={dbPath}>{dbPath}</span>
-          <button
-            className="btn-ghost text-xs"
-            onClick={() => window.api.app.showAbout()}
-            title="About Credit Card Benefit Tracker"
-          >
-            {version ? `v${version}` : 'About'}
-          </button>
-          <button className="btn-ghost" onClick={toggle} title="Toggle theme">
-            {theme === 'dark' ? '☀ Light' : '🌙 Dark'}
-          </button>
-        </div>
       </header>
 
       <div className="print:hidden"><RefreshBanner key={`banner-${fileEpoch}`} /></div>

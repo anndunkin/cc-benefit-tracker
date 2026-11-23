@@ -172,3 +172,28 @@ it('stops listening when the window content is torn down', async () => {
   view.unmount();
   expect(listeners).toHaveLength(0);
 });
+
+it('header keeps the open file, version and theme on one row and the page links on their own row (v1.0.28)', async () => {
+  renderApp('/settings');
+  const path = await screen.findByTestId('current-file-path');
+  await waitFor(() => expect(path).toHaveTextContent(currentPath));
+  // The full path is always available as a tooltip; long paths are shortened from the left.
+  expect(path).toHaveAttribute('title', currentPath);
+  expect(path.className).toContain('truncate');
+  expect(path.className).toContain('[direction:rtl]');
+  expect(path.querySelector('bdi')).toHaveAttribute('dir', 'ltr');
+  const header = path.closest('header')!;
+  const nav = header.querySelector('nav')!;
+  expect(nav).toHaveAttribute('aria-label', 'Pages');
+  // The file path, version and theme controls are not inside the link row, so they cannot be pushed off screen by it.
+  expect(nav.contains(path)).toBe(false);
+  expect(nav.contains(screen.getByTitle('Toggle theme'))).toBe(false);
+  expect(nav.contains(screen.getByTitle('About Credit Card Benefit Tracker'))).toBe(false);
+  // Links never break inside a label and the row wraps rather than overflowing.
+  expect(nav.className).toContain('flex-wrap');
+  const links = Array.from(nav.querySelectorAll('a'));
+  expect(links.map(a => a.textContent)).toEqual([
+    'Credits & Usages', 'Ongoing Benefits', 'Cards', 'Programs', 'Bonus Categories', 'Points Values', 'Manage Benefits', 'Refresh', 'Settings',
+  ]);
+  for (const a of links) expect(a.className).toContain('whitespace-nowrap');
+});

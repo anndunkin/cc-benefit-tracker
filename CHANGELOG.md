@@ -2,6 +2,17 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.28 - 2026-11-23
+
+### Window header
+- **The header now fits at the smallest window size (1000 x 640).** Before, the page links filled the top bar and pushed the open file's path, the version button and the Dark/Light toggle off the right edge, with a sideways scrollbar. The header now has two rows: the app name, open file, version and theme toggle on top, and the page links underneath on a single line. Page labels no longer break across lines at any window size.
+- **Long file paths are shortened from the left**, so the file name stays visible. Hover over the path to see all of it.
+
+### Verified
+- TypeScript checks, production build and all 411 tests pass (1 new, covering the header layout).
+- Checked in the running app at 1000 x 640, 1280 x 800 and 1600 x 1000, in light and dark mode, with a long OneDrive path: every header control is on screen, the page links sit on one row, nothing scrolls sideways, and every link opens its page.
+- The Windows installer test now also checks the header at 1000 x 640.
+
 ## v1.0.27 - 2026-11-23
 
 ### World of Hyatt program

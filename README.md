@@ -77,7 +77,7 @@ tests/print-ui.test.tsx     · Print Expiring Credits screen: options, per-row t
 tests/localDate.test.tsx    · "Today" follows the computer's local date, not UTC
 ```
 
-Run `npm run test` to see the full suite. All 410 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 411 tests pass on a clean checkout.
 
 ## License
 

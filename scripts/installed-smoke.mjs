@@ -135,6 +135,14 @@ try {
     await delay(1500);
     assert(await evaluate("document.body.innerText.includes('Apply approved') && document.body.innerText.includes('Approve all undecided')"), 'Refresh review actions unavailable');
     assert(await evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent === 'Apply approved'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth; })()"), 'Apply approved is not visible at 1000x640');
+    // v1.0.28: at the minimum window size every header control is on screen, the page links
+    // fit on one row, and nothing scrolls sideways.
+    const header = await evaluate(`(() => { const W = document.documentElement.clientWidth, h = document.querySelector('header');
+      const off = [...h.querySelectorAll('a,button,[data-testid="current-file-path"]')].filter(e => { const r = e.getBoundingClientRect(); return r.width === 0 || r.left < 0 || r.right > W + 0.5; }).map(e => e.textContent.trim());
+      const rows = new Set([...h.querySelectorAll('nav a')].map(a => Math.round(a.getBoundingClientRect().top))).size;
+      return { off, rows, height: Math.round(h.getBoundingClientRect().height), sideways: document.documentElement.scrollWidth > W }; })()`);
+    assert(header.off.length === 0, 'Header controls off screen at 1000x640: ' + header.off.join(', '));
+    assert(header.rows === 1 && !header.sideways && header.height <= 110, 'Header does not fit at 1000x640: ' + JSON.stringify(header));
     const review = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('release-evidence/refresh-review-1000x640.png', Buffer.from(review.data, 'base64'));
     // v1.0.25: every file command must be reachable on the Settings page at a small window size.
