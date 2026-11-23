@@ -11,6 +11,8 @@ export interface FileMenuActions {
   exportJson: () => void;
   importJson: () => void;
   showInFolder: () => void;
+  /** v1.0.26: open the Print Expiring Credits screen. */
+  printExpiring: () => void;
 }
 
 /** Labels used by the application menu and, word for word, by the Settings page (checked in tests/file-ui.test.tsx). */
@@ -24,6 +26,9 @@ export const FILE_MENU_LABELS = {
   importJson: 'Import from JSON…',
   showInFolder: 'Show File in Folder',
 } as const;
+
+/** v1.0.26. Not a file command, so it is not part of FILE_MENU_LABELS (which Settings mirrors). */
+export const PRINT_EXPIRING_LABEL = 'Print Expiring Credits…';
 
 export function buildFileMenu(actions: FileMenuActions, isMac: boolean): MenuItemConstructorOptions {
   const L = FILE_MENU_LABELS;
@@ -41,6 +46,8 @@ export function buildFileMenu(actions: FileMenuActions, isMac: boolean): MenuIte
       { label: L.importJson, click: () => actions.importJson() },
       { type: 'separator' },
       { label: L.showInFolder, click: () => actions.showInFolder() },
+      { type: 'separator' },
+      { label: PRINT_EXPIRING_LABEL, accelerator: 'CmdOrCtrl+P', click: () => actions.printExpiring() },
       { type: 'separator' },
       isMac ? { role: 'close' } : { role: 'quit', label: 'E&xit' },
     ],

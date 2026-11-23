@@ -17,8 +17,9 @@ import {
 } from './database';
 import type {
   CardInput, ProgramInput, BenefitInput, UsageInput, FileResult, FileChangeInfo,
-  PointsCurrencyInput,
+  PointsCurrencyInput, AppRoute, ExpiringReport, PrintResult,
 } from './types';
+import { buildExpiringReport, localIsoDate, utcDateFor } from './expiringCredits';
 import { chooseStartupPath, writeLastDbPath } from './fileStore';
 import { createFileOps } from './fileOps';
 import type { FileOpResult, PickOptions } from './fileOps';
@@ -197,6 +198,7 @@ function buildAppMenu(): void {
       exportJson: () => { void fromMenu(fileOps.exportJson); },
       importJson: () => { void fromMenu(fileOps.importJson); },
       showInFolder: () => { void fromMenu(fileOps.showInFolder); },
+      printExpiring: () => showScreen('print-expiring'),
     }, isMac),
     {
       label: '&Edit',
@@ -328,8 +330,13 @@ ipcMain.handle('usages:update', (_e, id: number, data: Partial<UsageInput>) => u
 ipcMain.handle('usages:delete', (_e, id: number) => { usageDelete(getDatabase(), id); return { ok: true }; });
 
 // ─── Projection ──────────────────────────────────────────────────────────────
-ipcMain.handle('projection:all', (_e, refYear?: number) =>
-  computeProjections(getDatabase(), refYear ?? new Date().getUTCFullYear()));
+// v1.0.26: "today" is the user's local calendar date. It used to be the UTC
+// date, which in US time zones moved to the next day (and so the next month or
+// year) during the evening.
+ipcMain.handle('projection:all', (_e, refYear?: number) => {
+  const today = localIsoDate();
+  return computeProjections(getDatabase(), refYear ?? parseInt(today.slice(0, 4), 10), utcDateFor(today));
+});
 
 // ─── Refresh ─────────────────────────────────────────────────────────────────
 ipcMain.handle('refresh:getStatus', () => refreshGetStatus(getDatabase()));
@@ -535,6 +542,59 @@ ipcMain.handle('file:saveCopy', () => fromSettings(fileOps.saveCopy));
 ipcMain.handle('file:exportJson', () => fromSettings(fileOps.exportJson));
 ipcMain.handle('file:importJson', () => fromSettings(fileOps.importJson));
 ipcMain.handle('file:showInFolder', () => fromSettings(fileOps.showInFolder));
+
+// ─── Expiring credits and printing (v1.0.26) ───────────────────────────────────
+// The list is built for the user's local calendar date, so a credit that ends
+// on the last day of the month is still listed that evening.
+ipcMain.handle('expiring:list', (event): ExpiringReport => {
+  if (!fromAppWindow(event)) throw new Error('Not available from this page.');
+  const today = localIsoDate();
+  const year = parseInt(today.slice(0, 4), 10);
+  return buildExpiringReport(computeProjections(getDatabase(), year, utcDateFor(today)), today);
+});
+
+/** Ask the window to show one of the screens the menu knows about. */
+function showScreen(route: AppRoute): void {
+  const win = activeWindow();
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.focus();
+  try { win.webContents.send('app:navigate', route); } catch (err) { logError(`app:navigate ${err}`); }
+}
+
+/** True when a request comes from the top-level page of one of this app's own windows. */
+function fromAppWindow(event: Electron.IpcMainInvokeEvent): boolean {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return !!win && !win.isDestroyed() && event.senderFrame === event.sender.mainFrame;
+}
+
+// Opens the system print dialog for the window that asked. Nothing is taken
+// from the renderer: no printer name, no file path, no options. One dialog at
+// a time.
+let printDialogOpen = false;
+/** Whether the window is showing Print Expiring Credits, the only screen laid out for paper. */
+function onPrintScreen(url: string): boolean {
+  try { return new URL(url).hash.split('?')[0] === '#/print-expiring'; } catch { return false; }
+}
+
+ipcMain.handle('app:print', (event): Promise<PrintResult> => new Promise(resolve => {
+  if (!fromAppWindow(event) || !onPrintScreen(event.sender.getURL())) return resolve({ success: false, error: 'Printing is not available from this page.' });
+  if (printDialogOpen) return resolve({ success: false, cancelled: true });
+  printDialogOpen = true;
+  const done = (result: PrintResult) => { printDialogOpen = false; resolve(result); };
+  try {
+    event.sender.print({ silent: false, printBackground: false }, (success, failureReason) => {
+      if (success) return done({ success: true });
+      const reason = String(failureReason ?? '').trim();
+      if (/cancel/i.test(reason)) return done({ success: false, cancelled: true });
+      logError(`print failed: ${reason}`);
+      done({ success: false, error: reason || 'The print job did not start.' });
+    });
+  } catch (err) {
+    logError(`print error: ${err}`);
+    done({ success: false, error: err instanceof Error ? err.message : String(err) });
+  }
+}));
 
 // ─── App metadata / About ───────────────────────────────────────
 ipcMain.handle('app:getVersion', () => app.getVersion());

@@ -9,6 +9,7 @@ Windows desktop application that tracks the credit card and airline/hotel status
 - **Unlimited benefits** (award-flight discounts, priority boarding, free bags, etc.) are tracked separately from consumable credits.
 - **Diff & review quarterly refresh workflow** — each release carries a researched list of published benefit changes; the app compares it with your data and proposes a change set with sources and effective dates. You approve or reject each row before it touches your saved benefits. Any benefit you have edited by hand is never overwritten by a refresh unless you choose "Approve and replace my edit" for that row.
 - **Full file management** — save your database anywhere, load it back, export a portable JSON payload. The File menu has New File, Open File, Save, Save As, Save a Backup Copy, Export to JSON, Import from JSON and Show File in Folder (the same commands are on the Settings page), and the app reopens the file you used last.
+- **Print expiring credits** — File > Print Expiring Credits… (Ctrl+P) prints a list of credits and certificates expiring this month or this year, optionally travel only and optionally with certificates expiring through the end of next year. Each row can be left off, and a partly used credit shows the amount remaining.
 - **Self-signed Windows installer** so the executable identifies itself as coming from Dunkin Global Advisors.
 - **13 seeded cards, 4 seeded loyalty programs, 176 seeded benefits** — every value is linked to its published source page for quick verification.
 
@@ -69,9 +70,12 @@ tests/refresh-ui.test.tsx   · Quarterly Refresh screen: review, approve, replac
 tests/fileStore.test.ts     · Data files: identifying a tracker file, safe copy and replace, remembered location
 tests/fileOps.test.ts       · File commands: New, Open, Save, Save As, backup copy, export, import confirmation, refusals
 tests/file-ui.test.tsx      · Settings file buttons and the notice shown after a File menu command
+tests/expiringCredits.test.ts · Expiring list: use-by dates, month/year boundaries, travel selection, amount remaining
+tests/print-ui.test.tsx     · Print Expiring Credits screen: options, per-row ticks, partly used wording, printing
+tests/localDate.test.tsx    · "Today" follows the computer's local date, not UTC
 ```
 
-Run `npm run test` to see the full suite. All 344 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. All 390 tests pass on a clean checkout.
 
 ## License
 

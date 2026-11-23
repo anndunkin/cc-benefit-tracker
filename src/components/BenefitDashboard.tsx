@@ -4,6 +4,7 @@ import type { BenefitProjection, Card, Program } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../lib/format';
 import LogUsageModal from './LogUsageModal';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
+import { localIsoDate } from '../../electron/expiringCredits';
 
 type SectionKey = 'all' | 'cards' | 'programs';
 type CadenceFilter = 'all' | 'annual' | 'semiannual' | 'quarterly' | 'monthly' | 'other';
@@ -30,7 +31,7 @@ export interface BenefitDashboardProps {
  */
 export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }: BenefitDashboardProps) {
   const now = new Date();
-  const [refYear, setRefYear] = useState<number>(now.getUTCFullYear());
+  const [refYear, setRefYear] = useState<number>(now.getFullYear());
   const [projections, setProjections] = useState<BenefitProjection[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -251,6 +252,11 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
           </div>
         )}
         {isConsumable && (
+          <Link to="/print-expiring" className="btn-ghost text-sm" title="Choose and print a list of credits that are about to expire">
+            Print expiring credits…
+          </Link>
+        )}
+        {isConsumable && (
           <div className="ml-auto flex gap-4 text-sm">
             <div className="text-right">
               <div className="text-xs text-slate-500">Value remaining ({refYear})</div>
@@ -444,7 +450,7 @@ function ConsumableTile({
         const entries = milestone ? p.usages : p.usages.slice(0, 1);
         for (const last of entries) await window.api.usages.delete(last.id);
       } else {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localIsoDate();
         await window.api.usages.create({
           benefit_id: b.id,
           used_on: p.ref_year === Number(today.slice(0, 4)) ? today : `${p.ref_year}-06-15`,

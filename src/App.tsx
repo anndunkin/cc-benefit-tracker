@@ -12,6 +12,7 @@ import BonusCategories from './pages/BonusCategories';
 import PointsCurrencies from './pages/PointsCurrencies';
 import Refresh from './pages/Refresh';
 import Settings from './pages/Settings';
+import PrintExpiring from './pages/PrintExpiring';
 import RefreshBanner from './components/RefreshBanner';
 
 const NAV = [
@@ -59,10 +60,22 @@ function Shell() {
     return () => clearTimeout(timer);
   }, [fileNotice]);
   useEffect(() => { window.api.app.getVersion().then(setVersion).catch(() => setVersion('')); }, []);
+  // v1.0.26: File > Print Expiring Credits opens its screen in this window.
+  useEffect(() => {
+    return window.api.app.onNavigate(route => {
+      if (route !== 'print-expiring' || location.pathname === '/print-expiring') return; // that page prints on Ctrl+P
+      // An open form may hold edits that have not been saved; do not leave it behind.
+      if (document.querySelector('main .fixed.inset-0')) {
+        setFileNotice(prev => ({ text: 'Close the open form first, then choose Print Expiring Credits again.', id: (prev?.id ?? 0) + 1 }));
+        return;
+      }
+      navigate('/print-expiring');
+    });
+  }, [navigate, location.pathname]);
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center gap-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3">
+    <div className="flex h-full flex-col print:block print:h-auto">
+      <header className="print:hidden flex items-center gap-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-primary-600">◈</span>
           <span className="text-lg font-bold">Credit Card Benefit Tracker</span>
@@ -100,9 +113,9 @@ function Shell() {
         </div>
       </header>
 
-      <RefreshBanner key={`banner-${fileEpoch}`} />
+      <div className="print:hidden"><RefreshBanner key={`banner-${fileEpoch}`} /></div>
 
-      <main className="flex-1 overflow-auto p-6" key={`page-${pageEpoch}`}>
+      <main className="flex-1 overflow-auto p-6 print:overflow-visible print:p-0" key={`page-${pageEpoch}`}>
         <Routes>
           <Route path="/" element={<DashboardConsumable />} />
           <Route path="/ongoing" element={<DashboardOngoing />} />
@@ -115,13 +128,14 @@ function Shell() {
           <Route path="/benefits" element={<ManageBenefits />} />
           <Route path="/refresh" element={<Refresh />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/print-expiring" element={<PrintExpiring />} />
         </Routes>
       </main>
 
       {fileNotice && (
         <div
           role="status"
-          className="pointer-events-none fixed bottom-4 right-4 z-[60] flex max-w-[min(32rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm shadow-lg"
+          className="print:hidden pointer-events-none fixed bottom-4 right-4 z-[60] flex max-w-[min(32rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm shadow-lg"
         >
           <span className="[overflow-wrap:anywhere]">{fileNotice.text}</span>
           <button className="btn-ghost pointer-events-auto text-xs shrink-0" onClick={() => setFileNotice(null)} aria-label="Dismiss">

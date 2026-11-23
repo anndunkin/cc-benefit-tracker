@@ -420,6 +420,69 @@ export interface FileChangeInfo {
   message?: string;
 }
 
+// ─── Expiring credits (v1.0.26) ───────────────────────────────────────────────
+
+/** One credit or certificate that still has something left and a date to use it by. */
+export interface ExpiringItem {
+  benefit_id: number;
+  title: string;
+  owner_kind: 'card' | 'program';
+  owner_id: string;
+  owner_name: string;
+  category: BenefitCategory;
+  cadence: ResetCadence;
+  /** Counts as travel for the "Travel only" choice. */
+  is_travel: boolean;
+  /**
+   * 'credit' is measured in dollars; 'certificate' (free nights, upgrades,
+   * lounge passes, companion certificates) in uses; 'other' is anything else
+   * with no dollar value recorded (a points bonus, for example).
+   */
+  kind: 'credit' | 'certificate' | 'other';
+  /** Last day it can be used, YYYY-MM-DD. */
+  expires_on: string;
+  /** 'date' = the benefit's own expiration date; 'period' = end of the period it resets on. */
+  expiry_source: 'date' | 'period';
+  /**
+   * True for a certificate or pass with no expiration date recorded: it is
+   * listed by the period the app tracks it in, but the certificate itself may
+   * expire on another day, so the list does not print that day as a deadline.
+   */
+  date_not_recorded: boolean;
+  /** Some of it has been used in the current period. */
+  partially_used: boolean;
+  /** Dollars left (credits only). */
+  value_remaining_usd: number | null;
+  /** Dollars available in the period before any use (credits only). */
+  value_total_usd: number | null;
+  /** Recorded dollar value of one use (certificates only, when known). */
+  value_each_usd: number | null;
+  uses_remaining: number;
+  uses_max: number;
+  /** The benefit's expiration note, if any. */
+  note: string | null;
+}
+
+export interface ExpiringReport {
+  /** The calendar date the list was prepared for (the user's local date). */
+  today: string;
+  month_end: string;
+  year_end: string;
+  next_year_end: string;
+  /** Everything expiring from today through next_year_end, soonest first. */
+  items: ExpiringItem[];
+}
+
+export interface PrintResult {
+  success: boolean;
+  /** The print dialog was closed without printing. */
+  cancelled?: boolean;
+  error?: string;
+}
+
+/** Screens the application menu can open in the window. */
+export type AppRoute = 'print-expiring';
+
 // ─── Renderer <-> Main IPC contract ──────────────────────────────────────────
 
 export interface WindowApi {
@@ -494,9 +557,17 @@ export interface WindowApi {
     /** Subscribe to file changes; returns a function that unsubscribes. */
     onChanged: (listener: (info: FileChangeInfo) => void) => () => void;
   };
+  expiring: {
+    /** Credits and certificates with something left, from today through the end of next year. */
+    list: () => Promise<ExpiringReport>;
+  };
   app: {
     getVersion: () => Promise<string>;
     showAbout: () => Promise<void>;
+    /** Open the system print dialog for the current window. */
+    print: () => Promise<PrintResult>;
+    /** Called when a menu command asks the window to show a screen. Returns an unsubscribe function. */
+    onNavigate: (listener: (route: AppRoute) => void) => () => void;
   };
 }
 

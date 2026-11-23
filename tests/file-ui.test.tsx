@@ -32,7 +32,7 @@ beforeEach(() => {
         return () => { listeners = listeners.filter(l => l !== listener); };
       },
     },
-    app: { getVersion: async () => '1.0.25', showAbout: async () => {} },
+    app: { getVersion: async () => '1.0.25', showAbout: async () => {}, onNavigate: () => () => {} },
     refresh: {
       getStatus: async () => { statusCalls++; return { last_run_at: null, next_due: '2099-01-01', pending_run_id: null }; },
     },

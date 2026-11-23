@@ -53,3 +53,17 @@
     @apply block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1;
   }
 }
+
+/* v1.0.26: printing (File > Print Expiring Credits). The page prints as black
+   on white whatever the theme, and is allowed to run over several sheets. */
+@page { margin: 14mm; }
+@media print {
+  html, body, #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .print-sheet { color: #000 !important; background: #fff !important; }
+  .print-sheet thead { display: table-header-group; }
+}

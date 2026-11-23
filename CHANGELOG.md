@@ -2,6 +2,29 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.26 - 2026-11-22
+
+### Print expiring credits
+- **Print Expiring Credits…** is on the File menu (Ctrl+P) and as a link on the Credits & Usages screen. It opens a screen showing the list exactly as it will print, with a **Print…** button that opens the Windows print dialog.
+- **Choose what prints.** Pick credits expiring **this month** or **this year**; tick **Travel only** to keep travel, airline, hotel and rideshare credits, free nights, upgrades, lounge passes and companion certificates; tick **Also include certificates expiring through December 31 of next year** to add free nights, upgrades, lounge passes and companion certificates that expire after the chosen period. Every row has its own tick box, with **Select all** and **Clear all**. A row you untick stays off the list until its use-by date passes, so next month's credit comes back on its own. The number of items left off is shown on screen and printed at the foot of the list.
+- **What is listed.** Dollar credits and certificates (free nights, upgrades, companion certificates, passes) that are not fully used. Benefits with no dollar value that expire, such as a points bonus, are listed too and can be unticked. Status tiers, milestones, elite-night counters and earning rates are not listed. One-time benefits and spend unlocks appear only when they have an expiration date recorded.
+- **Partly used credits show what is left**, for example "$9 left of $15" marked PARTLY USED. Certificates and passes show the uses left, for example "12 of 15 left".
+- **Use-by dates.** A benefit's own expiration date is used when one is recorded. Otherwise a dollar credit is due on the last day of its month, quarter, half-year or year. A resetting dollar credit is never shown later than the end of its current period. A certificate or pass with no recorded expiration date prints "Check certificate" (a benefit with no dollar value prints "Check terms") rather than a date the app does not know; record the date in the benefit editor to print it. These are listed under the year the app tracks them in, and are included when certificates expiring through next year are added.
+- **The printed sheet** is black on white in both themes, without the app's menus or buttons, grouped by card or program with the name and column headings repeated when a group continues on the next page, with a box to tick off each item by hand and a total of the dollar value still available.
+- The list is brought up to date when the file changes, when the window regains focus, when the date changes and immediately before printing. If it changed, or could not be read again, nothing is printed and the app says to check the list and choose Print again. The choices are locked while the print dialog is open, and printing is available only from this screen.
+
+### Fixed
+- **"Today" is now the date on your computer.** The app used the date in UTC, so in US Eastern time it moved to the next day at 7 PM (8 PM in summer). On the last evening of a month, monthly credits already showed as reset, and a use logged that evening was dated the next day and counted against the next month. Period totals, the default date in Log usage and the year shown on card and program pages now follow the local date.
+- **A use logged with a quantity above 1 and no dollar amount** now counts the full value (value times quantity) instead of the value once.
+
+### Notes
+- There is no separate "Save as PDF" button. Choose "Microsoft Print to PDF" in the print dialog to keep a copy.
+- Print Expiring Credits does not open while an edit form is open; close the form first so unsaved text is not lost.
+- The printed amounts are for the current period of each credit. A recurring certificate whose recorded expiration date falls after December 31 shows as unused again once the new year starts, as it does on the Credits & Usages screen; track a carried-over certificate as its own one-time benefit.
+
+### Verified
+- TypeScript checks, production build and all 390 tests pass (46 new, covering the use-by rules, month and year boundaries, travel selection, partly used amounts, the print screen, printing only a list that is current and on screen, and the local-date fix in the US Eastern time zone). The installer test now also opens Print Expiring Credits at 1000 x 640, confirms the list matches what the app reports for the local date and that Print… is visible, and confirms the printed page is black on white with every row and none of the app's controls.
+
 ## v1.0.25 - 2026-11-22
 
 ### File management

@@ -155,7 +155,54 @@ try {
     assert(await evaluate(`document.body.innerText.includes(${JSON.stringify(result.dbPath)})`), 'Settings does not show the open file');
     const settingsShot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync('release-evidence/settings-file-1000x640.png', Buffer.from(settingsShot.data, 'base64'));
-    await evaluate("location.hash = '#/'");
+    // v1.0.26: Print Expiring Credits. The screen must be usable at a small window size,
+    // list what the app itself reports as expiring, and print as black on white with none
+    // of the app's own controls. The system print dialog is never opened here.
+    await evaluate("localStorage.removeItem('cct.printExpiring.v1'); location.hash = '#/print-expiring'");
+    await delay(1500);
+    assert.equal(await evaluate("typeof window.api.app.print + ' ' + typeof window.api.app.onNavigate + ' ' + typeof window.api.expiring.list"), 'function function function', 'Print commands are not exposed');
+    const expiring = await evaluate(`(async () => {
+      const r = await window.api.expiring.list();
+      const n = new Date();
+      const local = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+      return { today: r.today, local, month_end: r.month_end, year_end: r.year_end, next_year_end: r.next_year_end, items: r.items.length,
+        thisYear: r.items.filter(i => i.expires_on <= r.year_end).length,
+        partly: r.items.filter(i => i.partially_used).length,
+        undatedCertificates: r.items.filter(i => i.date_not_recorded).length };
+    })()`);
+    assert.equal(expiring.today, expiring.local, 'The expiring list is not built for the local date');
+    assert(await evaluate("document.body.innerText.includes('Print Expiring Credits') && !!document.querySelector('section.print-sheet')"), 'Print Expiring Credits screen unavailable');
+    const printButton = "[...document.querySelectorAll('button')].find(x => x.textContent.trim() === 'Print…')";
+    assert(await evaluate(`(() => { const r = ${printButton}.getBoundingClientRect(); return r.top >= 0 && r.bottom <= window.innerHeight && r.left >= 0 && r.right <= window.innerWidth; })()`), 'Print… is not visible at 1000x640');
+    await evaluate("[...document.querySelectorAll('input[type=radio]')].find(x => x.closest('label').innerText.startsWith('This year')).click()");
+    await delay(500);
+    const listedRows = await evaluate("document.querySelectorAll('section.print-sheet tr[data-benefit-id]').length");
+    assert.equal(listedRows, expiring.thisYear, 'The sheet does not list what is expiring this year');
+    const printShot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('release-evidence/print-expiring-1000x640.png', Buffer.from(printShot.data, 'base64'));
+    await command('Emulation.setEmulatedMedia', { media: 'print' });
+    await delay(300);
+    const paper = await evaluate(`(() => {
+      const shown = el => !!el && getComputedStyle(el).display !== 'none' && el.getClientRects().length > 0;
+      const sheet = document.querySelector('section.print-sheet');
+      const main = document.querySelector('main');
+      return {
+        appHeader: shown(document.querySelector('#root header')),
+        printButton: shown(${printButton}),
+        tickBoxes: [...sheet.querySelectorAll('input[type=checkbox]')].filter(shown).length,
+        sheet: shown(sheet),
+        color: getComputedStyle(sheet).color,
+        background: getComputedStyle(document.body).backgroundColor,
+        mainOverflow: getComputedStyle(main).overflowY,
+        rows: [...sheet.querySelectorAll('tr[data-benefit-id]')].filter(shown).length,
+      };
+    })()`);
+    await command('Emulation.setEmulatedMedia', { media: '' });
+    assert.deepEqual({ ...paper, rows: undefined }, { appHeader: false, printButton: false, tickBoxes: 0, sheet: true, color: 'rgb(0, 0, 0)', background: 'rgb(255, 255, 255)', mainOverflow: 'visible', rows: undefined }, 'The printed page is not a clean black-on-white sheet');
+    assert.equal(paper.rows, expiring.thisYear, 'Rows are missing from the printed page');
+    result.print = { ...expiring, listedRows, paper };
+    fs.writeFileSync(expectDb ? 'release-evidence/runtime-file-check.json' : 'release-evidence/runtime.json', JSON.stringify(result, null, 2));
+    await evaluate("localStorage.removeItem('cct.printExpiring.v1'); location.hash = '#/'");
   }
   console.log(JSON.stringify(result));
 } finally { ws.close(); }

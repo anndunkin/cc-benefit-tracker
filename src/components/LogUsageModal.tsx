@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import type { Benefit, Usage } from '../../electron/types';
 import { fmtUsd } from '../lib/format';
 import { isMilestone, tracksEarnedNights, valueAtDate } from '../../electron/benefitRules';
+import { localIsoDate } from '../../electron/expiringCredits';
 
 export default function LogUsageModal({
   benefitId, onClose, onSaved, refYear,
 }: { benefitId: number; onClose: () => void; onSaved: () => void; refYear?: number }) {
   const [benefit, setBenefit] = useState<Benefit | null>(null);
   const [history, setHistory] = useState<Usage[]>([]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localIsoDate();
   const [usedOn, setUsedOn] = useState(refYear && refYear !== Number(today.slice(0, 4)) ? `${refYear}-06-15` : today);
   const [quantity, setQuantity] = useState('1');
   const [expiration, setExpiration] = useState('');

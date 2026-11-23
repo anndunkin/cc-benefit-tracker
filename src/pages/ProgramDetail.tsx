@@ -18,7 +18,7 @@ export default function ProgramDetail() {
     const [p, bs, projAll] = await Promise.all([
       window.api.programs.getById(id),
       window.api.benefits.getForProgram(id),
-      window.api.projection.all(new Date().getUTCFullYear()),
+      window.api.projection.all(new Date().getFullYear()),
     ]);
     setProg(p); setBenefits(bs);
     const map = new Map<number, BenefitProjection>();

@@ -10,7 +10,7 @@ import {
   samePath, sidecarFiles, removeDatabaseFiles, inspectDatabaseFile, openProblem, flushToDisk,
   copyDatabaseTo, replaceDatabaseFile, tempNameFor, readLastDbPath, writeLastDbPath, chooseStartupPath, SETTINGS_FILE,
 } from '../electron/fileStore';
-import { buildFileMenu, FILE_MENU_LABELS } from '../electron/fileMenu';
+import { buildFileMenu, FILE_MENU_LABELS, PRINT_EXPIRING_LABEL } from '../electron/fileMenu';
 import type { FileMenuActions } from '../electron/fileMenu';
 
 let dir: string;
@@ -399,7 +399,7 @@ describe('remembering the file in use', () => {
 describe('File menu', () => {
   const names = ['newFile', 'openFile', 'save', 'saveAs', 'saveCopy', 'exportJson', 'importJson', 'showInFolder'] as const;
   function menu(isMac = false) {
-    const actions = Object.fromEntries(names.map(n => [n, vi.fn()])) as unknown as Record<(typeof names)[number], ReturnType<typeof vi.fn>>;
+    const actions = Object.fromEntries([...names, 'printExpiring'].map(n => [n, vi.fn()])) as unknown as Record<(typeof names)[number] | 'printExpiring', ReturnType<typeof vi.fn>>;
     const built = buildFileMenu(actions as unknown as FileMenuActions, isMac);
     return { actions, items: built.submenu as Array<Record<string, any>>, built };
   }
@@ -409,7 +409,7 @@ describe('File menu', () => {
     expect(built.label).toBe('&File');
     expect(items.filter(i => i.type !== 'separator').map(i => i.label)).toEqual([
       'New File…', 'Open File…', 'Save', 'Save As…', 'Save a Backup Copy…',
-      'Export to JSON…', 'Import from JSON…', 'Show File in Folder', 'E&xit',
+      'Export to JSON…', 'Import from JSON…', 'Show File in Folder', 'Print Expiring Credits…', 'E&xit',
     ]);
     const shortcut = (label: string) => items.find(i => i.label === label)!.accelerator;
     expect(shortcut(FILE_MENU_LABELS.newFile)).toBe('CmdOrCtrl+N');
@@ -427,5 +427,19 @@ describe('File menu', () => {
       expect(actions[n]).toHaveBeenCalledTimes(1);
     }
     for (const n of names) expect(actions[n]).toHaveBeenCalledTimes(1);
+    expect(actions.printExpiring).not.toHaveBeenCalled();
+  });
+
+  it('offers Print Expiring Credits with Ctrl+P, apart from the file commands', () => {
+    const { actions, items } = menu();
+    const item = items.find(i => i.label === PRINT_EXPIRING_LABEL)!;
+    expect(item.accelerator).toBe('CmdOrCtrl+P');
+    // It sits in its own section: a separator on each side.
+    const at = items.indexOf(item);
+    expect(items[at - 1].type).toBe('separator');
+    expect(items[at + 1].type).toBe('separator');
+    item.click();
+    expect(actions.printExpiring).toHaveBeenCalledTimes(1);
+    for (const n of names) expect(actions[n]).not.toHaveBeenCalled();
   });
 });

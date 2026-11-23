@@ -24,6 +24,7 @@ cc-benefit-tracker/
 │   ├── fileOps.ts           File commands (New, Open, Save, Save As, backup copy, export, import) behind the menu and Settings
 │   ├── fileMenu.ts          File menu definition and shortcuts
 │   ├── periods.ts           Period bucket math for reset cadences
+│   ├── expiringCredits.ts   Expiring list for printing: use-by dates, amount remaining, travel and period selection
 │   ├── refreshProposal.ts   Refresh proposals: validation, diff against live data, draft-run creation
 │   ├── refreshProposalData.ts GENERATED from refresh-proposals/*.json by scripts/build-refresh-proposals.mjs
 │   ├── benefitsSeed.ts      Seed loader — reads generated data with fallback lists
@@ -31,7 +32,7 @@ cc-benefit-tracker/
 │   ├── iconPath.ts          App-icon path resolution with traversal guard
 │   └── types.ts             Shared TypeScript types
 ├── src/                     React frontend (pages, components, theme)
-│   ├── pages/               Dashboard, Cards, CardDetail, Programs, ProgramDetail, ManageBenefits, Refresh, Settings
+│   ├── pages/               Dashboard, Cards, CardDetail, Programs, ProgramDetail, ManageBenefits, Refresh, Settings, PrintExpiring
 │   ├── components/          RefreshBanner, LogUsageModal, BenefitEditor
 │   └── main.tsx, App.tsx, theme.tsx, index.css
 ├── tests/                   vitest test suites + electron mock + helpers

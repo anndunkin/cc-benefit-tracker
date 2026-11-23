@@ -18,7 +18,7 @@ export default function CardDetail() {
     const [c, bs, projAll] = await Promise.all([
       window.api.cards.getById(id),
       window.api.benefits.getForCard(id),
-      window.api.projection.all(new Date().getUTCFullYear()),
+      window.api.projection.all(new Date().getFullYear()),
     ]);
     setCard(c); setBenefits(bs);
     const map = new Map<number, BenefitProjection>();

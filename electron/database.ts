@@ -2578,7 +2578,7 @@ function buildPeriodHistory(
         .all(b.id, String(refYear)) as Usage[];
     }
 
-    const value_used_usd = periodUsages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(b, u.used_on) ?? 0), 0);
+    const value_used_usd = periodUsages.reduce((s, u) => s + (u.amount_usd ?? (valueAtDate(b, u.used_on) ?? 0) * (u.quantity ?? 1)), 0);
     const uses_count = periodUsages.reduce((s, u) => s + u.quantity, 0);
 
     // Period start (used to tell past-vs-future for empty periods).
@@ -2631,8 +2631,9 @@ function buildPeriodHistory(
   });
 }
 
-export function computeProjections(database: Database.Database, refYear: number): BenefitProjection[] {
-  const today = new Date();
+// `today` is read through its UTC calendar date. Callers that need the user's
+// local date (the expiring-credits list) pass a Date built for that date.
+export function computeProjections(database: Database.Database, refYear: number, today: Date = new Date()): BenefitProjection[] {
   const isCurrentYear = refYear === today.getUTCFullYear();
   const anchorDate = isCurrentYear
     ? today.toISOString().slice(0, 10)
@@ -2688,7 +2689,7 @@ export function computeProjections(database: Database.Database, refYear: number)
     // meaningful per-use dollar value; a zero-value points-based benefit
     // shouldn't inflate value_used_usd.
     const per_use_fallback = b.value_usd && b.value_usd > 0 ? b.value_usd : 0;
-    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(originalBenefit, u.used_on) ?? 0), 0);
+    const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? (valueAtDate(originalBenefit, u.used_on) ?? 0) * (u.quantity ?? 1)), 0);
     const total_value = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
     const value_remaining_usd = total_value === null ? null : Math.max(0, total_value - value_used_usd);
 
@@ -2709,7 +2710,7 @@ export function computeProjections(database: Database.Database, refYear: number)
           .all(b.id, String(refYear)) as Usage[]
       : usages;
 
-    const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? valueAtDate(originalBenefit, u.used_on) ?? 0), 0);
+    const annual_value_used_usd = yearUsages.reduce((s, u) => s + (u.amount_usd ?? (valueAtDate(originalBenefit, u.used_on) ?? 0) * (u.quantity ?? 1)), 0);
     const annual_value_usd = total_value === null ? null
       : b.reset_cadence === 'monthly' && originalBenefit.value_effective_date
         ? Array.from({ length: 12 }, (_, i) => (valueAtDate(originalBenefit, `${refYear}-${String(i + 1).padStart(2, '0')}-01`) ?? 0) * (uses_max ?? 1)).reduce((a, v) => a + v, 0)

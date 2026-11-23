@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { WindowApi, FileChangeInfo } from './types';
+import type { WindowApi, FileChangeInfo, AppRoute } from './types';
 
 const api: WindowApi = {
   cards: {
@@ -71,9 +71,18 @@ const api: WindowApi = {
       return () => { ipcRenderer.removeListener('file:changed', handler); };
     },
   },
+  expiring: {
+    list:         ()  => ipcRenderer.invoke('expiring:list'),
+  },
   app: {
     getVersion:   ()  => ipcRenderer.invoke('app:getVersion'),
     showAbout:    ()  => ipcRenderer.invoke('app:showAbout'),
+    print:        ()  => ipcRenderer.invoke('app:print'),
+    onNavigate:   (listener) => {
+      const handler = (_event: unknown, route: AppRoute) => listener(route);
+      ipcRenderer.on('app:navigate', handler);
+      return () => { ipcRenderer.removeListener('app:navigate', handler); };
+    },
   },
 };
 
