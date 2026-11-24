@@ -28,3 +28,27 @@ export function certificateYearOffset(iso: string, offset: number): string {
   const date = year + iso.slice(4);
   return isCertificateDate(date) ? date : `${year}-02-28`;
 }
+
+/** Old seeded and generated titles included static dates. Keep the stored names
+ * for refresh matching and backups, but show expiration only from expiration_date.
+ */
+export function certificateDisplay(b: Pick<Benefit, 'title' | 'card_id' | 'category' | 'reset_cadence' | 'expiration_note' | 'description'>) {
+  let { title, expiration_note: note, description } = b;
+  let earnedYear: string | null = null;
+  if (b.card_id && b.reset_cadence === 'one_time' && (b.category === 'free_night' || isCompanionCertificate(b))) {
+    if (b.card_id === 'hyatt_visa' && b.category === 'free_night') {
+      const spend = /^(Hyatt Category 1[–-]4 Free Night Award \(\$15,000 spend), (\d{4})\)$/.exec(title);
+      if (spend) {
+        title = `${spend[1]})`;
+        earnedYear = spend[2];
+      }
+      if (/^Carried-over Category 1-4 Free Night \(expires \d{4}-\d{2}-\d{2}\)$/.test(title)) {
+        title = title.replace(/ \(expires \d{4}-\d{2}-\d{2}\)$/, '');
+        if (note && /^Expires [A-Za-z]+ \d{1,2}, \d{4}; cannot be extended\.$/.test(note)) note = 'Cannot be extended.';
+        if (description) description = description.replace(/ Expires [A-Za-z]+ \d{1,2}, \d{4}\.$/, '');
+      }
+    }
+    title = title.replace(/ \(\d{4} expiration\)$/, '');
+  }
+  return { title, earnedYear, note, description };
+}

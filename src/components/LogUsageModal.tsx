@@ -3,7 +3,7 @@ import type { Benefit, Usage } from '../../electron/types';
 import { fmtUsd } from '../lib/format';
 import { isMilestone, tracksEarnedNights, valueAtDate } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
-import { isCompanionCertificate, isHyattSpendCertificate } from '../../electron/certificateRules';
+import { certificateDisplay, isCompanionCertificate, isHyattSpendCertificate } from '../../electron/certificateRules';
 
 export default function LogUsageModal({
   benefitId, onClose, onSaved, refYear,
@@ -108,6 +108,7 @@ export default function LogUsageModal({
   }
 
   if (!benefit) return null;
+  const certificate = certificateDisplay(benefit);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
@@ -115,7 +116,8 @@ export default function LogUsageModal({
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-lg font-semibold">{dialogTitle}</h2>
-            <div className="text-sm text-slate-500">{benefit.title}</div>
+            <div className="text-sm text-slate-500">{certificate.title}</div>
+            {certificate.earnedYear && <div className="text-xs text-slate-500">Earned from {certificate.earnedYear} spend</div>}
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>

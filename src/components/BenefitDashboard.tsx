@@ -5,7 +5,7 @@ import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../
 import LogUsageModal from './LogUsageModal';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
-import { isCompanionCertificate } from '../../electron/certificateRules';
+import { certificateDisplay, isCompanionCertificate } from '../../electron/certificateRules';
 import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 type SectionKey = 'all' | 'cards' | 'programs';
@@ -461,6 +461,7 @@ function ConsumableTile({
   const isExpired = p.status === 'expired';
   const needsExpiry = p.certificate_kind === 'hyatt_spend' && !b.expiration_date;
   const hasCertificateDetails = !milestone && !isSpendThreshold && (b.category === 'free_night' || isCompanionCertificate(b));
+  const certificate = certificateDisplay(b);
 
   async function toggleUsed() {
     if (busy) return;
@@ -490,13 +491,14 @@ function ConsumableTile({
   }
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex flex-col gap-2 bg-slate-50 dark:bg-slate-900/40">
+    <div data-benefit-id={b.id} className="border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex flex-col gap-2 bg-slate-50 dark:bg-slate-900/40">
       <div className="flex items-start gap-2">
         <span className={`mt-1.5 inline-block w-2 h-2 rounded-full ${statusColor(p.status)}`} title={p.status} />
         <div className="flex-1 min-w-0">
-          <div className="font-medium leading-tight break-words">{b.title}</div>
+          <div className="font-medium leading-tight break-words">{certificate.title}</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)} · {p.period_label}
+            {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)}
+            {certificate.earnedYear ? ` · Earned from ${certificate.earnedYear} spend` : !hasCertificateDetails && ` · ${p.period_label}`}
           </div>
         </div>
         {b.value_usd !== null && b.value_usd > 0 && (
@@ -558,13 +560,13 @@ function ConsumableTile({
       {b.is_hidden === 1 && <div className="text-xs text-slate-500">Hidden from default view and totals</div>}
       {b.expiration_date && !isSpendThreshold && (
         <div className="text-xs text-amber-700 dark:text-amber-400">
-          {isExpired ? 'Expired' : p.certificate_kind === 'annual_renewal' && b.is_user_modified === 0 ? 'Expected expiration' : 'Expires'} {b.expiration_date}
+          {isExpired ? 'Expired:' : p.certificate_kind === 'annual_renewal' && b.is_user_modified === 0 ? 'Expected expiration:' : 'Expiration date:'} <time dateTime={b.expiration_date}>{b.expiration_date}</time>
           {isExpired && usesCount === 0 ? ' (unused)' : ''}
         </div>
       )}
       {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">Earned from logged spend. Add the posted expiration date.</div>}
-      {b.expiration_note && (
-        <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {b.expiration_note}</div>
+      {certificate.note && (
+        <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {certificate.note}</div>
       )}
       {daysToReset !== null && p.status !== 'unlimited' && daysToReset <= 30 && daysToReset >= 0 && (
         <div className="text-xs text-amber-600 dark:text-amber-400">Resets in {daysToReset} day{daysToReset === 1 ? '' : 's'}</div>

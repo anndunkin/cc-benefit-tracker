@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Benefit, Card, Program } from '../../electron/types';
+import { certificateDisplay } from '../../electron/certificateRules';
 import { fmtUsd, cadenceLabel, categoryLabel } from '../lib/format';
 import BenefitEditor from '../components/BenefitEditor';
 
@@ -67,9 +68,16 @@ export default function ManageBenefits() {
             {filtered.map(b => {
               const owner = b.card_id ? cardMap.get(b.card_id) : progMap.get(b.program_id!);
               const ownerLink = b.card_id ? `/cards/${b.card_id}` : `/programs/${b.program_id}`;
+              const display = certificateDisplay(b);
               return (
                 <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                  <td className="px-3 py-2 font-medium">{b.title}</td>
+                  <td className="px-3 py-2 font-medium">
+                    {display.title}
+                    {display.earnedYear && <div className="text-xs font-normal text-slate-500">Earned from {display.earnedYear} spend</div>}
+                    {b.expiration_date && b.reset_cadence !== 'spend_threshold' && <div className="text-xs font-normal text-slate-500">
+                      Expiration date: <time dateTime={b.expiration_date}>{b.expiration_date}</time>
+                    </div>}
+                  </td>
                   <td className="px-3 py-2">
                     {owner ? <Link to={ownerLink} className="hover:text-primary-600">{owner.name}</Link> : <span className="text-slate-400">—</span>}
                   </td>

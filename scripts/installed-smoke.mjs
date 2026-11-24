@@ -97,6 +97,7 @@ try {
       }
       const reloadedAwards = (await window.api.projection.all()).filter(p => p.certificate_kind === 'hyatt_spend');
       if (reloadedAwards.length !== 1 || reloadedAwards[0].benefit.id !== hyattAwards[0].benefit.id) throw Error('Duplicate spend award');
+      await window.api.benefits.update(hyattAwards[0].benefit.id, { expiration_date: today });
       const diamond = all.find(b => b.program_id === 'delta_medallion' && b.title.startsWith('Diamond Medallion Choice Benefits'));
       const earned = await window.api.usages.getForBenefit(diamond.id);
       if (!earned.some(u => u.used_on.startsWith('2026'))) await window.api.usages.create({benefit_id:diamond.id, used_on:'2026-09-15'});
@@ -140,9 +141,14 @@ try {
     await command('Emulation.setDeviceMetricsOverride', { width: 1000, height: 640, deviceScaleFactor: 1, mobile: false });
     await command('Page.reload');
     await delay(1500);
+    const certificate = await evaluate(`(async () => {
+      const award = (await window.api.projection.all()).find(p => p.certificate_kind === 'hyatt_spend');
+      return { id: award.benefit.id, originalExpiration: award.benefit.expiration_date, newExpiration: (new Date().getFullYear() + 1) + '-10-25' };
+    })()`);
+    const tileSelector = JSON.stringify(`[data-benefit-id="${certificate.id}"]`);
     assert(await evaluate(`(() => {
-      const title = [...document.querySelectorAll('div')].find(el => el.childElementCount === 0 && el.textContent.startsWith('Hyatt Category 1–4 Free Night Award ($15,000 spend,'));
-      const tile = title?.closest('.rounded-lg');
+      const tile = document.querySelector(${tileSelector});
+      if (tile?.querySelector('time')?.dateTime !== ${JSON.stringify(certificate.originalExpiration)} || !tile?.textContent.includes('Earned from ')) return false;
       const edit = [...(tile?.querySelectorAll('button') ?? [])].find(b => /^(Add|Edit) expiration/.test(b.textContent));
       if (!edit) return false;
       edit.click();
@@ -162,7 +168,7 @@ try {
       const used = dialog.querySelector('#entry-date');
       const buttons = [...dialog.querySelectorAll('button')];
       if (!used || used.value !== '' || !buttons.find(b => b.textContent === 'Save redemption')?.disabled) return false;
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(date, '2099-10-25');
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(date, ${JSON.stringify(certificate.newExpiration)});
       date.dispatchEvent(new Event('input', { bubbles:true }));
       date.dispatchEvent(new Event('change', { bubbles:true }));
       return true;
@@ -171,8 +177,13 @@ try {
     for (let i = 0; i < 20 && (await evaluate("!!document.querySelector('#certificate-expiration')")); i++) await delay(100);
     assert(await evaluate(`(async () => {
       const award = (await window.api.projection.all()).find(p => p.certificate_kind === 'hyatt_spend');
-      return award.benefit.expiration_date === '2099-10-25' && (await window.api.usages.getForBenefit(award.benefit.id)).length === 0;
+      return award.benefit.expiration_date === ${JSON.stringify(certificate.newExpiration)} && (await window.api.usages.getForBenefit(award.benefit.id)).length === 0;
     })()`), 'Saving Hyatt expiration with Date used blank must not create a usage');
+    for (let i = 0; i < 20; i++) {
+      if (await evaluate(`document.querySelector(${tileSelector})?.querySelector('time')?.dateTime === ${JSON.stringify(certificate.newExpiration)}`)) break;
+      await delay(100);
+    }
+    assert(await evaluate(`document.querySelector(${tileSelector})?.querySelector('time')?.dateTime === ${JSON.stringify(certificate.newExpiration)}`), 'Dashboard kept the old Hyatt expiration after saving a date in the next year');
     assert(await evaluate("document.body.innerText.includes('Mark achieved') || document.body.innerText.includes('Achieved (click to undo)')"));
     await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Log nights earned')?.click()");
     await delay(500);

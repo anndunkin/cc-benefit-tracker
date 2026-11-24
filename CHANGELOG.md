@@ -2,6 +2,10 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.32 - 2026-11-24
+
+- **Certificate displays use the saved expiration.** The Hyatt spend year is labeled as an earning year, not an expiration. Stale dates embedded in legacy Hyatt carry-over and annual renewal labels no longer conflict with the saved date on the dashboard, in certificate details, or on the expiring credits report.
+
 ## v1.0.31 - 2026-11-24
 
 - **Certificate expiration and redemption are separate.** Use **Add expiration** or **Edit expiration** on the certificate tile, then **Save expiration**. No Date used is needed and no redemption is logged. Choosing **Log redemption** opens a separate set of fields and requires an explicit Date used.

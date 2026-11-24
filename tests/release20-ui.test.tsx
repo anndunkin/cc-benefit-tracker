@@ -1,11 +1,12 @@
 import React from 'react';
 import '@testing-library/jest-dom/vitest';
 import { beforeEach, afterEach, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { seededDb } from './helpers';
 import * as data from '../electron/database';
 import { isDiamondChoices, tracksEarnedNights } from '../electron/benefitRules';
+import { buildExpiringReport, utcDateFor } from '../electron/expiringCredits';
 import BenefitDashboard from '../src/components/BenefitDashboard';
 import LogUsageModal from '../src/components/LogUsageModal';
 
@@ -81,6 +82,41 @@ it('saves the generated Hyatt expiration with Date used blank, even after openin
   fireEvent.click(screen.getByRole('button', { name: 'Save redemption' }));
   await waitFor(() => expect(saved).toHaveBeenCalledTimes(2));
   expect(data.usagesForBenefit(db, id)).toMatchObject([{ used_on: '2026-10-24' }]);
+});
+
+it('shows the new expiration on the same Hyatt dashboard tile and report after a 2026-to-2027 edit', async () => {
+  const today = '2026-11-24';
+  const spend = data.benefitsForCard(db, 'hyatt_visa').find(b => b.spend_threshold_usd === 15000)!;
+  data.usageCreate(db, { benefit_id: spend.id, used_on: '2026-09-15', amount_usd: 15000 });
+  data.reconcileCertificateAwards(db, today);
+  const id = data.buildFilePayload(db).certificate_awards!.find(a => a.kind === 'hyatt_spend')!.award_id;
+  const carryover = data.benefitsForCard(db, 'hyatt_visa').find(b => b.title === 'Carried-over Category 1-4 Free Night (expires 2026-11-26)')!;
+  data.benefitUpdate(db, id, { expiration_date: '2026-10-25' });
+  data.benefitUpdate(db, carryover.id, { expiration_date: '2027-11-26' });
+  const projections = () => data.computeProjections(db, 2026, utcDateFor(today));
+  window.api.projection.all = async () => projections();
+  render(<MemoryRouter><BenefitDashboard mode="consumable" title="Credits & Usage" /></MemoryRouter>);
+  const title = await screen.findByText('Hyatt Category 1–4 Free Night Award ($15,000 spend)');
+  const tile = within(title.closest<HTMLElement>('[data-benefit-id]')!);
+  expect(tile.getByText('2026-10-25')).toBeInTheDocument();
+  fireEvent.click(tile.getByRole('button', { name: 'Edit expiration…' }));
+  const field = await screen.findByLabelText('Certificate expiration date');
+  expect(field).toHaveValue('2026-10-25');
+  fireEvent.change(field, { target: { value: '2027-10-25' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save expiration' }));
+  expect(await tile.findByText('2027-10-25')).toHaveAttribute('datetime', '2027-10-25');
+  expect(tile.queryByText('2026-10-25')).not.toBeInTheDocument();
+  expect(tile.getByText(/Earned from 2026 spend/)).toBeInTheDocument();
+
+  const report = buildExpiringReport(projections(), today);
+  expect(report.items.find(p => p.benefit_id === id)).toMatchObject({
+    title: 'Hyatt Category 1–4 Free Night Award ($15,000 spend)',
+    expires_on: '2027-10-25',
+    note: 'Earned from 2026 spend.',
+  });
+  expect(report.items.find(p => p.benefit_id === carryover.id)).toMatchObject({
+    title: 'Carried-over Category 1-4 Free Night', expires_on: '2027-11-26', note: 'Cannot be extended.',
+  });
 });
 
 it('hides and restores a credit from the dashboard', async () => {

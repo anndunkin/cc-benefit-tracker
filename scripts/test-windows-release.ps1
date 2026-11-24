@@ -43,7 +43,7 @@ try {
   }
   Write-Host "PASS: rebuilt, vendored and installed SQLite binding SHA-256 $rebuilt"
   Smoke
-  Write-Host 'PASS: certificate reconciliation, deduplication and Hyatt expiration saved without a redemption'
+  Write-Host 'PASS: certificate reconciliation, deduplication and edited Hyatt expiration displayed in the new year without a redemption'
   Write-Host 'PASS: 1.0.19 to current-version upgrade, native SQLite ABI, renderer, preload, preserved data and new controls'
   # Reinstall while app is running exercises the custom running-process check.
   Run-Setup $setup

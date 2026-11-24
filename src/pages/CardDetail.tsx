@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { certificateDisplay } from '../../electron/certificateRules';
 import { Link, useParams } from 'react-router-dom';
 import type { Benefit, Card, BenefitProjection } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor } from '../lib/format';
@@ -74,20 +75,25 @@ export default function CardDetail() {
         )}
         {benefits.map(b => {
           const p = projections.get(b.id);
+          const display = certificateDisplay(b);
           return (
             <div key={b.id} className="p-4 flex items-start gap-4">
               <span className={`mt-1.5 inline-block w-2 h-2 rounded-full ${statusColor(p?.status ?? 'available')}`} />
               <div className="flex-1 min-w-0">
                 <div className="font-medium leading-tight">
-                  {b.title}{b.is_user_modified === 1 && <span className="ml-2 text-xs text-amber-600" title="User modified">✎</span>}
+                  {display.title}{b.is_user_modified === 1 && <span className="ml-2 text-xs text-amber-600" title="User modified">✎</span>}
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
                   {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)}
                   {b.value_usd !== null && ` · ${fmtUsd(b.value_usd)}/use`}
-                  {p && ` · ${p.uses_count} of ${p.uses_max ?? '∞'} used (${p.period_label})`}
+                  {p && ` · ${p.uses_count} of ${p.uses_max ?? '∞'} used${b.expiration_date && b.reset_cadence !== 'spend_threshold' ? '' : ` (${p.period_label})`}`}
+                  {display.earnedYear && ` · Earned from ${display.earnedYear} spend`}
                 </div>
-                {b.description && <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">{b.description}</div>}
-                {b.expiration_note && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">⏱ {b.expiration_note}</div>}
+                {display.description && <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">{display.description}</div>}
+                {b.expiration_date && b.reset_cadence !== 'spend_threshold' && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                  {p?.status === 'expired' ? 'Expired:' : 'Expiration date:'} <time dateTime={b.expiration_date}>{b.expiration_date}</time>
+                </div>}
+                {display.note && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">⏱ {display.note}</div>}
               </div>
               <div className="flex flex-col items-end gap-1 text-xs">
                 <button className="btn-primary text-xs py-1 px-2" onClick={() => setLogBenefitId(b.id)}>+ Log</button>

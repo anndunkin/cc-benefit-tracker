@@ -12,6 +12,7 @@ import type {
   BenefitCategory, BenefitProjection, ExpiringItem, ExpiringReport,
 } from './types';
 import { isMilestone, tracksEarnedNights } from './benefitRules';
+import { certificateDisplay } from './certificateRules';
 
 /** Categories that count as travel for the "Travel only" choice. */
 export const TRAVEL_CATEGORIES: readonly BenefitCategory[] = [
@@ -192,9 +193,10 @@ export function toExpiringItem(p: BenefitProjection, todayIso: string): Expiring
   }
 
   const isCard = !!b.card_id;
+  const label = certificateDisplay(b);
   return {
     benefit_id: b.id,
-    title: b.title,
+    title: label.title,
     owner_kind: isCard ? 'card' : 'program',
     owner_id: (isCard ? b.card_id : b.program_id) ?? '',
     owner_name: (isCard ? p.card_name : p.program_name) ?? '(unknown)',
@@ -213,7 +215,7 @@ export function toExpiringItem(p: BenefitProjection, todayIso: string): Expiring
     value_each_usd: counted ? perUse : null,
     uses_remaining: usesRemaining,
     uses_max: p.uses_max,
-    note: b.expiration_note && b.expiration_note.trim() ? b.expiration_note.trim() : null,
+    note: [label.earnedYear && `Earned from ${label.earnedYear} spend.`, label.note?.trim()].filter(Boolean).join(' ') || null,
   };
 }
 
