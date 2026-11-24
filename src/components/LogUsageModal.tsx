@@ -16,6 +16,7 @@ export default function LogUsageModal({
   const [expiration, setExpiration] = useState('');
   const [amount, setAmount] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [loggingRedemption, setLoggingRedemption] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -58,6 +59,9 @@ export default function LogUsageModal({
   const milestone = !!benefit && isMilestone(benefit);
   const hasCertificateDate = !!benefit && !milestone && !hyattSpend
     && (benefit.category === 'free_night' || isCompanionCertificate(benefit));
+  const certificateDetails = hasCertificateDate && !isSpendThreshold;
+  const showUsageFields = !certificateDetails || loggingRedemption;
+  const dialogTitle = certificateDetails ? 'Certificate details' : milestone ? 'Achievement details' : earnedNights ? 'Log nights earned' : 'Log usage';
 
   async function saveExpiration() {
     if (saving) return;
@@ -69,7 +73,7 @@ export default function LogUsageModal({
   }
 
   async function save() {
-    if (saving) return;
+    if (saving || (certificateDetails && (!loggingRedemption || !usedOn))) return;
     setSaving(true); setErr(null);
     try {
       await window.api.usages.create({
@@ -107,10 +111,10 @@ export default function LogUsageModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div role="dialog" aria-label={milestone ? 'Achievement details' : 'Log usage'} className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-label={dialogTitle} className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h2 className="text-lg font-semibold">{milestone ? 'Achievement details' : earnedNights ? 'Log nights earned' : 'Log usage'}</h2>
+            <h2 className="text-lg font-semibold">{dialogTitle}</h2>
             <div className="text-sm text-slate-500">{benefit.title}</div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
@@ -118,14 +122,18 @@ export default function LogUsageModal({
         {hasCertificateDate && <div className="mb-4 border-b border-slate-200 pb-4">
           <label className="label" htmlFor="certificate-expiration">Certificate expiration date</label>
           <input id="certificate-expiration" type="date" className="input" value={expiration} onChange={e => setExpiration(e.target.value)} />
-          <button className="btn-ghost text-xs mt-2" disabled={saving} onClick={saveExpiration}>Save expiration only</button>
-          <p className="text-xs text-slate-500">Saving or clearing this date does not mark the certificate used.</p>
+          {!certificateDetails && <button className="btn-ghost text-xs mt-2" disabled={saving} onClick={saveExpiration}>Save expiration only</button>}
+          <p className="text-xs text-slate-500 mt-1">Save the expiration whether or not you’ve used the certificate. This does not record a redemption.</p>
         </div>}
 
+        {certificateDetails && !loggingRedemption && (
+          <button className="btn-ghost text-sm" disabled={saving} onClick={() => { setUsedOn(''); setLoggingRedemption(true); }}>Log redemption…</button>
+        )}
+        {showUsageFields && <>
         <div className={showAmountField ? 'grid grid-cols-2 gap-3' : ''}>
           <div>
             <label className="label" htmlFor="entry-date">{milestone ? 'Date achieved' : earnedNights ? 'Date earned' : isSpendThreshold ? 'Date spent' : 'Date used'}</label>
-            <input id="entry-date" type="date" className="input" value={usedOn} onChange={e => {
+            <input id="entry-date" type="date" className="input" value={usedOn} required={certificateDetails} onChange={e => {
               setUsedOn(e.target.value);
               if (benefit.value_effective_date) setAmount(String(valueAtDate(benefit, e.target.value) ?? ''));
             }} />
@@ -165,12 +173,14 @@ export default function LogUsageModal({
           <label className="label">Notes</label>
           <input type="text" className="input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional context (hotel name, purchase, etc.)" />
         </div>
+        </>}
 
-        {err && <div className="text-sm text-red-600 mt-2">{err}</div>}
+        {err && <div role="alert" className="text-sm text-red-600 mt-2">{err}</div>}
 
-        <div className="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
+        <div className="flex flex-wrap justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
           <button className="btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="btn-primary" onClick={save} disabled={saving || (milestone && history.some(u => u.used_on.slice(0, 4) === usedOn.slice(0, 4)))}>{saving ? 'Saving…' : milestone ? 'Save achievement' : 'Save usage'}</button>
+          {certificateDetails && <button className={loggingRedemption && usedOn ? 'btn-ghost' : 'btn-primary'} onClick={saveExpiration} disabled={saving}>Save expiration</button>}
+          {showUsageFields && <button className="btn-primary" onClick={save} disabled={saving || (certificateDetails && !usedOn) || (milestone && history.some(u => u.used_on.slice(0, 4) === usedOn.slice(0, 4)))}>{saving ? 'Saving…' : certificateDetails ? 'Save redemption' : milestone ? 'Save achievement' : 'Save usage'}</button>}
         </div>
 
         {history.length > 0 && (

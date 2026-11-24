@@ -47,10 +47,40 @@ it.each(['hyatt_visa', 'marriott_business'])('allows %s expiration-only save wit
   const saved = vi.fn();
   render(<LogUsageModal benefitId={b.id} onClose={() => {}} onSaved={saved} />);
   fireEvent.change(await screen.findByLabelText('Certificate expiration date'), { target: { value: '2027-10-10' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save expiration only' }));
+  expect(screen.queryByLabelText('Date used')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Save expiration' }));
   await waitFor(() => expect(saved).toHaveBeenCalledOnce());
   expect(data.benefitGetById(db, b.id)?.expiration_date).toBe('2027-10-10');
   expect(data.usagesForBenefit(db, b.id)).toHaveLength(0);
+});
+
+it('saves the generated Hyatt expiration with Date used blank, even after opening the redemption fields', async () => {
+  const spend = data.benefitsForCard(db, 'hyatt_visa').find(b => b.spend_threshold_usd === 15000)!;
+  data.usageCreate(db, { benefit_id: spend.id, used_on: '2026-09-15', amount_usd: 15000 });
+  data.reconcileCertificateAwards(db, '2026-11-24');
+  const id = data.buildFilePayload(db).certificate_awards!.find(a => a.kind === 'hyatt_spend')!.award_id;
+  const saved = vi.fn();
+  render(<LogUsageModal benefitId={id} onClose={() => {}} onSaved={saved} />);
+  const date = await screen.findByLabelText('Certificate expiration date');
+  expect(screen.queryByRole('button', { name: 'Save usage' })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Date used')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Log redemption…' }));
+  expect(screen.getByLabelText('Date used')).toHaveValue('');
+  expect(screen.getByRole('button', { name: 'Save redemption' })).toBeDisabled();
+  fireEvent.change(date, { target: { value: '2026-10-25' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save expiration' }));
+  await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  expect(data.benefitGetById(db, id)?.expiration_date).toBe('2026-10-25');
+  expect(data.usagesForBenefit(db, id)).toEqual([]);
+
+  // onSaved normally unmounts the dialog. Re-open it to exercise a separate redemption.
+  cleanup();
+  render(<LogUsageModal benefitId={id} onClose={() => {}} onSaved={saved} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Log redemption…' }));
+  fireEvent.change(screen.getByLabelText('Date used'), { target: { value: '2026-10-24' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save redemption' }));
+  await waitFor(() => expect(saved).toHaveBeenCalledTimes(2));
+  expect(data.usagesForBenefit(db, id)).toMatchObject([{ used_on: '2026-10-24' }]);
 });
 
 it('hides and restores a credit from the dashboard', async () => {

@@ -2,6 +2,10 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.31 - 2026-11-24
+
+- **Certificate expiration and redemption are separate.** Use **Add expiration** or **Edit expiration** on the certificate tile, then **Save expiration**. No Date used is needed and no redemption is logged. Choosing **Log redemption** opens a separate set of fields and requires an explicit Date used.
+
 ## v1.0.30 - 2026-11-24
 
 ### Certificates

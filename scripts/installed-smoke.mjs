@@ -140,7 +140,39 @@ try {
     await command('Emulation.setDeviceMetricsOverride', { width: 1000, height: 640, deviceScaleFactor: 1, mobile: false });
     await command('Page.reload');
     await delay(1500);
-    assert(await evaluate("document.body.innerText.includes('Hyatt Category 1–4 Free Night Award ($15,000 spend,') && document.body.innerText.includes('Confirm the posted expiration date in Details.')"), 'Generated Hyatt certificate tile unavailable');
+    assert(await evaluate(`(() => {
+      const title = [...document.querySelectorAll('div')].find(el => el.childElementCount === 0 && el.textContent.startsWith('Hyatt Category 1–4 Free Night Award ($15,000 spend,'));
+      const tile = title?.closest('.rounded-lg');
+      const edit = [...(tile?.querySelectorAll('button') ?? [])].find(b => /^(Add|Edit) expiration/.test(b.textContent));
+      if (!edit) return false;
+      edit.click();
+      return true;
+    })()`), 'Generated Hyatt certificate expiration action unavailable');
+    for (let i = 0; i < 20 && !(await evaluate("!!document.querySelector('#certificate-expiration')")); i++) await delay(100);
+    assert(await evaluate(`(() => {
+      const date = document.querySelector('#certificate-expiration');
+      const dialog = date?.closest('[role="dialog"]');
+      if (!dialog || dialog.querySelector('#entry-date')) return false;
+      [...dialog.querySelectorAll('button')].find(b => b.textContent === 'Log redemption…')?.click();
+      return true;
+    })()`), 'Certificate details should default to expiration only');
+    assert(await evaluate(`(() => {
+      const date = document.querySelector('#certificate-expiration');
+      const dialog = date.closest('[role="dialog"]');
+      const used = dialog.querySelector('#entry-date');
+      const buttons = [...dialog.querySelectorAll('button')];
+      if (!used || used.value !== '' || !buttons.find(b => b.textContent === 'Save redemption')?.disabled) return false;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(date, '2099-10-25');
+      date.dispatchEvent(new Event('input', { bubbles:true }));
+      date.dispatchEvent(new Event('change', { bubbles:true }));
+      return true;
+    })()`), 'Redemption should require an explicit Date used');
+    await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent === 'Save expiration').click()");
+    for (let i = 0; i < 20 && (await evaluate("!!document.querySelector('#certificate-expiration')")); i++) await delay(100);
+    assert(await evaluate(`(async () => {
+      const award = (await window.api.projection.all()).find(p => p.certificate_kind === 'hyatt_spend');
+      return award.benefit.expiration_date === '2099-10-25' && (await window.api.usages.getForBenefit(award.benefit.id)).length === 0;
+    })()`), 'Saving Hyatt expiration with Date used blank must not create a usage');
     assert(await evaluate("document.body.innerText.includes('Mark achieved') || document.body.innerText.includes('Achieved (click to undo)')"));
     await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Log nights earned')?.click()");
     await delay(500);

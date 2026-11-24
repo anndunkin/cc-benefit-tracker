@@ -5,6 +5,7 @@ import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../
 import LogUsageModal from './LogUsageModal';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
+import { isCompanionCertificate } from '../../electron/certificateRules';
 import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 type SectionKey = 'all' | 'cards' | 'programs';
@@ -459,6 +460,7 @@ function ConsumableTile({
   const isMarkedUsed = isSingleUse && usesCount >= 1;
   const isExpired = p.status === 'expired';
   const needsExpiry = p.certificate_kind === 'hyatt_spend' && !b.expiration_date;
+  const hasCertificateDetails = !milestone && !isSpendThreshold && (b.category === 'free_night' || isCompanionCertificate(b));
 
   async function toggleUsed() {
     if (busy) return;
@@ -560,7 +562,7 @@ function ConsumableTile({
           {isExpired && usesCount === 0 ? ' (unused)' : ''}
         </div>
       )}
-      {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">Earned from logged spend. Confirm the posted expiration date in Details.</div>}
+      {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">Earned from logged spend. Add the posted expiration date.</div>}
       {b.expiration_note && (
         <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {b.expiration_note}</div>
       )}
@@ -589,7 +591,7 @@ function ConsumableTile({
 
       <div className="flex items-center gap-2 mt-1 flex-wrap">
         {isExpired || needsExpiry ? (
-          <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage}>Details…</button>
+          <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage}>{needsExpiry ? 'Add expiration…' : 'Edit expiration…'}</button>
         ) : isSingleUse ? (
           <>
             <button
@@ -604,13 +606,13 @@ function ConsumableTile({
             >
               {busy ? 'Saving…' : milestone ? (isMarkedUsed ? 'Achieved (click to undo)' : 'Mark achieved') : isMarkedUsed ? 'Used (click to undo)' : 'Mark used'}
             </button>
-            <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage} title="Backdate or add notes">
-              Details…
+            <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage} title={hasCertificateDetails ? 'Edit the expiration without recording a redemption' : 'Backdate or add notes'}>
+              {hasCertificateDetails ? (b.expiration_date ? 'Edit expiration…' : 'Add expiration…') : 'Details…'}
             </button>
           </>
         ) : (
           <button className="btn-primary text-xs py-1 px-2" onClick={onLogUsage}>
-            {earnedNights ? 'Log nights earned' : isSpendThreshold ? 'Log spend' : '+ Log usage'}
+            {earnedNights ? 'Log nights earned' : isSpendThreshold ? 'Log spend' : hasCertificateDetails ? (b.expiration_date ? 'Edit expiration…' : 'Add expiration…') : '+ Log usage'}
           </button>
         )}
         <button className="btn-ghost text-xs py-1 px-2" disabled={busy} onClick={async () => {
