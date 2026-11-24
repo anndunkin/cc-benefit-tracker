@@ -272,7 +272,7 @@ export interface BenefitProjection {
   // (period elapsed or current with no activity yet), 'future' (period has not started).
   period_history: PeriodHistoryEntry[];
   status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked' | 'expired';
-  certificate_kind?: 'annual_renewal' | 'hyatt_spend';
+  certificate_kind?: CertificateAward['kind'];
   usages: Usage[];                 // for this period only
   next_reset: string | null;       // ISO date when it resets
 }
@@ -409,7 +409,7 @@ export interface CertificateAward {
   award_id: number;
   cycle_year: number;
   starts_on: string;
-  kind: 'annual_renewal' | 'hyatt_spend';
+  kind: 'annual_renewal' | 'hyatt_spend' | 'omni_stay';
 }
 
 export interface FileResult {

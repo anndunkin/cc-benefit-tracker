@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   benefitCreate, benefitDelete, benefitGetById, benefitsForCard, benefitUpdate, buildFilePayload, computeProjections,
-  importFilePayload, reconcileCertificateAwards, usageCreate, usageUpdate,
+  importFilePayload, initSchema, reconcileCertificateAwards, usageCreate, usageDelete, usageUpdate,
 } from '../electron/database';
 import { buildExpiringReport, utcDateFor } from '../electron/expiringCredits';
 import { emptyDb, seededDb } from './helpers';
@@ -14,8 +14,84 @@ const marriott = (db: ReturnType<typeof seededDb>) =>
   benefitsForCard(db, 'marriott_premier').find(b => b.category === 'free_night' && b.reset_cadence === 'annual')!;
 const hyatt = (db: ReturnType<typeof seededDb>) =>
   benefitsForCard(db, 'hyatt_visa').find(b => b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd === 15000)!;
+const omni = (db: ReturnType<typeof seededDb>) => benefitCreate(db, {
+  card_id: 'aa_executive', title: 'Omni Free Night Award', category: 'free_night',
+  reset_cadence: 'annual', expiration_date: '2025-12-31', uses_per_period: 1,
+});
 
 describe('automatic certificate awards', () => {
+  it('earns Omni only from one completed 2+ night reservation, by checkout year', () => {
+    const db = seededDb();
+    const source = omni(db);
+    const today = '2026-11-24';
+    const log = (used_on: string, quantity: number) => usageCreate(db, { benefit_id: source.id, used_on, quantity });
+    log('2026-01-01', 1);
+    log('2026-01-02', 1);
+    expect(() => log('9999-12-31', 2)).toThrow(/completed Omni stay/);
+    expect(() => usageCreate(db, { benefit_id: source.id, used_on: today, quantity: 2, amount_usd: 10 })).toThrow(/single Omni reservation/);
+    const qualifying = log('2026-11-23', 2);
+    reconcileCertificateAwards(db, '2026-11-22');
+    expect(awards(db, '2026-11-22')).toHaveLength(0);
+    expect(project(db, '2026-11-22').find(p => p.benefit.id === source.id)).toMatchObject({ uses_count: 0, status: 'available' });
+    expect(buildExpiringReport(project(db, '2026-11-22'), '2026-11-22').items.some(p => p.benefit_id === source.id)).toBe(false);
+    reconcileCertificateAwards(db, today);
+    const [p] = awards(db, today);
+    expect(p).toMatchObject({ certificate_kind: 'omni_stay', uses_count: 0, status: 'available', benefit: { expiration_date: null } });
+    expect(awards(db, '2027-01-01')[0].benefit.id).toBe(p.benefit.id);
+    expect(() => usageCreate(db, { benefit_id: p.benefit.id, used_on: today })).toThrow(/posted expiration/);
+    expect(buildExpiringReport(project(db, today), today).items.some(row => row.benefit_id === p.benefit.id)).toBe(false);
+    benefitUpdate(db, p.benefit.id, { expiration_date: '2027-11-23' });
+    expect(() => usageCreate(db, { benefit_id: p.benefit.id, used_on: '2026-11-22' })).toThrow(/completed before redemption/);
+    expect(buildExpiringReport(project(db, today), today).items.find(row => row.benefit_id === p.benefit.id)?.expires_on).toBe('2027-11-23');
+    usageDelete(db, qualifying.id);
+    expect(awards(db, today)).toHaveLength(0);
+    log('2026-11-22', 3);
+    log('2026-11-24', 2);
+    reconcileCertificateAwards(db, today);
+    reconcileCertificateAwards(db, today);
+    expect(awards(db, today).map(a => a.benefit.id)).toEqual([p.benefit.id]);
+    expect(buildFilePayload(db).certificate_awards).toEqual([
+      { source_id: source.id, award_id: p.benefit.id, cycle_year: 2026, starts_on: '2026-11-22', kind: 'omni_stay' },
+    ]);
+    expect(awards(db, '2027-11-24')[0].status).toBe('expired');
+    reconcileCertificateAwards(db, '2027-11-24');
+    expect(buildFilePayload(db).certificate_awards).toHaveLength(1);
+    const restored = emptyDb();
+    importFilePayload(restored, buildFilePayload(db));
+    expect(awards(restored, today)[0].benefit.id).toBe(p.benefit.id);
+    restored.close();
+    db.close();
+  });
+
+  it('upgrades old links in place and suppresses unused Omni renewals without deleting history', () => {
+    const db = seededDb();
+    const source = omni(db);
+    const legacy = benefitCreate(db, {
+      card_id: source.card_id, title: 'Omni Free Night Award (2026 expiration)', category: 'free_night',
+      reset_cadence: 'one_time', expiration_date: '2026-12-31',
+    });
+    db.exec(`DROP TABLE certificate_awards;
+      CREATE TABLE certificate_awards (
+        source_id INTEGER NOT NULL REFERENCES benefits(id) ON DELETE CASCADE,
+        award_id INTEGER NOT NULL UNIQUE REFERENCES benefits(id) ON DELETE CASCADE,
+        cycle_year INTEGER NOT NULL CHECK(cycle_year BETWEEN 1000 AND 9999),
+        starts_on TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('annual_renewal', 'hyatt_spend')),
+        CHECK(source_id <> award_id),
+        PRIMARY KEY(source_id, kind, cycle_year)
+      )`);
+    db.prepare('INSERT INTO certificate_awards VALUES (?, ?, ?, ?, ?)').run(source.id, legacy.id, 2026, '2026-01-01', 'annual_renewal');
+    initSchema(db);
+    initSchema(db);
+    expect(buildFilePayload(db).certificate_awards).toMatchObject([{ award_id: legacy.id, kind: 'annual_renewal' }]);
+    expect(awards(db, '2026-11-24')).toHaveLength(0);
+    expect(() => usageCreate(db, { benefit_id: legacy.id, used_on: '2026-11-24' })).toThrow(/earned from a qualifying stay/);
+    db.prepare("INSERT INTO usages (benefit_id, used_on, period_key, quantity) VALUES (?, '2026-08-01', 'once', 1)").run(legacy.id);
+    expect(awards(db, '2026-11-24')[0]).toMatchObject({ uses_count: 1, status: 'exhausted' });
+    expect(db.pragma('foreign_key_check')).toEqual([]);
+    db.close();
+  });
+
   it('waits through the annual expiration day and renews exactly once without carrying usage over', () => {
     const db = seededDb();
     const b = marriott(db);

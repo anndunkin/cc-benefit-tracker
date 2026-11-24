@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Benefit, Card, Program } from '../../electron/types';
-import { certificateDisplay } from '../../electron/certificateRules';
+import { certificateDisplay, isOmniStayBenefit } from '../../electron/certificateRules';
 import { fmtUsd, cadenceLabel, categoryLabel } from '../lib/format';
 import BenefitEditor from '../components/BenefitEditor';
 
@@ -73,8 +73,8 @@ export default function ManageBenefits() {
                 <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
                   <td className="px-3 py-2 font-medium">
                     {display.title}
-                    {display.earnedYear && <div className="text-xs font-normal text-slate-500">Earned from {display.earnedYear} spend</div>}
-                    {b.expiration_date && b.reset_cadence !== 'spend_threshold' && <div className="text-xs font-normal text-slate-500">
+                    {display.earnedLabel && <div className="text-xs font-normal text-slate-500">{display.earnedLabel}</div>}
+                    {b.expiration_date && b.reset_cadence !== 'spend_threshold' && !isOmniStayBenefit(b) && <div className="text-xs font-normal text-slate-500">
                       Expiration date: <time dateTime={b.expiration_date}>{b.expiration_date}</time>
                     </div>}
                   </td>

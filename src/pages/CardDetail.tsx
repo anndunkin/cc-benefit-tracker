@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { certificateDisplay } from '../../electron/certificateRules';
+import { airlinePurchaseRequirement, certificateDisplay, isOmniAwardRow, isOmniStayBenefit } from '../../electron/certificateRules';
 import { Link, useParams } from 'react-router-dom';
 import type { Benefit, Card, BenefitProjection } from '../../electron/types';
 import { fmtUsd, cadenceLabel, categoryLabel, statusColor } from '../lib/format';
@@ -17,14 +17,14 @@ export default function CardDetail() {
 
   async function reload() {
     if (!id) return;
-    const [c, bs, projAll] = await Promise.all([
+    const [c, projAll] = await Promise.all([
       window.api.cards.getById(id),
-      window.api.benefits.getForCard(id),
       window.api.projection.all(new Date().getFullYear()),
     ]);
-    setCard(c); setBenefits(bs);
+    const bs = await window.api.benefits.getForCard(id);
     const map = new Map<number, BenefitProjection>();
     for (const p of projAll) map.set(p.benefit.id, p);
+    setCard(c); setBenefits(bs.filter(b => !isOmniAwardRow(b) || map.has(b.id)));
     setProjections(map);
   }
   useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
@@ -76,6 +76,8 @@ export default function CardDetail() {
         {benefits.map(b => {
           const p = projections.get(b.id);
           const display = certificateDisplay(b);
+          const omniStay = isOmniStayBenefit(b);
+          const purchaseRequirement = airlinePurchaseRequirement(b);
           return (
             <div key={b.id} className="p-4 flex items-start gap-4">
               <span className={`mt-1.5 inline-block w-2 h-2 rounded-full ${statusColor(p?.status ?? 'available')}`} />
@@ -85,18 +87,19 @@ export default function CardDetail() {
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
                   {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)}
-                  {b.value_usd !== null && ` · ${fmtUsd(b.value_usd)}/use`}
-                  {p && ` · ${p.uses_count} of ${p.uses_max ?? '∞'} used${b.expiration_date && b.reset_cadence !== 'spend_threshold' ? '' : ` (${p.period_label})`}`}
-                  {display.earnedYear && ` · Earned from ${display.earnedYear} spend`}
+                  {!omniStay && b.value_usd !== null && ` · ${fmtUsd(b.value_usd)}/use`}
+                  {p && (omniStay ? ` · ${p.uses_count ? 'Qualifying stay completed' : 'Not yet earned'}` : ` · ${p.uses_count} of ${p.uses_max ?? '∞'} used${b.expiration_date && b.reset_cadence !== 'spend_threshold' ? '' : ` (${p.period_label})`}`)}
+                  {display.earnedLabel && ` · ${display.earnedLabel}`}
                 </div>
                 {display.description && <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">{display.description}</div>}
-                {b.expiration_date && b.reset_cadence !== 'spend_threshold' && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                {purchaseRequirement && <div className="text-xs text-slate-500 mt-1">{purchaseRequirement}</div>}
+                {b.expiration_date && b.reset_cadence !== 'spend_threshold' && !omniStay && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                   {p?.status === 'expired' ? 'Expired:' : 'Expiration date:'} <time dateTime={b.expiration_date}>{b.expiration_date}</time>
                 </div>}
                 {display.note && <div className="text-xs text-amber-700 dark:text-amber-400 mt-1">⏱ {display.note}</div>}
               </div>
               <div className="flex flex-col items-end gap-1 text-xs">
-                <button className="btn-primary text-xs py-1 px-2" onClick={() => setLogBenefitId(b.id)}>+ Log</button>
+                <button className="btn-primary text-xs py-1 px-2" onClick={() => setLogBenefitId(b.id)}>{omniStay ? 'Log Omni stay' : '+ Log'}</button>
                 <button className="text-slate-500 hover:text-primary-600" onClick={() => setEditorBenefit(b)}>Edit</button>
                 <button className="text-red-500 hover:text-red-700" onClick={() => delBenefit(b)}>Delete</button>
               </div>

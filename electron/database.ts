@@ -13,7 +13,7 @@ import { ensureRelease20Schema, migrateRelease20 } from './release20';
 import { periodKeyFor, periodLabelFor, nextResetIso, uses_max_for } from './periods';
 import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS, SEED_POINTS_CURRENCIES } from './benefitsSeed';
 import { requireWebLinkOrBlank, safeWebLinkOrNull } from './linkPolicy';
-import { certificateYearOffset, isAnnualCertificate, isCertificateDate, isCompanionCertificate, isHyattSpendCertificate } from './certificateRules';
+import { certificateYearOffset, isAnnualCertificate, isCertificateDate, isCompanionCertificate, isHyattSpendCertificate, isOmniStayBenefit, OMNI_STAY_NIGHTS } from './certificateRules';
 import { localIsoDate } from './expiringCredits';
 
 let db: Database.Database | null = null;
@@ -105,6 +105,18 @@ export function setDatabase(testDb: Database.Database): void {
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
+const CERTIFICATE_AWARDS_TABLE = `
+  CREATE TABLE IF NOT EXISTS certificate_awards (
+    source_id INTEGER NOT NULL REFERENCES benefits(id) ON DELETE CASCADE,
+    award_id INTEGER NOT NULL UNIQUE REFERENCES benefits(id) ON DELETE CASCADE,
+    cycle_year INTEGER NOT NULL CHECK(cycle_year BETWEEN 1000 AND 9999),
+    starts_on TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN ('annual_renewal', 'hyatt_spend', 'omni_stay')),
+    CHECK(source_id <> award_id),
+    PRIMARY KEY(source_id, kind, cycle_year)
+  );
+`;
+
 export function initSchema(database: Database.Database): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS cards (
@@ -169,15 +181,7 @@ export function initSchema(database: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_benefits_card    ON benefits(card_id);
     CREATE INDEX IF NOT EXISTS idx_benefits_program ON benefits(program_id);
 
-    CREATE TABLE IF NOT EXISTS certificate_awards (
-      source_id INTEGER NOT NULL REFERENCES benefits(id) ON DELETE CASCADE,
-      award_id INTEGER NOT NULL UNIQUE REFERENCES benefits(id) ON DELETE CASCADE,
-      cycle_year INTEGER NOT NULL CHECK(cycle_year BETWEEN 1000 AND 9999),
-      starts_on TEXT NOT NULL,
-      kind TEXT NOT NULL CHECK(kind IN ('annual_renewal', 'hyatt_spend')),
-      CHECK(source_id <> award_id),
-      PRIMARY KEY(source_id, kind, cycle_year)
-    );
+    ${CERTIFICATE_AWARDS_TABLE}
 
     CREATE TABLE IF NOT EXISTS usages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,6 +240,16 @@ export function initSchema(database: Database.Database): void {
   `);
   ensureRelease20Schema(database);
   ensureRefreshSchema(database);
+  const awardsTable = database.prepare("SELECT sql FROM sqlite_master WHERE name = 'certificate_awards'").get() as { sql: string };
+  if (!awardsTable.sql.includes("'omni_stay'")) {
+    database.transaction(() => {
+      database.exec(`ALTER TABLE certificate_awards RENAME TO certificate_awards_previous;
+        ${CERTIFICATE_AWARDS_TABLE}
+        INSERT INTO certificate_awards (source_id, award_id, cycle_year, starts_on, kind)
+          SELECT source_id, award_id, cycle_year, starts_on, kind FROM certificate_awards_previous;
+        DROP TABLE certificate_awards_previous;`);
+    }).immediate();
+  }
 }
 
 /**
@@ -2488,6 +2502,19 @@ function validateQuantity(value: unknown): number {
   return value as number;
 }
 
+function qualifyingOmniCheckout(database: Database.Database, sourceId: number, year: number, today: string): string | null {
+  const entries = database.prepare(`SELECT used_on FROM usages
+    WHERE benefit_id = ? AND used_on BETWEEN ? AND ? AND quantity >= ? AND amount_usd IS NULL
+    ORDER BY used_on, id`).all(sourceId, `${year}-01-01`, `${year}-12-31`, OMNI_STAY_NIGHTS) as { used_on: string }[];
+  return entries.find(e => isCertificateDate(e.used_on) && e.used_on <= today)?.used_on ?? null;
+}
+
+function validateOmniStay(b: Benefit, checkout: string, amount: number | null | undefined, expiry?: string | null): void {
+  if (!isOmniStayBenefit(b)) return;
+  if (checkout > localIsoDate() || checkout < '1000-01-01') throw new Error('Enter the checkout date of a completed Omni stay');
+  if (amount != null || expiry !== undefined) throw new Error('Log the nights for a single Omni reservation, not an amount or expiration');
+}
+
 export function usagesForBenefit(database: Database.Database, benefitId: number): Usage[] {
   return database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? ORDER BY used_on DESC, id DESC`).all(benefitId) as Usage[];
 }
@@ -2496,10 +2523,20 @@ function validateCertificateUsage(database: Database.Database, b: Benefit, usedO
   const award = database.prepare('SELECT * FROM certificate_awards WHERE award_id = ?').get(b.id) as CertificateAward | undefined;
   if (!award && !isAnnualCertificate(b)) return;
   if (award && b.is_active !== 1) throw new Error('This certificate is no longer active');
-  if (award?.kind === 'hyatt_spend' && !isCertificateDate(expiry)) throw new Error('Record the posted expiration date before logging a redemption');
+  if (award?.kind === 'annual_renewal') {
+    const source = benefitGetById(database, award.source_id);
+    if (source && isOmniStayBenefit(source)) throw new Error('Omni awards must be earned from a qualifying stay');
+  }
+  if ((award?.kind === 'hyatt_spend' || award?.kind === 'omni_stay') && !isCertificateDate(expiry)) {
+    throw new Error('Record the posted expiration date before logging a redemption');
+  }
   if (isCertificateDate(expiry) && usedOn > expiry) throw new Error('Usage date is after the certificate expired');
   if (!award && isCertificateDate(expiry) && usedOn <= certificateYearOffset(expiry, -1)) throw new Error('Usage date is before this certificate cycle began');
   if (award?.kind === 'annual_renewal' && usedOn < award.starts_on) throw new Error('Usage date is before this certificate cycle began');
+  if (award?.kind === 'omni_stay') {
+    const checkout = qualifyingOmniCheckout(database, award.source_id, award.cycle_year, localIsoDate());
+    if (!checkout || usedOn < checkout) throw new Error('A qualifying Omni stay must be completed before redemption');
+  }
 }
 
 export function usageCreate(database: Database.Database, input: UsageInput): Usage {
@@ -2508,6 +2545,7 @@ export function usageCreate(database: Database.Database, input: UsageInput): Usa
   const quantity = validateQuantity(input.quantity ?? 1);
   const benefit = benefitGetById(database, input.benefit_id);
   if (!benefit) throw new Error(`Benefit ${input.benefit_id} not found`);
+  validateOmniStay(benefit, input.used_on, input.amount_usd, input.expiration_date);
   validateCertificateUsage(database, benefit, input.used_on, input.expiration_date === undefined ? benefit.expiration_date : input.expiration_date);
   const period_key = periodKeyFor(benefit.reset_cadence, input.used_on);
   return database.transaction(() => {
@@ -2528,6 +2566,7 @@ export function usageUpdate(database: Database.Database, id: number, patch: Part
   const benefit = benefitGetById(database, current.benefit_id);
   const used_on = patch.used_on ?? current.used_on;
   requireIsoDate('used_on', used_on);
+  if (benefit) validateOmniStay(benefit, used_on, patch.amount_usd ?? current.amount_usd, patch.expiration_date);
   if (benefit && used_on !== current.used_on) validateCertificateUsage(database, benefit, used_on, benefit.expiration_date);
   const quantity = validateQuantity(patch.quantity ?? current.quantity);
   const period_key = benefit ? periodKeyFor(benefit.reset_cadence, used_on) : current.period_key;
@@ -2562,6 +2601,8 @@ export function reconcileCertificateAwards(database: Database.Database, today = 
   const insertAward = database.prepare('INSERT INTO certificate_awards (source_id, award_id, cycle_year, starts_on, kind) VALUES (?, ?, ?, ?, ?)');
   const spendFor = database.prepare(`SELECT used_on, amount_usd FROM usages
     WHERE benefit_id = ? AND used_on <= ? AND amount_usd IS NOT NULL ORDER BY used_on, id`);
+  const stayYears = database.prepare(`SELECT DISTINCT substr(used_on, 1, 4) AS year FROM usages
+    WHERE benefit_id = ? AND used_on <= ? AND quantity >= ? AND amount_usd IS NULL`);
   const nextDay = (iso: string) => {
     const date = new Date(iso);
     date.setUTCDate(date.getUTCDate() + 1);
@@ -2577,11 +2618,13 @@ export function reconcileCertificateAwards(database: Database.Database, today = 
       const create = (kind: CertificateAward['kind'], year: number, starts: string, expiration: string | null) => {
         const award = benefitCreate(database, {
           card_id: b.card_id,
-          title: kind === 'hyatt_spend' ? `Hyatt Category 1–4 Free Night Award ($15,000 spend, ${year})` : `${b.title} (${year} expiration)`,
-          description: b.description,
+          title: kind === 'hyatt_spend' ? `Hyatt Category 1–4 Free Night Award ($15,000 spend, ${year})`
+            : kind === 'omni_stay' ? `Omni Free Night Award (earned ${year})` : `${b.title} (${year} expiration)`,
+          description: kind === 'omni_stay'
+            ? 'Earned from a logged qualifying stay. Confirm posting in Omni Select Guest and enter the expiration shown there.' : b.description,
           category: b.category,
           reset_cadence: 'one_time',
-          uses_per_period: kind === 'hyatt_spend' ? 1 : b.uses_per_period ?? 1,
+          uses_per_period: kind === 'annual_renewal' ? b.uses_per_period ?? 1 : 1,
           value_usd: b.value_usd,
           expiration_date: expiration,
           sort_order: b.sort_order + 1,
@@ -2591,7 +2634,17 @@ export function reconcileCertificateAwards(database: Database.Database, today = 
         insertAward.run(b.id, award.id, year, starts, kind);
       };
 
-      if (isAnnualCertificate(b)) {
+      if (isOmniStayBenefit(b)) {
+        const existing = new Map((readAwards.all(b.id, 'omni_stay') as CertificateAward[]).map(a => [a.cycle_year, a]));
+        for (const { year } of stayYears.all(b.id, today, OMNI_STAY_NIGHTS) as { year: string }[]) {
+          if (!/^[1-9]\d{3}$/.test(year)) continue;
+          const checkout = qualifyingOmniCheckout(database, b.id, Number(year), today);
+          if (!checkout) continue;
+          const prior = existing.get(Number(year));
+          if (!prior) create('omni_stay', Number(year), checkout, null);
+          else if (prior.starts_on !== checkout) database.prepare('UPDATE certificate_awards SET starts_on = ? WHERE award_id = ?').run(checkout, prior.award_id);
+        }
+      } else if (isAnnualCertificate(b)) {
         const latest = (readAwards.all(b.id, 'annual_renewal') as CertificateAward[])[0];
         const previous = latest ? benefitGetById(database, latest.award_id)! : b;
         const expiry = previous.expiration_date;
@@ -2769,12 +2822,23 @@ export function computeProjections(database: Database.Database, refYear: number,
   const out: BenefitProjection[] = [];
   for (const b of benefits) {
     const award = awards.get(b.id);
+    const omniStay = isOmniStayBenefit(b);
+    if (award?.kind === 'omni_stay' || award?.kind === 'annual_renewal') {
+      const source = benefitGetById(database, award.source_id);
+      const unsupported = award.kind === 'omni_stay'
+        ? !source || !isOmniStayBenefit(source) || !qualifyingOmniCheckout(database, award.source_id, award.cycle_year, todayIso)
+        : !!source && isOmniStayBenefit(source);
+      // Unverified awards from the old renewal rule (or a corrected stay) must
+      // not look redeemable. Keep the stored record and any redemption history.
+      if (unsupported && !database.prepare('SELECT 1 FROM usages WHERE benefit_id = ? LIMIT 1').get(b.id)) continue;
+    }
     const datedAnnual = !award && isAnnualCertificate(b) && isCertificateDate(b.expiration_date);
-    const expiry = isCertificateDate(b.expiration_date) ? b.expiration_date : null;
+    const expiry = !omniStay && isCertificateDate(b.expiration_date) ? b.expiration_date : null;
     const annualStart = datedAnnual ? certificateYearOffset(expiry!, -1) : null;
     if (award && (award.starts_on > `${refYear}-12-31`
       || (award.cycle_year !== refYear && expiry !== null && expiry < `${refYear}-01-01`)
-      || (expiry === null && award.cycle_year !== refYear))) continue;
+      || (expiry === null && award.cycle_year !== refYear
+        && !(award.kind === 'omni_stay' && award.cycle_year + 1 === refYear)))) continue;
     if (datedAnnual && (annualStart! >= `${refYear}-12-31` || expiry! < `${refYear}-01-01`)) continue;
     const originalBenefit = { ...b };
     if (b.prerequisite_benefit_id) {
@@ -2792,7 +2856,11 @@ export function computeProjections(database: Database.Database, refYear: number,
 
     // For year-scoped periods, look at all usages in that year (not just current sub-period)
     let usages: Usage[];
-    if (datedAnnual) {
+    if (omniStay) {
+      usages = (database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND period_key = ?
+        AND used_on <= ? AND amount_usd IS NULL ORDER BY used_on DESC, id DESC`).all(b.id, period_key, todayIso) as Usage[])
+        .filter(u => isCertificateDate(u.used_on));
+    } else if (datedAnnual) {
       usages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ?
         AND used_on > ? AND used_on <= ? ORDER BY used_on DESC, id DESC`).all(b.id, annualStart, expiry) as Usage[];
     } else if (b.reset_cadence === 'unlimited' || b.reset_cadence === 'one_time' || b.reset_cadence === 'spend_threshold') {
@@ -2802,8 +2870,8 @@ export function computeProjections(database: Database.Database, refYear: number,
         .all(b.id, period_key) as Usage[];
     }
 
-    const uses_max = uses_max_for(b);
-    const rawCount = usages.reduce((s, u) => s + u.quantity, 0);
+    const uses_max = omniStay ? 1 : uses_max_for(b);
+    const rawCount = omniStay ? Number(usages.some(u => u.quantity >= OMNI_STAY_NIGHTS)) : usages.reduce((s, u) => s + u.quantity, 0);
     const uses_count = isMilestone(b) ? Math.min(1, rawCount) : rawCount;
     const expired = (award || b.category === 'free_night' || isCompanionCertificate(b))
       && b.reset_cadence !== 'spend_threshold' && expiry !== null && expiry < todayIso;
@@ -2846,7 +2914,7 @@ export function computeProjections(database: Database.Database, refYear: number,
     // For dashboard mini-strips: one entry per period (Q1..Q4, Jan..Dec, H1/H2,
     // or the year itself). Status marks whether the cap was fully used, partial,
     // unused (past periods only), or future (period hasn't started yet).
-    const period_history = buildPeriodHistory(database, { ...b, value_usd: originalBenefit.value_usd }, refYear, today);
+    const period_history = omniStay ? [] : buildPeriodHistory(database, { ...b, value_usd: originalBenefit.value_usd }, refYear, today);
 
     // ─── Spend-threshold progress ──────────────────────────────────────────
     // For benefits gated on a spend threshold (e.g. Hilton $30K free night),
@@ -2880,7 +2948,7 @@ export function computeProjections(database: Database.Database, refYear: number,
       if ((spend_progress_usd ?? 0) >= b.spend_threshold_usd) status = 'exhausted';
       else if ((spend_progress_usd ?? 0) > 0) status = 'partial';
       else status = 'available';
-    } else if (b.value_usd !== null && b.value_usd > 0 && total_value !== null && total_value > 0) {
+    } else if (!omniStay && b.value_usd !== null && b.value_usd > 0 && total_value !== null && total_value > 0) {
       if (value_used_usd >= total_value) status = 'exhausted';
       else if (value_used_usd > 0) status = 'partial';
       else status = 'available';
@@ -3324,10 +3392,14 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
     for (const a of payload.certificate_awards ?? []) {
       if (!a || !Number.isSafeInteger(a.source_id) || !Number.isSafeInteger(a.award_id) || !Number.isInteger(a.cycle_year)
         || awardIds.has(a.source_id) || !isCertificateDate(a.starts_on)
-        || (a.kind !== 'annual_renewal' && a.kind !== 'hyatt_spend')) throw new Error('Invalid certificate award');
+        || (a.kind !== 'annual_renewal' && a.kind !== 'hyatt_spend' && a.kind !== 'omni_stay')) throw new Error('Invalid certificate award');
       const source = benefitGetById(database, a.source_id);
       const award = benefitGetById(database, a.award_id);
       if (!source?.card_id || !award || source.card_id !== award.card_id) throw new Error('Certificate award must match its source card');
+      if (a.kind === 'omni_stay' && (!isOmniStayBenefit(source) || award.category !== 'free_night'
+        || award.reset_cadence !== 'one_time' || Number(a.starts_on.slice(0, 4)) !== a.cycle_year)) {
+        throw new Error('Invalid Omni stay award');
+      }
       insertAward.run(a.source_id, a.award_id, a.cycle_year, a.starts_on, a.kind);
     }
     const insRun = database.prepare(`

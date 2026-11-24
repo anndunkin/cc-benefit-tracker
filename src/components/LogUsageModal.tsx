@@ -3,7 +3,7 @@ import type { Benefit, Usage } from '../../electron/types';
 import { fmtUsd } from '../lib/format';
 import { isMilestone, tracksEarnedNights, valueAtDate } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
-import { certificateDisplay, isCompanionCertificate, isHyattSpendCertificate } from '../../electron/certificateRules';
+import { certificateDisplay, isCompanionCertificate, isHyattSpendCertificate, isOmniStayBenefit, OMNI_STAY_REQUIREMENT, OMNI_STAY_TERMS } from '../../electron/certificateRules';
 
 export default function LogUsageModal({
   benefitId, onClose, onSaved, refYear,
@@ -47,21 +47,22 @@ export default function LogUsageModal({
   // dollar value (SkyClub visits, systemwide upgrades, etc.) — no dollar field.
   const isSpendThreshold = !!benefit && benefit.reset_cadence === 'spend_threshold';
   const hyattSpend = !!benefit && isHyattSpendCertificate(benefit);
+  const omniStay = !!benefit && isOmniStayBenefit(benefit);
   const isCountBased =
-    !!benefit &&
+    omniStay || (!!benefit &&
     !isSpendThreshold &&
-    (benefit.value_usd == null || benefit.value_usd === 0);
+    (benefit.value_usd == null || benefit.value_usd === 0));
   // The amount field is available whenever the user might want to record a
   // dollar amount. Spend-threshold and dollar-valued benefits always show it;
   // count-based benefits (unlimited access, visit-count) omit it by default.
   const showAmountField = !isCountBased;
   const earnedNights = !!benefit && tracksEarnedNights(benefit);
   const milestone = !!benefit && isMilestone(benefit);
-  const hasCertificateDate = !!benefit && !milestone && !hyattSpend
+  const hasCertificateDate = !!benefit && !omniStay && !milestone && !hyattSpend
     && (benefit.category === 'free_night' || isCompanionCertificate(benefit));
   const certificateDetails = hasCertificateDate && !isSpendThreshold;
   const showUsageFields = !certificateDetails || loggingRedemption;
-  const dialogTitle = certificateDetails ? 'Certificate details' : milestone ? 'Achievement details' : earnedNights ? 'Log nights earned' : 'Log usage';
+  const dialogTitle = omniStay ? 'Log Omni stay' : certificateDetails ? 'Certificate details' : milestone ? 'Achievement details' : earnedNights ? 'Log nights earned' : 'Log usage';
 
   async function saveExpiration() {
     if (saving) return;
@@ -78,7 +79,7 @@ export default function LogUsageModal({
     try {
       await window.api.usages.create({
         benefit_id: benefitId,
-        quantity: earnedNights ? Number(quantity) : 1,
+        quantity: earnedNights || omniStay ? Number(quantity) : 1,
         ...(hasCertificateDate ? { expiration_date: expiration || null } : {}),
         used_on: usedOn,
         // Count-based benefits never carry a dollar amount.
@@ -117,7 +118,7 @@ export default function LogUsageModal({
           <div>
             <h2 className="text-lg font-semibold">{dialogTitle}</h2>
             <div className="text-sm text-slate-500">{certificate.title}</div>
-            {certificate.earnedYear && <div className="text-xs text-slate-500">Earned from {certificate.earnedYear} spend</div>}
+            {certificate.earnedLabel && <div className="text-xs text-slate-500">{certificate.earnedLabel}</div>}
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
@@ -132,10 +133,11 @@ export default function LogUsageModal({
           <button className="btn-ghost text-sm" disabled={saving} onClick={() => { setUsedOn(''); setLoggingRedemption(true); }}>Log redemption…</button>
         )}
         {showUsageFields && <>
+        {omniStay && <p className="text-xs text-slate-500 mb-3">{OMNI_STAY_REQUIREMENT} {OMNI_STAY_TERMS}</p>}
         <div className={showAmountField ? 'grid grid-cols-2 gap-3' : ''}>
           <div>
-            <label className="label" htmlFor="entry-date">{milestone ? 'Date achieved' : earnedNights ? 'Date earned' : isSpendThreshold ? 'Date spent' : 'Date used'}</label>
-            <input id="entry-date" type="date" className="input" value={usedOn} required={certificateDetails} onChange={e => {
+            <label className="label" htmlFor="entry-date">{omniStay ? 'Checkout date' : milestone ? 'Date achieved' : earnedNights ? 'Date earned' : isSpendThreshold ? 'Date spent' : 'Date used'}</label>
+            <input id="entry-date" type="date" className="input" value={usedOn} required={certificateDetails || omniStay} max={omniStay ? today : undefined} onChange={e => {
               setUsedOn(e.target.value);
               if (benefit.value_effective_date) setAmount(String(valueAtDate(benefit, e.target.value) ?? ''));
             }} />
@@ -166,10 +168,10 @@ export default function LogUsageModal({
             </div>
           )}
         </div>
-        {earnedNights && <div className="mt-3">
-          <label className="label" htmlFor="earned-nights">Number of nights earned</label>
-          <input id="earned-nights" type="number" min="1" max="1000000" step="1" className="input" value={quantity} onChange={e => setQuantity(e.target.value)} />
-          <p className="text-xs text-slate-500">Enter newly earned nights, not your year-to-date total.</p>
+        {(earnedNights || omniStay) && <div className="mt-3">
+          <label className="label" htmlFor={omniStay ? 'omni-stay-nights' : 'earned-nights'}>{omniStay ? 'Consecutive nights on this reservation' : 'Number of nights earned'}</label>
+          <input id={omniStay ? 'omni-stay-nights' : 'earned-nights'} type="number" min="1" max="1000000" step="1" className="input" value={quantity} onChange={e => setQuantity(e.target.value)} />
+          <p className="text-xs text-slate-500">{omniStay ? 'Enter one completed reservation at a time. Separate stays do not combine.' : 'Enter newly earned nights, not your year-to-date total.'}</p>
         </div>}
         <div className="mt-3">
           <label className="label">Notes</label>
@@ -182,7 +184,7 @@ export default function LogUsageModal({
         <div className="flex flex-wrap justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-slate-900 py-2">
           <button className="btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
           {certificateDetails && <button className={loggingRedemption && usedOn ? 'btn-ghost' : 'btn-primary'} onClick={saveExpiration} disabled={saving}>Save expiration</button>}
-          {showUsageFields && <button className="btn-primary" onClick={save} disabled={saving || (certificateDetails && !usedOn) || (milestone && history.some(u => u.used_on.slice(0, 4) === usedOn.slice(0, 4)))}>{saving ? 'Saving…' : certificateDetails ? 'Save redemption' : milestone ? 'Save achievement' : 'Save usage'}</button>}
+          {showUsageFields && <button className="btn-primary" onClick={save} disabled={saving || ((certificateDetails || omniStay) && !usedOn) || (milestone && history.some(u => u.used_on.slice(0, 4) === usedOn.slice(0, 4)))}>{saving ? 'Saving…' : omniStay ? 'Save stay' : certificateDetails ? 'Save redemption' : milestone ? 'Save achievement' : 'Save usage'}</button>}
         </div>
 
         {history.length > 0 && (
@@ -193,7 +195,7 @@ export default function LogUsageModal({
                 <div key={u.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <span className="font-mono text-xs w-24 text-slate-500">{u.used_on}</span>
                   {isCountBased ? (
-                    <span className="font-mono w-20 text-slate-500">{milestone ? 'Achieved' : `${u.quantity ?? 1} ${earnedNights ? 'nights' : 'use(s)'}`}</span>
+                    <span className="font-mono w-20 text-slate-500">{milestone ? 'Achieved' : `${u.quantity ?? 1} ${earnedNights || omniStay ? 'night(s)' : 'use(s)'}`}</span>
                   ) : (
                     <span className="font-mono w-20">{fmtUsd(u.amount_usd)}</span>
                   )}

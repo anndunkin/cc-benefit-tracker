@@ -12,7 +12,7 @@ import type {
   BenefitCategory, BenefitProjection, ExpiringItem, ExpiringReport,
 } from './types';
 import { isMilestone, tracksEarnedNights } from './benefitRules';
-import { certificateDisplay } from './certificateRules';
+import { airlinePurchaseRequirement, certificateDisplay, isOmniStayBenefit } from './certificateRules';
 
 /** Categories that count as travel for the "Travel only" choice. */
 export const TRAVEL_CATEGORIES: readonly BenefitCategory[] = [
@@ -165,7 +165,7 @@ export function toExpiringItem(p: BenefitProjection, todayIso: string): Expiring
   const b = p.benefit;
   if (b.reset_cadence === 'unlimited' || b.reset_cadence === 'spend_threshold') return null;
   if (b.category === 'status_boost' || b.category === 'earning_multiplier') return null;
-  if (isMilestone(b) || tracksEarnedNights(b)) return null;
+  if (isMilestone(b) || tracksEarnedNights(b) || isOmniStayBenefit(b)) return null;
   // Whether anything is left is decided below from the dollars or the uses,
   // not from the projection's status: a four-pass benefit with one pass logged
   // at its full dollar value still has three passes left.
@@ -215,7 +215,7 @@ export function toExpiringItem(p: BenefitProjection, todayIso: string): Expiring
     value_each_usd: counted ? perUse : null,
     uses_remaining: usesRemaining,
     uses_max: p.uses_max,
-    note: [label.earnedYear && `Earned from ${label.earnedYear} spend.`, label.note?.trim()].filter(Boolean).join(' ') || null,
+    note: [label.earnedLabel && `${label.earnedLabel}.`, airlinePurchaseRequirement(b), label.note?.trim()].filter(Boolean).join(' ') || null,
   };
 }
 

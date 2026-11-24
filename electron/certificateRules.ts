@@ -8,9 +8,30 @@ export function isHyattSpendCertificate(b: Pick<Benefit, RuleFields>): boolean {
     && !b.is_choice_option && !b.prerequisite_benefit_id;
 }
 
+/** The reviewed refresh keeps this stable title. This is a card-issued reward,
+ * not the general Omni Select Guest 100-credit earning rule. */
+export function isOmniStayBenefit(b: Pick<Benefit, 'card_id' | 'category' | 'reset_cadence' | 'title'>): boolean {
+  return b.card_id === 'aa_executive' && b.category === 'free_night'
+    && b.reset_cadence === 'annual' && /^Omni Free Night Award$/i.test(b.title.trim());
+}
+
+export function isOmniAwardRow(b: Pick<Benefit, 'card_id' | 'category' | 'reset_cadence' | 'title'>): boolean {
+  return b.card_id === 'aa_executive' && b.category === 'free_night' && b.reset_cadence === 'one_time'
+    && /^Omni Free Night Award \((?:earned \d{4}|\d{4} expiration)\)$/i.test(b.title.trim());
+}
+
+export const OMNI_STAY_NIGHTS = 2;
+export const OMNI_STAY_REQUIREMENT = 'Complete one qualifying stay of 2+ consecutive nights on a single reservation.';
+export const OMNI_STAY_TERMS = 'Book directly with Omni in the primary cardmember’s name and include their Omni loyalty number. Activate the Citi Omni Champion benefit before check-in and pay with the Citi AAdvantage Executive card.';
+
+export function airlinePurchaseRequirement(b: Pick<Benefit, 'card_id' | 'category' | 'title'>): string | null {
+  return b.card_id === 'ihg_premier' && b.category === 'airline_credit' && /\bairline statement credit\b/i.test(b.title)
+    ? 'Requires one flight-ticket purchase of $250 or more booked directly with the airline.' : null;
+}
+
 export function isAnnualCertificate(b: Pick<Benefit, RuleFields | 'title'>): boolean {
   return b.card_id !== null && (b.category === 'free_night' || isCompanionCertificate(b)) && b.reset_cadence === 'annual'
-    && !b.is_choice_option && !b.prerequisite_benefit_id;
+    && !b.is_choice_option && !b.prerequisite_benefit_id && !isOmniStayBenefit(b);
 }
 
 export function isCompanionCertificate(b: Pick<Benefit, 'category' | 'title'>): boolean {
@@ -34,13 +55,14 @@ export function certificateYearOffset(iso: string, offset: number): string {
  */
 export function certificateDisplay(b: Pick<Benefit, 'title' | 'card_id' | 'category' | 'reset_cadence' | 'expiration_note' | 'description'>) {
   let { title, expiration_note: note, description } = b;
-  let earnedYear: string | null = null;
+  let earnedLabel: string | null = null;
+  if (isOmniStayBenefit(b)) title = 'Earn an Omni Free Night Award';
   if (b.card_id && b.reset_cadence === 'one_time' && (b.category === 'free_night' || isCompanionCertificate(b))) {
     if (b.card_id === 'hyatt_visa' && b.category === 'free_night') {
       const spend = /^(Hyatt Category 1[–-]4 Free Night Award \(\$15,000 spend), (\d{4})\)$/.exec(title);
       if (spend) {
         title = `${spend[1]})`;
-        earnedYear = spend[2];
+        earnedLabel = `Earned from ${spend[2]} spend`;
       }
       if (/^Carried-over Category 1-4 Free Night \(expires \d{4}-\d{2}-\d{2}\)$/.test(title)) {
         title = title.replace(/ \(expires \d{4}-\d{2}-\d{2}\)$/, '');
@@ -48,7 +70,14 @@ export function certificateDisplay(b: Pick<Benefit, 'title' | 'card_id' | 'categ
         if (description) description = description.replace(/ Expires [A-Za-z]+ \d{1,2}, \d{4}\.$/, '');
       }
     }
+    if (b.card_id === 'aa_executive' && b.category === 'free_night') {
+      const stay = /^Omni Free Night Award \(earned (\d{4})\)$/.exec(title);
+      if (stay) {
+        title = 'Omni Free Night Award';
+        earnedLabel = `Earned from a ${stay[1]} Omni stay`;
+      }
+    }
     title = title.replace(/ \(\d{4} expiration\)$/, '');
   }
-  return { title, earnedYear, note, description };
+  return { title, earnedLabel, note, description };
 }

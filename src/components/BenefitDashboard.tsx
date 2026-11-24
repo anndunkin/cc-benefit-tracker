@@ -5,7 +5,7 @@ import { fmtUsd, cadenceLabel, categoryLabel, statusColor, daysUntil } from '../
 import LogUsageModal from './LogUsageModal';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
-import { certificateDisplay, isCompanionCertificate } from '../../electron/certificateRules';
+import { airlinePurchaseRequirement, certificateDisplay, isCompanionCertificate, isOmniStayBenefit, OMNI_STAY_REQUIREMENT } from '../../electron/certificateRules';
 import { safeWebLinkOrNull } from '../../electron/linkPolicy';
 
 type SectionKey = 'all' | 'cards' | 'programs';
@@ -233,7 +233,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
     for (const p of filtered) {
       if (p.benefit.is_hidden === 1) continue;
       const cadence = p.benefit.reset_cadence;
-      if (cadence === 'unlimited' || cadence === 'spend_threshold') continue;
+      if (cadence === 'unlimited' || cadence === 'spend_threshold' || isOmniStayBenefit(p.benefit)) continue;
       if (p.annual_value_remaining_usd !== null) value_remaining += p.annual_value_remaining_usd;
       value_used += p.annual_value_used_usd;
     }
@@ -436,7 +436,9 @@ function ConsumableTile({
   //     stay 'partial' with the correct remaining balance).
   //   • use-count benefit      → progress = uses_count / uses_max, as before.
   const isSpendThreshold = b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null;
-  const isDollarValued = !milestone && !isSpendThreshold && b.value_usd !== null && b.value_usd > 0 && usesMax !== null;
+  const omniStay = isOmniStayBenefit(b);
+  const purchaseRequirement = airlinePurchaseRequirement(b);
+  const isDollarValued = !omniStay && !milestone && !isSpendThreshold && b.value_usd !== null && b.value_usd > 0 && usesMax !== null;
   const totalPeriodValue = isDollarValued ? (usesMax as number) * (b.value_usd as number) : null;
 
   let pct: number;
@@ -456,11 +458,11 @@ function ConsumableTile({
   // night awards, anniversary bonuses, etc. Dollar-valued single-cap credits
   // (e.g., Hilton $50 quarterly airline) still use the modal so the user can
   // enter the actual amount.
-  const isSingleUse = usesMax === 1 && !isDollarValued && !isSpendThreshold;
+  const isSingleUse = usesMax === 1 && !omniStay && !isDollarValued && !isSpendThreshold;
   const isMarkedUsed = isSingleUse && usesCount >= 1;
   const isExpired = p.status === 'expired';
-  const needsExpiry = p.certificate_kind === 'hyatt_spend' && !b.expiration_date;
-  const hasCertificateDetails = !milestone && !isSpendThreshold && (b.category === 'free_night' || isCompanionCertificate(b));
+  const needsExpiry = (p.certificate_kind === 'hyatt_spend' || p.certificate_kind === 'omni_stay') && !b.expiration_date;
+  const hasCertificateDetails = !omniStay && !milestone && !isSpendThreshold && (b.category === 'free_night' || isCompanionCertificate(b));
   const certificate = certificateDisplay(b);
 
   async function toggleUsed() {
@@ -498,10 +500,10 @@ function ConsumableTile({
           <div className="font-medium leading-tight break-words">{certificate.title}</div>
           <div className="text-xs text-slate-500 mt-0.5">
             {cadenceLabel(b.reset_cadence)} · {categoryLabel(b.category)}
-            {certificate.earnedYear ? ` · Earned from ${certificate.earnedYear} spend` : !hasCertificateDetails && ` · ${p.period_label}`}
+            {certificate.earnedLabel ? ` · ${certificate.earnedLabel}` : !hasCertificateDetails && ` · ${p.period_label}`}
           </div>
         </div>
-        {b.value_usd !== null && b.value_usd > 0 && (
+        {!omniStay && b.value_usd !== null && b.value_usd > 0 && (
           <div className="text-right shrink-0">
             <div className="text-xs text-slate-500">per use</div>
             <div className="font-mono text-sm">{fmtUsd(b.value_usd)}</div>
@@ -512,14 +514,14 @@ function ConsumableTile({
       <div>
         <div className="flex justify-between text-xs mb-1">
           <span className="text-slate-500">
-            {isSpendThreshold ? (
+            {omniStay ? (usesCount ? 'Qualifying stay completed' : 'Not yet earned') : isSpendThreshold ? (
               <>{fmtUsd(p.spend_progress_usd ?? 0)} of {fmtUsd(b.spend_threshold_usd)} spent</>
             ) : (
               <>{milestone ? (isMarkedUsed ? 'Achieved' : 'Not achieved') : earnedNights ? `${usesCount} nights earned` : `${usesCount} of ${usesMax ?? '∞'} used`}</>
             )}
           </span>
           <span className="text-slate-500">
-            {isSpendThreshold ? (
+            {omniStay ? '' : isSpendThreshold ? (
               (p.spend_progress_usd ?? 0) >= (b.spend_threshold_usd ?? 0) ? 'Unlocked' : `${fmtUsd(Math.max(0, (b.spend_threshold_usd ?? 0) - (p.spend_progress_usd ?? 0)))} to go`
             ) : (
               p.value_remaining_usd !== null && (b.value_usd ?? 0) > 0 ? `${fmtUsd(p.value_remaining_usd)} left` : ''
@@ -558,14 +560,18 @@ function ConsumableTile({
       </div>
 
       {b.is_hidden === 1 && <div className="text-xs text-slate-500">Hidden from default view and totals</div>}
-      {b.expiration_date && !isSpendThreshold && (
+      {omniStay && <div className="text-xs text-slate-600 dark:text-slate-400">{OMNI_STAY_REQUIREMENT}</div>}
+      {purchaseRequirement && <div className="text-xs text-slate-600 dark:text-slate-400">{purchaseRequirement}</div>}
+      {b.expiration_date && !isSpendThreshold && !omniStay && (
         <div className="text-xs text-amber-700 dark:text-amber-400">
           {isExpired ? 'Expired:' : p.certificate_kind === 'annual_renewal' && b.is_user_modified === 0 ? 'Expected expiration:' : 'Expiration date:'} <time dateTime={b.expiration_date}>{b.expiration_date}</time>
           {isExpired && usesCount === 0 ? ' (unused)' : ''}
         </div>
       )}
-      {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">Earned from logged spend. Add the posted expiration date.</div>}
-      {certificate.note && (
+      {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">
+        {p.certificate_kind === 'omni_stay' ? 'Confirm the award in Omni Select Guest and add its posted expiration date.' : 'Earned from logged spend. Add the posted expiration date.'}
+      </div>}
+      {certificate.note && !omniStay && (
         <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {certificate.note}</div>
       )}
       {daysToReset !== null && p.status !== 'unlimited' && daysToReset <= 30 && daysToReset >= 0 && (
@@ -614,7 +620,7 @@ function ConsumableTile({
           </>
         ) : (
           <button className="btn-primary text-xs py-1 px-2" onClick={onLogUsage}>
-            {earnedNights ? 'Log nights earned' : isSpendThreshold ? 'Log spend' : hasCertificateDetails ? (b.expiration_date ? 'Edit expiration…' : 'Add expiration…') : '+ Log usage'}
+            {omniStay ? 'Log Omni stay' : earnedNights ? 'Log nights earned' : isSpendThreshold ? 'Log spend' : hasCertificateDetails ? (b.expiration_date ? 'Edit expiration…' : 'Add expiration…') : '+ Log usage'}
           </button>
         )}
         <button className="btn-ghost text-xs py-1 px-2" disabled={busy} onClick={async () => {

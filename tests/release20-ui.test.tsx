@@ -119,6 +119,35 @@ it('shows the new expiration on the same Hyatt dashboard tile and report after a
   });
 });
 
+it('logs one Omni reservation and shows its separate award and the IHG $250 summary', async () => {
+  const today = '2026-11-24';
+  const omni = data.benefitCreate(db, { card_id: 'aa_executive', title: 'Omni Free Night Award', category: 'free_night', reset_cadence: 'annual' });
+  const ihg = data.benefitCreate(db, { card_id: 'ihg_premier', title: '$100 Annual Airline Statement Credit', category: 'airline_credit', reset_cadence: 'annual', value_usd: 100 });
+  data.usageCreate(db, { benefit_id: omni.id, used_on: '2026-11-20', quantity: 1 });
+  data.usageCreate(db, { benefit_id: omni.id, used_on: '2026-11-21', quantity: 1 });
+  window.api.projection.all = async () => {
+    data.reconcileCertificateAwards(db, today);
+    return data.computeProjections(db, 2026, utcDateFor(today));
+  };
+  render(<MemoryRouter><BenefitDashboard mode="consumable" title="Credits & Usage" /></MemoryRouter>);
+  const title = await screen.findByText('Earn an Omni Free Night Award');
+  const sourceTile = within(title.closest<HTMLElement>('[data-benefit-id]')!);
+  expect(sourceTile.getByText('Not yet earned')).toBeInTheDocument();
+  expect(sourceTile.queryByRole('button', { name: 'Mark used' })).not.toBeInTheDocument();
+  expect(screen.queryByText('Omni Free Night Award', { exact: true })).not.toBeInTheDocument();
+  expect(screen.getByText('Requires one flight-ticket purchase of $250 or more booked directly with the airline.')).toBeInTheDocument();
+  fireEvent.click(sourceTile.getByRole('button', { name: 'Log Omni stay' }));
+  fireEvent.change(await screen.findByLabelText('Checkout date'), { target: { value: today } });
+  fireEvent.change(screen.getByLabelText('Consecutive nights on this reservation'), { target: { value: '2' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save stay' }));
+  const award = within((await screen.findByText('Omni Free Night Award', { exact: true })).closest<HTMLElement>('[data-benefit-id]')!);
+  expect(sourceTile.getByText('Qualifying stay completed')).toBeInTheDocument();
+  expect(award.getByText('0 of 1 used')).toBeInTheDocument();
+  expect(award.getByRole('button', { name: 'Add expiration…' })).toBeInTheDocument();
+  const report = buildExpiringReport(await window.api.projection.all(), today);
+  expect(report.items.find(row => row.benefit_id === ihg.id)?.note).toMatch(/\$250 or more booked directly/);
+});
+
 it('hides and restores a credit from the dashboard', async () => {
   const b = data.benefitsGetAll(db).find(b => b.card_id === 'hyatt_visa' && b.title.startsWith('Annual'))!;
   db.prepare('UPDATE benefits SET is_active=0 WHERE id != ?').run(b.id);

@@ -139,8 +139,56 @@ try {
   fs.writeFileSync(expectDb ? 'release-evidence/runtime-file-check.json' : 'release-evidence/runtime.json', JSON.stringify(result, null, 2));
   if (!legacy) {
     await command('Emulation.setDeviceMetricsOverride', { width: 1000, height: 640, deviceScaleFactor: 1, mobile: false });
+    const omni = await evaluate(`(async () => {
+      const current = await window.api.benefits.getAll();
+      const ensure = (card_id, title, category, value_usd) => current.find(b => b.card_id === card_id && b.title === title)
+        ?? window.api.benefits.create({ card_id, title, category, value_usd, reset_cadence: 'annual', uses_per_period: 1 });
+      const source = await ensure('aa_executive', 'Omni Free Night Award', 'free_night', 0);
+      const ihg = await ensure('ihg_premier', '$100 Annual Airline Statement Credit', 'airline_credit', 100);
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      const existing = (await window.api.usages.getForBenefit(source.id)).some(u => u.quantity >= 2 && u.used_on.startsWith(today.slice(0, 4)));
+      if (!existing) {
+        for (const notes of ['omni-single-night-1', 'omni-single-night-2']) {
+          await window.api.usages.create({ benefit_id: source.id, used_on: today, quantity: 1, notes });
+        }
+        if ((await window.api.projection.all()).some(p => p.certificate_kind === 'omni_stay')) throw Error('Separate one-night stays earned an Omni award');
+      }
+      return { sourceId: source.id, ihgId: ihg.id, existing };
+    })()`);
     await command('Page.reload');
     await delay(1500);
+    const omniSelector = JSON.stringify(`[data-benefit-id="${omni.sourceId}"]`);
+    const ihgSelector = JSON.stringify(`[data-benefit-id="${omni.ihgId}"]`);
+    assert(await evaluate(`document.querySelector(${ihgSelector})?.textContent.includes('Requires one flight-ticket purchase of $250 or more booked directly with the airline.')`), 'IHG dashboard summary omitted the $250 direct airline purchase requirement');
+    if (!omni.existing) {
+      assert(await evaluate(`(() => {
+        const tile = document.querySelector(${omniSelector});
+        if (!tile?.textContent.includes('Not yet earned')) return false;
+        const log = [...tile.querySelectorAll('button')].find(b => b.textContent === 'Log Omni stay');
+        if (!log) return false;
+        log.click();
+        return true;
+      })()`), 'Omni milestone lacked the stay logging action');
+      for (let i = 0; i < 30 && !(await evaluate("!!document.querySelector('#omni-stay-nights')")); i++) await delay(100);
+      assert(await evaluate(`(() => {
+        const nights = document.querySelector('#omni-stay-nights');
+        const dialog = nights?.closest('[role="dialog"]');
+        if (!nights || !dialog?.textContent.includes('Checkout date') || dialog.querySelector('#certificate-expiration')) return false;
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(nights, '2');
+        nights.dispatchEvent(new Event('input', { bubbles:true }));
+        nights.dispatchEvent(new Event('change', { bubbles:true }));
+        return true;
+      })()`), 'Omni checkout and reservation length fields were not available');
+      await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent === 'Save stay').click()");
+      for (let i = 0; i < 30 && (await evaluate("!!document.querySelector('#omni-stay-nights')")); i++) await delay(100);
+    }
+    const earnedOmni = await evaluate(`(async () => (await window.api.projection.all()).filter(p => p.certificate_kind === 'omni_stay'))()`);
+    assert.equal(earnedOmni.length, 1, 'A qualifying two-night Omni stay must generate exactly one award');
+    assert.equal(earnedOmni[0].uses_count, 0, 'Logging an Omni stay must not redeem the award');
+    const earnedOmniSelector = JSON.stringify(`[data-benefit-id="${earnedOmni[0].benefit.id}"]`);
+    for (let i = 0; i < 30 && !(await evaluate(`!!document.querySelector(${earnedOmniSelector})`)); i++) await delay(100);
+    assert(await evaluate(`document.querySelector(${earnedOmniSelector})?.textContent.includes('Omni Free Night Award')`), 'Earned Omni award missing from dashboard');
     const certificate = await evaluate(`(async () => {
       const award = (await window.api.projection.all()).find(p => p.certificate_kind === 'hyatt_spend');
       return { id: award.benefit.id, originalExpiration: award.benefit.expiration_date, newExpiration: (new Date().getFullYear() + 1) + '-10-25' };
