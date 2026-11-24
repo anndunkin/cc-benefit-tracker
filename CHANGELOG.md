@@ -6,6 +6,7 @@ All notable changes to Credit Card Benefit Tracker follow this file. Versions fo
 
 - **Omni Free Night Award is earned, not renewed.** On the Citi AAdvantage Executive benefit, use **Log Omni stay** to record a single completed reservation. A direct, qualifying stay of at least two consecutive nights generates one separate award per checkout calendar year. Separate one-night reservations do not combine, and an expiration never triggers a renewal. Confirm posting in Omni Select Guest and enter the issuer's expiration on the award. Unused awards incorrectly generated under the old annual rule no longer appear as redeemable; saved records and redemption history are preserved. [Citi terms](https://creditcards.aa.com/card-benefits/executive-terms/)
 - **IHG Premier Airline Statement Credit** shows the $250 minimum in its dashboard summary and expiring credits report: one flight-ticket purchase booked directly with the airline. [Chase offer details](https://creditcards.chase.com/a1/ihg/offerdetails-PremierCardhub140KQ411)
+- **Validation:** See the [v1.0.33 validation record](docs/validation-1.0.33.md) for the published Windows installer checks and follow-up regression coverage.
 
 ## v1.0.32 - 2026-11-24
 

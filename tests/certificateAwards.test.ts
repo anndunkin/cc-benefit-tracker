@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   benefitCreate, benefitDelete, benefitGetById, benefitsForCard, benefitUpdate, buildFilePayload, computeProjections,
   importFilePayload, initSchema, reconcileCertificateAwards, usageCreate, usageDelete, usageUpdate,
@@ -90,6 +90,29 @@ describe('automatic certificate awards', () => {
     expect(awards(db, '2026-11-24')[0]).toMatchObject({ uses_count: 1, status: 'exhausted' });
     expect(db.pragma('foreign_key_check')).toEqual([]);
     db.close();
+  });
+
+  it('earns again only after a qualifying checkout in the next calendar year', () => {
+    const db = seededDb();
+    const source = omni(db);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2027, 0, 2, 12));
+    try {
+      const log = (used_on: string, quantity: number) => usageCreate(db, { benefit_id: source.id, used_on, quantity });
+      log('2026-12-31', 2);
+      log('2027-01-01', 1);
+      reconcileCertificateAwards(db, '2027-01-01');
+      expect(buildFilePayload(db).certificate_awards?.map(a => a.cycle_year)).toEqual([2026]);
+      log('2027-01-02', 2);
+      reconcileCertificateAwards(db, '2027-01-02');
+      reconcileCertificateAwards(db, '2027-01-02');
+      const links = buildFilePayload(db).certificate_awards!;
+      expect(links.map(a => [a.cycle_year, a.starts_on])).toEqual([[2026, '2026-12-31'], [2027, '2027-01-02']]);
+      expect(new Set(links.map(a => a.award_id)).size).toBe(2);
+    } finally {
+      vi.useRealTimers();
+      db.close();
+    }
   });
 
   it('waits through the annual expiration day and renews exactly once without carrying usage over', () => {

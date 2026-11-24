@@ -8,6 +8,7 @@ import {
   pointsCurrencyGetById, pointsCurrencyUpdate, refreshGetStatus, refreshPendingChanges,
   refreshApproveChange, refreshRejectChange, refreshApplyRun, refreshDiscardRun,
   buildFilePayload, importFilePayload, ensureRefreshSchema, usageCreate, usagesForBenefit,
+  computeProjections, reconcileCertificateAwards,
 } from '../electron/database';
 import {
   validateProposal, diffProposal, createRunFromProposal, offerBundledProposals,
@@ -15,6 +16,8 @@ import {
 } from '../electron/refreshProposal';
 import { BUNDLED_REFRESH_PROPOSALS } from '../electron/refreshProposalData';
 import { isMilestone } from '../electron/benefitRules';
+import { airlinePurchaseRequirement, isOmniStayBenefit } from '../electron/certificateRules';
+import { buildExpiringReport, utcDateFor } from '../electron/expiringCredits';
 import type { RefreshProposal } from '../electron/types';
 
 /** A fully seeded + migrated database, i.e. what a real install looks like. */
@@ -64,6 +67,40 @@ function fixture(db: Database.Database) {
 function approveAll(db: Database.Database, runId: number, overwrite = false) {
   for (const ch of refreshPendingChanges(db, runId)) refreshApproveChange(db, ch.id, undefined, overwrite);
 }
+
+it('uses the real approved Omni and IHG catalog rows without changing unrelated benefits', () => {
+  const db = liveDb();
+  const today = '2026-11-24';
+  const isTarget = (c: RefreshProposal['changes'][number]) => c.scope === 'benefit' && c.change_type === 'added'
+    && ((c.card_id === 'aa_executive' && c.after.title === 'Omni Free Night Award')
+      || (c.card_id === 'ihg_premier' && c.after.title === '$100 Annual Airline Statement Credit'));
+  try {
+    const selected = BUNDLED_REFRESH_PROPOSALS.flatMap(p => p.changes.filter(isTarget));
+    expect(selected).toHaveLength(2);
+    const r = createRunFromProposal(db, {
+      ...BUNDLED_REFRESH_PROPOSALS[0], proposal_id: 'test-omni-ihg-catalog', changes: selected,
+    });
+    expect(r.proposed).toBe(2);
+    expect(benefitsGetAll(db).some(b => isOmniStayBenefit(b) || airlinePurchaseRequirement(b))).toBe(false);
+    approveAll(db, r.run_id!);
+    expect(refreshApplyRun(db, r.run_id!).applied).toBe(2);
+    const all = benefitsGetAll(db);
+    const omni = all.filter(isOmniStayBenefit);
+    const ihg = all.filter(b => airlinePurchaseRequirement(b));
+    expect(omni).toHaveLength(1);
+    expect(ihg).toHaveLength(1);
+    usageCreate(db, { benefit_id: omni[0].id, used_on: '2026-11-23', quantity: 2 });
+    reconcileCertificateAwards(db, today);
+    const p = computeProjections(db, 2026, utcDateFor(today));
+    const earned = p.filter(x => x.certificate_kind === 'omni_stay');
+    expect(earned).toHaveLength(1);
+    expect(earned[0]).toMatchObject({ uses_count: 0, benefit: { card_id: 'aa_executive', program_id: null, expiration_date: null } });
+    const notes = buildExpiringReport(p, today).items.filter(row => row.note?.includes('one flight-ticket purchase of $250'));
+    expect(notes.map(row => row.benefit_id)).toEqual([ihg[0].id]);
+  } finally {
+    db.close();
+  }
+});
 
 describe('Refresh proposal validation (untrusted input)', () => {
   const ok = () => fixture(liveDb()).proposal as Record<string, unknown>;
@@ -924,4 +961,3 @@ describe('The World of Hyatt program refresh bundled with v1.0.27', () => {
     expect(active(y2027).filter(b => isMilestone(b) && b.prerequisite_benefit_id === null).map(b => b.title.split(' ')[0])).toEqual(['10']);
   });
 });
-

@@ -23,12 +23,21 @@ Delta SkyMiles Medallion · American AAdvantage · IHG One Rewards Ambassador ·
 
 The World of Hyatt program (elite tiers and Milestone Rewards) is not in the seed list. It is added by the refresh bundled with v1.0.27: an existing file is asked to approve it on the Quarterly Refresh screen, and a new file starts with it.
 
+## Tracking the Omni award and IHG airline credit
+
+- **Citi AAdvantage Executive / Omni:** On **Credits & Usages**, choose **Log Omni stay** and enter the checkout date and the consecutive nights on one completed reservation. The stay must be booked directly with Omni, in the primary cardmember’s name with their Omni loyalty number, and paid with the Citi AAdvantage Executive card. Activate the Citi Omni Champion benefit before check-in. A qualifying reservation of at least two nights creates one separate, unused award per checkout calendar year. One-night reservations do not combine, and expiration does not generate a replacement. [Citi benefit terms](https://creditcards.aa.com/card-benefits/executive-terms/)
+- **Omni award expiration:** The tracker records eligibility but cannot check whether the credits have posted. Once the award posts in Omni Select Guest, use **Add expiration** on the award tile and save the issuer’s expiration date. Saving expiration does not record a redemption. A stay-only tracker or an award with no recorded expiration does not appear on **Print Expiring Credits**. See the [v1.0.33 release notes](https://github.com/anndunkin/cc-benefit-tracker/releases/tag/v1.0.33) for how older automatic Omni renewals are treated.
+- **IHG One Rewards Premier:** The $100 Airline Statement Credit summary and expiring credits report specify that a single flight-ticket purchase of at least $250 must be booked directly with the airline. Separate purchases do not add up to qualify. [Chase offer details](https://creditcards.chase.com/a1/ihg/offerdetails-PremierCardhub140KQ411)
+
+If the Omni or IHG benefit isn’t in an existing tracker file, check **Quarterly Refresh** for the corresponding bundled change. No duplicate benefit is needed if the row is already present.
+
 ## Quick start
 
 ```bash
-npm install
+npm ci               # Node.js 22, as used by Windows release CI
 npm run dev          # Vite + Electron in dev mode
-npm run test         # 139 Vitest tests across security / validation / boundary / functionality
+npm run test         # Full Vitest suite
+npx tsc --noEmit -p tsconfig.json
 npm run electron:build  # Build the Windows installer into dist-installer/
 bash build/sign.sh   # Sign the installer with build/signing.crt (Windows only, requires osslsigncode)
 ```
@@ -46,7 +55,8 @@ is updated to the latest stable 12.x release; it intentionally does not use
 - **Cards** — issuer, network, annual fee, notes, color, source URL. Yours to add and delete.
 - **Programs** — separate table for status/loyalty programs. Same fields.
 - **Benefits** — belong to exactly one card OR one program. Each has a title, category, reset cadence, uses per period, dollar value, optional spend threshold, expiration note, and a source URL back to the official page.
-- **Usages** — a row per redemption: benefit, date, dollar amount, optional note. The app tags each row with the correct period key at insert time so "used this quarter" queries never do calendar math on the fly.
+- **Usages** — a dated entry for a redemption or progress toward an award, such as eligible Hyatt spend or the number of consecutive nights on one Omni reservation. The app tags each row with the correct period key at insert time.
+- **Certificate awards** — links each generated award to the benefit and cycle that produced it. For Omni, the cycle is the checkout calendar year. The link and the award’s expiration and redemption history are included in JSON backups.
 - **Refresh runs** — a diff between the current database and the newly proposed benefit list. Each pending change is `pending`, then `approved` or `rejected`. Applying a run skips any benefit whose `is_user_modified` flag is set. The exception is a row you explicitly approved with "Approve and replace my edit".
 - **Refresh proposals** — the prepared change lists behind a refresh run, kept as JSON in `refresh-proposals/` and compiled into the app by `scripts/build-refresh-proposals.mjs`. A proposal can carry a `not_before` date so that changes are offered on the day they take effect. The same JSON can be loaded by hand with **Load refresh file...** on the Quarterly Refresh screen. Since v1.0.27 a proposal can also add a whole loyalty program (`scope: "program"`, `change_type: "added"`) together with its benefits; the benefits are created only if the program row is approved. A `modified` benefit change can also name the row it now follows (`prerequisite_benefit_title`), which is how a new first milestone level is put in front of an existing one.
 
@@ -72,6 +82,8 @@ tests/refresh-ui.test.tsx   · Quarterly Refresh screen: review, approve, replac
 tests/fileStore.test.ts     · Data files: identifying a tracker file, safe copy and replace, remembered location
 tests/fileOps.test.ts       · File commands: New, Open, Save, Save As, backup copy, export, import confirmation, refusals
 tests/file-ui.test.tsx      · Settings file buttons and the notice shown after a File menu command
+tests/certificateAwards.test.ts · Annual renewals, Hyatt spend, Omni stays, calendar-year boundaries, migrations and JSON
+tests/release20-ui.test.tsx · Dashboard and award dialogs, including Omni stay entry and the IHG minimum
 tests/expiringCredits.test.ts · Expiring list: use-by dates, month/year boundaries, travel selection, amount remaining
 tests/print-ui.test.tsx     · Print Expiring Credits screen: options, per-row ticks, partly used wording, printing
 tests/localDate.test.tsx    · "Today" follows the computer's local date, not UTC
@@ -79,7 +91,7 @@ tests/linkSafety.test.ts    · Link rule, window locked to the app page, sandbox
 tests/link-ui.test.tsx      · Unsafe links are shown as text, never as links
 ```
 
-Run `npm run test` to see the full suite. All 426 tests pass on a clean checkout.
+Run `npm run test` to see the full suite. The release workflow also runs TypeScript checks, the npm dependency audit, and installed-app checks on Windows. See the [v1.0.33 validation record](docs/validation-1.0.33.md) for exact coverage and evidence.
 
 ## License
 
