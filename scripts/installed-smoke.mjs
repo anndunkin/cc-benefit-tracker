@@ -81,6 +81,22 @@ try {
       const lyft = projections.find(p => p.benefit.card_id === 'aa_executive' && p.benefit.title.includes('Lyft'));
       if (lyft.annual_value_usd !== 140) throw Error('Wrong effective-date Lyft annual amount');
       if (projections.some(p => p.benefit.title === 'Medallion Tier MQD Requirements')) throw Error('MQD reference still visible');
+      const now = new Date();
+      const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      const annual = all.find(b => b.card_id === 'marriott_premier' && b.category === 'free_night' && b.reset_cadence === 'annual');
+      await window.api.benefits.update(annual.id, { expiration_date: '2024-10-21' });
+      const spend = all.find(b => b.card_id === 'hyatt_visa' && b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd === 15000);
+      if (!(await window.api.usages.getForBenefit(spend.id)).some(u => u.notes === 'certificate-spend-sentinel' && u.used_on === today)) {
+        await window.api.usages.create({ benefit_id: spend.id, used_on: today, amount_usd: 15000, notes: 'certificate-spend-sentinel' });
+      }
+      const awards = (await window.api.projection.all()).filter(p => p.certificate_kind);
+      const renewal = awards.find(p => p.certificate_kind === 'annual_renewal' && p.benefit.card_id === 'marriott_premier');
+      const hyattAwards = awards.filter(p => p.certificate_kind === 'hyatt_spend');
+      if (!renewal || renewal.benefit.expiration_date < today || renewal.uses_count !== 0 || hyattAwards.length !== 1) {
+        throw Error('Certificate renewal or spend generation failed');
+      }
+      const reloadedAwards = (await window.api.projection.all()).filter(p => p.certificate_kind === 'hyatt_spend');
+      if (reloadedAwards.length !== 1 || reloadedAwards[0].benefit.id !== hyattAwards[0].benefit.id) throw Error('Duplicate spend award');
       const diamond = all.find(b => b.program_id === 'delta_medallion' && b.title.startsWith('Diamond Medallion Choice Benefits'));
       const earned = await window.api.usages.getForBenefit(diamond.id);
       if (!earned.some(u => u.used_on.startsWith('2026'))) await window.api.usages.create({benefit_id:diamond.id, used_on:'2026-09-15'});
@@ -124,6 +140,7 @@ try {
     await command('Emulation.setDeviceMetricsOverride', { width: 1000, height: 640, deviceScaleFactor: 1, mobile: false });
     await command('Page.reload');
     await delay(1500);
+    assert(await evaluate("document.body.innerText.includes('Hyatt Category 1–4 Free Night Award ($15,000 spend,') && document.body.innerText.includes('Confirm the posted expiration date in Details.')"), 'Generated Hyatt certificate tile unavailable');
     assert(await evaluate("document.body.innerText.includes('Mark achieved') || document.body.innerText.includes('Achieved (click to undo)')"));
     await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Log nights earned')?.click()");
     await delay(500);

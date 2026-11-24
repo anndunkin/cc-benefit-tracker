@@ -2,6 +2,13 @@
 
 All notable changes to Credit Card Benefit Tracker follow this file. Versions follow a simple `.` release pattern (never a major bump).
 
+## v1.0.30 - 2026-11-24
+
+### Certificates
+- The tracker creates a separate renewal after an annual card free-night or companion certificate with a recorded expiration expires. The new certificate has a fresh usage balance and an expected expiration one year after the prior date. The expired award and its usage history remain intact.
+- The World of Hyatt card creates a separate Category 1–4 Free Night Award on the Credits & Usages dashboard when logged qualifying purchases, net of refunds, reach $15,000 in a calendar year. Existing spend qualifies too. Confirm the exact expiration from Hyatt in **Details → Save expiration only** if it is not already recorded; the tracker does not guess when Chase posts the award.
+- Expired free nights are labeled on the dashboard and excluded from the expiring credits report. Generated certificates and their renewal history are included in the local file and JSON backups.
+
 ## v1.0.29 - 2026-11-23
 
 ### Security

@@ -5,7 +5,7 @@ import type {
   Benefit, BenefitInput, Usage, UsageInput,
   BenefitProjection, RefreshChange, RefreshRun, RefreshChangeType, RefreshStatusInfo, RefreshUnmatched,
   AppFilePayload, ResetCadence, CardNetwork,
-  PointsCurrency, PointsCurrencyInput,
+  PointsCurrency, PointsCurrencyInput, CertificateAward,
 } from './types';
 import { APP_FILE_VERSION } from './types';
 import { choiceCost, isDiamondChoices, isMilestone, tracksEarnedNights, valueAtDate } from './benefitRules';
@@ -13,6 +13,8 @@ import { ensureRelease20Schema, migrateRelease20 } from './release20';
 import { periodKeyFor, periodLabelFor, nextResetIso, uses_max_for } from './periods';
 import { SEED_CARDS, SEED_PROGRAMS, SEED_BENEFITS, SEED_POINTS_CURRENCIES } from './benefitsSeed';
 import { requireWebLinkOrBlank, safeWebLinkOrNull } from './linkPolicy';
+import { certificateYearOffset, isAnnualCertificate, isCertificateDate, isCompanionCertificate, isHyattSpendCertificate } from './certificateRules';
+import { localIsoDate } from './expiringCredits';
 
 let db: Database.Database | null = null;
 
@@ -166,6 +168,16 @@ export function initSchema(database: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_benefits_card    ON benefits(card_id);
     CREATE INDEX IF NOT EXISTS idx_benefits_program ON benefits(program_id);
+
+    CREATE TABLE IF NOT EXISTS certificate_awards (
+      source_id INTEGER NOT NULL REFERENCES benefits(id) ON DELETE CASCADE,
+      award_id INTEGER NOT NULL UNIQUE REFERENCES benefits(id) ON DELETE CASCADE,
+      cycle_year INTEGER NOT NULL CHECK(cycle_year BETWEEN 1000 AND 9999),
+      starts_on TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('annual_renewal', 'hyatt_spend')),
+      CHECK(source_id <> award_id),
+      PRIMARY KEY(source_id, kind, cycle_year)
+    );
 
     CREATE TABLE IF NOT EXISTS usages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2415,6 +2427,12 @@ export function benefitUpdate(database: Database.Database, id: number, patch: Pa
   return benefitGetById(database, id)!;
 }
 export function benefitDelete(database: Database.Database, id: number): void {
+  // Retain a generated cycle's identity so deleting a benefit won't cause it
+  // to reappear on the next dashboard load. Normal benefits keep existing delete behavior.
+  if (database.prepare('SELECT 1 FROM certificate_awards WHERE award_id = ?').get(id)) {
+    database.prepare('UPDATE benefits SET is_active = 0 WHERE id = ?').run(id);
+    return;
+  }
   database.prepare('DELETE FROM benefits WHERE id = ?').run(id);
 }
 
@@ -2473,16 +2491,28 @@ function validateQuantity(value: unknown): number {
 export function usagesForBenefit(database: Database.Database, benefitId: number): Usage[] {
   return database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? ORDER BY used_on DESC, id DESC`).all(benefitId) as Usage[];
 }
+
+function validateCertificateUsage(database: Database.Database, b: Benefit, usedOn: string, expiry: string | null): void {
+  const award = database.prepare('SELECT * FROM certificate_awards WHERE award_id = ?').get(b.id) as CertificateAward | undefined;
+  if (!award && !isAnnualCertificate(b)) return;
+  if (award && b.is_active !== 1) throw new Error('This certificate is no longer active');
+  if (award?.kind === 'hyatt_spend' && !isCertificateDate(expiry)) throw new Error('Record the posted expiration date before logging a redemption');
+  if (isCertificateDate(expiry) && usedOn > expiry) throw new Error('Usage date is after the certificate expired');
+  if (!award && isCertificateDate(expiry) && usedOn <= certificateYearOffset(expiry, -1)) throw new Error('Usage date is before this certificate cycle began');
+  if (award?.kind === 'annual_renewal' && usedOn < award.starts_on) throw new Error('Usage date is before this certificate cycle began');
+}
+
 export function usageCreate(database: Database.Database, input: UsageInput): Usage {
   if (!Number.isInteger(input.benefit_id) || input.benefit_id <= 0) throw new Error('benefit_id is required');
   requireIsoDate('used_on', input.used_on);
   const quantity = validateQuantity(input.quantity ?? 1);
   const benefit = benefitGetById(database, input.benefit_id);
   if (!benefit) throw new Error(`Benefit ${input.benefit_id} not found`);
+  validateCertificateUsage(database, benefit, input.used_on, input.expiration_date === undefined ? benefit.expiration_date : input.expiration_date);
   const period_key = periodKeyFor(benefit.reset_cadence, input.used_on);
   return database.transaction(() => {
     if (input.expiration_date !== undefined) {
-      if (benefit.category !== 'free_night') throw new Error('Expiration entry applies only to free-night certificates');
+      if (benefit.category !== 'free_night' && !isCompanionCertificate(benefit)) throw new Error('Expiration entry applies only to certificates');
       benefitUpdate(database, benefit.id, { expiration_date: input.expiration_date });
     }
     const info = database.prepare(`
@@ -2498,6 +2528,7 @@ export function usageUpdate(database: Database.Database, id: number, patch: Part
   const benefit = benefitGetById(database, current.benefit_id);
   const used_on = patch.used_on ?? current.used_on;
   requireIsoDate('used_on', used_on);
+  if (benefit && used_on !== current.used_on) validateCertificateUsage(database, benefit, used_on, benefit.expiration_date);
   const quantity = validateQuantity(patch.quantity ?? current.quantity);
   const period_key = benefit ? periodKeyFor(benefit.reset_cadence, used_on) : current.period_key;
   database.prepare(`
@@ -2523,6 +2554,84 @@ export function usageDelete(database: Database.Database, id: number): void {
 }
 
 // ─── Projection ──────────────────────────────────────────────────────────────
+
+/** Reconcile the working file using real local today, not the dashboard's selected year. */
+export function reconcileCertificateAwards(database: Database.Database, today = localIsoDate()): void {
+  requireIsoDate('today', today);
+  const readAwards = database.prepare('SELECT * FROM certificate_awards WHERE source_id = ? AND kind = ? ORDER BY cycle_year DESC');
+  const insertAward = database.prepare('INSERT INTO certificate_awards (source_id, award_id, cycle_year, starts_on, kind) VALUES (?, ?, ?, ?, ?)');
+  const spendFor = database.prepare(`SELECT used_on, amount_usd FROM usages
+    WHERE benefit_id = ? AND used_on <= ? AND amount_usd IS NOT NULL ORDER BY used_on, id`);
+  const nextDay = (iso: string) => {
+    const date = new Date(iso);
+    date.setUTCDate(date.getUTCDate() + 1);
+    return date.toISOString().slice(0, 10);
+  };
+  database.transaction(() => {
+    const sources = database.prepare(`SELECT ${BEN_COLS.split(',').map(c => `b.${c.trim()}`).join(', ')}
+      FROM benefits b JOIN cards c ON c.id = b.card_id
+      WHERE b.category IN ('free_night', 'other') AND b.reset_cadence IN ('annual', 'spend_threshold')
+        AND b.is_active = 1 AND c.is_active = 1 AND c.is_visible = 1
+        AND NOT EXISTS (SELECT 1 FROM certificate_awards a WHERE a.award_id = b.id)`).all() as Benefit[];
+    for (const b of sources) {
+      const create = (kind: CertificateAward['kind'], year: number, starts: string, expiration: string | null) => {
+        const award = benefitCreate(database, {
+          card_id: b.card_id,
+          title: kind === 'hyatt_spend' ? `Hyatt Category 1–4 Free Night Award ($15,000 spend, ${year})` : `${b.title} (${year} expiration)`,
+          description: b.description,
+          category: b.category,
+          reset_cadence: 'one_time',
+          uses_per_period: kind === 'hyatt_spend' ? 1 : b.uses_per_period ?? 1,
+          value_usd: b.value_usd,
+          expiration_date: expiration,
+          sort_order: b.sort_order + 1,
+          source_url: safeWebLinkOrNull(b.source_url),
+          is_hidden: b.is_hidden,
+        }, false);
+        insertAward.run(b.id, award.id, year, starts, kind);
+      };
+
+      if (isAnnualCertificate(b)) {
+        const latest = (readAwards.all(b.id, 'annual_renewal') as CertificateAward[])[0];
+        const previous = latest ? benefitGetById(database, latest.award_id)! : b;
+        const expiry = previous.expiration_date;
+        if (!isCertificateDate(expiry) || expiry >= today) continue;
+        const thisYear = Number(today.slice(0, 4));
+        if (expiry.startsWith('9999-')) continue;
+        // Create the current renewal, not a series of imagined certificates for years
+        // when the app wasn't opened. Preserve the old certificate and all its uses.
+        let renewed = certificateYearOffset(expiry, Math.max(1, thisYear - Number(expiry.slice(0, 4))));
+        if (renewed < today) {
+          if (thisYear === 9999) continue;
+          renewed = certificateYearOffset(expiry, thisYear - Number(expiry.slice(0, 4)) + 1);
+        }
+        const year = Math.max(Number(renewed.slice(0, 4)), (latest?.cycle_year ?? 0) + 1);
+        if (year > 9999) continue;
+        const priorBoundary = certificateYearOffset(expiry, Number(renewed.slice(0, 4)) - Number(expiry.slice(0, 4)) - 1);
+        create('annual_renewal', year, nextDay(priorBoundary), renewed);
+      } else if (isHyattSpendCertificate(b)) {
+        const existing = new Set((readAwards.all(b.id, 'hyatt_spend') as CertificateAward[]).map(a => a.cycle_year));
+        const byYear = new Map<number, { cents: number; crossed: string | null }>();
+        for (const u of spendFor.all(b.id, today) as { used_on: string; amount_usd: number }[]) {
+          if (!isCertificateDate(u.used_on) || !Number.isSafeInteger(Math.round(u.amount_usd * 100))) continue;
+          const year = Number(u.used_on.slice(0, 4));
+          if (year < 1000 || existing.has(year)) continue;
+          const running = byYear.get(year) ?? { cents: 0, crossed: null };
+          running.cents += Math.round(u.amount_usd * 100);
+          running.crossed = running.cents >= 1_500_000 ? running.crossed ?? u.used_on : null;
+          byYear.set(year, running);
+        }
+        for (const [year, spend] of byYear) {
+          // An issuer can post the award after the threshold date. Don't pretend
+          // to know its actual issue or expiry; the user can record it on the award.
+          const recordedExpiry = isCertificateDate(b.expiration_date) && b.expiration_date.startsWith(`${year}-`)
+            ? b.expiration_date : null;
+          if (spend.crossed) create('hyatt_spend', year, spend.crossed, recordedExpiry);
+        }
+      }
+    }
+  }).immediate();
+}
 // Build one BenefitProjection per active benefit for the requested year. For
 // cadences that repeat within a year (semiannual, quarterly, monthly) we only
 // surface the CURRENT period; the UI can drill into history if desired.
@@ -2639,6 +2748,8 @@ export function computeProjections(database: Database.Database, refYear: number,
   const anchorDate = isCurrentYear
     ? today.toISOString().slice(0, 10)
     : `${refYear}-06-15`; // mid-year anchor for past/future views
+  const todayIso = today.toISOString().slice(0, 10);
+  const awards = new Map((database.prepare('SELECT * FROM certificate_awards').all() as CertificateAward[]).map(a => [a.award_id, a]));
 
   // Skip benefits belonging to cards the user has hidden. Program benefits
   // (card_id IS NULL) are always visible — they aren't card-scoped.
@@ -2657,6 +2768,14 @@ export function computeProjections(database: Database.Database, refYear: number,
 
   const out: BenefitProjection[] = [];
   for (const b of benefits) {
+    const award = awards.get(b.id);
+    const datedAnnual = !award && isAnnualCertificate(b) && isCertificateDate(b.expiration_date);
+    const expiry = isCertificateDate(b.expiration_date) ? b.expiration_date : null;
+    const annualStart = datedAnnual ? certificateYearOffset(expiry!, -1) : null;
+    if (award && (award.starts_on > `${refYear}-12-31`
+      || (award.cycle_year !== refYear && expiry !== null && expiry < `${refYear}-01-01`)
+      || (expiry === null && award.cycle_year !== refYear))) continue;
+    if (datedAnnual && (annualStart! >= `${refYear}-12-31` || expiry! < `${refYear}-01-01`)) continue;
     const originalBenefit = { ...b };
     if (b.prerequisite_benefit_id) {
       const parent = benefits.find(p => p.id === b.prerequisite_benefit_id);
@@ -2673,7 +2792,10 @@ export function computeProjections(database: Database.Database, refYear: number,
 
     // For year-scoped periods, look at all usages in that year (not just current sub-period)
     let usages: Usage[];
-    if (b.reset_cadence === 'unlimited' || b.reset_cadence === 'one_time' || b.reset_cadence === 'spend_threshold') {
+    if (datedAnnual) {
+      usages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ?
+        AND used_on > ? AND used_on <= ? ORDER BY used_on DESC, id DESC`).all(b.id, annualStart, expiry) as Usage[];
+    } else if (b.reset_cadence === 'unlimited' || b.reset_cadence === 'one_time' || b.reset_cadence === 'spend_threshold') {
       usages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? ORDER BY used_on DESC`).all(b.id) as Usage[];
     } else {
       usages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND period_key = ? ORDER BY used_on DESC`)
@@ -2683,7 +2805,9 @@ export function computeProjections(database: Database.Database, refYear: number,
     const uses_max = uses_max_for(b);
     const rawCount = usages.reduce((s, u) => s + u.quantity, 0);
     const uses_count = isMilestone(b) ? Math.min(1, rawCount) : rawCount;
-    const uses_remaining = uses_max === null ? null : Math.max(0, uses_max - uses_count);
+    const expired = (award || b.category === 'free_night' || isCompanionCertificate(b))
+      && b.reset_cadence !== 'spend_threshold' && expiry !== null && expiry < todayIso;
+    const uses_remaining = uses_max === null ? null : expired ? 0 : Math.max(0, uses_max - uses_count);
 
     // Per-period dollar burn. If a usage has no amount_usd (single-use toggle),
     // fall back to the benefit's value_usd only when the benefit stores a
@@ -2692,7 +2816,7 @@ export function computeProjections(database: Database.Database, refYear: number,
     const per_use_fallback = b.value_usd && b.value_usd > 0 ? b.value_usd : 0;
     const value_used_usd = usages.reduce((s, u) => s + (u.amount_usd ?? (valueAtDate(originalBenefit, u.used_on) ?? 0) * (u.quantity ?? 1)), 0);
     const total_value = uses_max !== null && b.value_usd !== null ? uses_max * b.value_usd : null;
-    const value_remaining_usd = total_value === null ? null : Math.max(0, total_value - value_used_usd);
+    const value_remaining_usd = total_value === null ? null : expired ? 0 : Math.max(0, total_value - value_used_usd);
 
     // ─── Annual (year-scoped) aggregates ───────────────────────────────────
     // For sub-year cadences (quarterly/monthly/semiannual), roll up the entire
@@ -2716,7 +2840,7 @@ export function computeProjections(database: Database.Database, refYear: number,
       : b.reset_cadence === 'monthly' && originalBenefit.value_effective_date
         ? Array.from({ length: 12 }, (_, i) => (valueAtDate(originalBenefit, `${refYear}-${String(i + 1).padStart(2, '0')}-01`) ?? 0) * (uses_max ?? 1)).reduce((a, v) => a + v, 0)
         : total_value * periodsPerYear;
-    const annual_value_remaining_usd = annual_value_usd === null ? null : Math.max(0, annual_value_usd - annual_value_used_usd);
+    const annual_value_remaining_usd = annual_value_usd === null ? null : expired ? 0 : Math.max(0, annual_value_usd - annual_value_used_usd);
 
     // ─── Per-period history for the reference year ─────────────────────────
     // For dashboard mini-strips: one entry per period (Q1..Q4, Jan..Dec, H1/H2,
@@ -2732,7 +2856,9 @@ export function computeProjections(database: Database.Database, refYear: number,
     if (b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null) {
       const spendUsages = database.prepare(`SELECT ${USE_COLS} FROM usages WHERE benefit_id = ? AND substr(used_on, 1, 4) = ?`)
         .all(b.id, String(refYear)) as Usage[];
-      spend_progress_usd = spendUsages.reduce((s, u) => s + (u.amount_usd ?? 0), 0);
+      spend_progress_usd = isHyattSpendCertificate(b)
+        ? spendUsages.filter(u => u.used_on <= todayIso).reduce((s, u) => s + Math.round((u.amount_usd ?? 0) * 100), 0) / 100
+        : spendUsages.reduce((s, u) => s + (u.amount_usd ?? 0), 0);
     }
 
     // ─── Status ────────────────────────────────────────────────────────────
@@ -2746,7 +2872,9 @@ export function computeProjections(database: Database.Database, refYear: number,
     //   • otherwise (points-based / status_boost / toggle) → status keys off
     //                           uses_count vs uses_max as before
     let status: BenefitProjection['status'];
-    if (b.reset_cadence === 'unlimited') {
+    if (expired) {
+      status = 'expired';
+    } else if (b.reset_cadence === 'unlimited') {
       status = 'unlimited';
     } else if (b.reset_cadence === 'spend_threshold' && b.spend_threshold_usd !== null) {
       if ((spend_progress_usd ?? 0) >= b.spend_threshold_usd) status = 'exhausted';
@@ -2782,8 +2910,9 @@ export function computeProjections(database: Database.Database, refYear: number,
       spend_progress_usd,
       period_history,
       status,
+      ...(award ? { certificate_kind: award.kind } : {}),
       usages,
-      next_reset: nextResetIso(b.reset_cadence, anchorDate),
+      next_reset: datedAnnual ? null : nextResetIso(b.reset_cadence, anchorDate),
     });
   }
   return out;
@@ -3112,6 +3241,7 @@ export function buildFilePayload(database: Database.Database): AppFilePayload {
   return {
     seed_version: metaGet(database, 'seed_version') ?? '1.0.20',
     benefit_choices: database.prepare('SELECT * FROM benefit_choices').all() as NonNullable<AppFilePayload['benefit_choices']>,
+    certificate_awards: database.prepare('SELECT * FROM certificate_awards').all() as CertificateAward[],
     version: APP_FILE_VERSION,
     exported_at: new Date().toISOString(),
     cards:            cardsGetAll(database),
@@ -3128,10 +3258,14 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
   if (!payload || typeof payload !== 'object' || payload.version !== APP_FILE_VERSION) {
     throw new Error(`Unsupported file version: ${payload?.version}`);
   }
+  if (payload.certificate_awards !== undefined && !Array.isArray(payload.certificate_awards)) {
+    throw new Error('Invalid certificate awards list');
+  }
   const tx = database.transaction(() => {
     database.exec(`
       DELETE FROM refresh_changes; DELETE FROM refresh_runs;
       DELETE FROM benefit_choices;
+      DELETE FROM certificate_awards;
       DELETE FROM usages; DELETE FROM benefits;
       DELETE FROM programs; DELETE FROM cards; DELETE FROM points_currencies;
     `);
@@ -3184,6 +3318,17 @@ export function importFilePayload(database: Database.Database, payload: AppFileP
     }
     for (const c of payload.benefit_choices ?? []) {
       benefitSetChoices(database, c.parent_id, c.ref_year, JSON.parse(c.selections_json), false);
+    }
+    const insertAward = database.prepare('INSERT INTO certificate_awards (source_id, award_id, cycle_year, starts_on, kind) VALUES (?, ?, ?, ?, ?)');
+    const awardIds = new Set((payload.certificate_awards ?? []).map(a => a?.award_id));
+    for (const a of payload.certificate_awards ?? []) {
+      if (!a || !Number.isSafeInteger(a.source_id) || !Number.isSafeInteger(a.award_id) || !Number.isInteger(a.cycle_year)
+        || awardIds.has(a.source_id) || !isCertificateDate(a.starts_on)
+        || (a.kind !== 'annual_renewal' && a.kind !== 'hyatt_spend')) throw new Error('Invalid certificate award');
+      const source = benefitGetById(database, a.source_id);
+      const award = benefitGetById(database, a.award_id);
+      if (!source?.card_id || !award || source.card_id !== award.card_id) throw new Error('Certificate award must match its source card');
+      insertAward.run(a.source_id, a.award_id, a.cycle_year, a.starts_on, a.kind);
     }
     const insRun = database.prepare(`
       INSERT INTO refresh_runs (id, started_at, completed_at, source_notes, status)

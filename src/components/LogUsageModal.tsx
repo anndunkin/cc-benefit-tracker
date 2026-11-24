@@ -3,6 +3,7 @@ import type { Benefit, Usage } from '../../electron/types';
 import { fmtUsd } from '../lib/format';
 import { isMilestone, tracksEarnedNights, valueAtDate } from '../../electron/benefitRules';
 import { localIsoDate } from '../../electron/expiringCredits';
+import { isCompanionCertificate, isHyattSpendCertificate } from '../../electron/certificateRules';
 
 export default function LogUsageModal({
   benefitId, onClose, onSaved, refYear,
@@ -44,6 +45,7 @@ export default function LogUsageModal({
   // of value_usd. Otherwise a benefit is "count-based" when it has no per-use
   // dollar value (SkyClub visits, systemwide upgrades, etc.) — no dollar field.
   const isSpendThreshold = !!benefit && benefit.reset_cadence === 'spend_threshold';
+  const hyattSpend = !!benefit && isHyattSpendCertificate(benefit);
   const isCountBased =
     !!benefit &&
     !isSpendThreshold &&
@@ -54,6 +56,8 @@ export default function LogUsageModal({
   const showAmountField = !isCountBased;
   const earnedNights = !!benefit && tracksEarnedNights(benefit);
   const milestone = !!benefit && isMilestone(benefit);
+  const hasCertificateDate = !!benefit && !milestone && !hyattSpend
+    && (benefit.category === 'free_night' || isCompanionCertificate(benefit));
 
   async function saveExpiration() {
     if (saving) return;
@@ -71,7 +75,7 @@ export default function LogUsageModal({
       await window.api.usages.create({
         benefit_id: benefitId,
         quantity: earnedNights ? Number(quantity) : 1,
-        ...(benefit?.category === 'free_night' && !milestone ? { expiration_date: expiration || null } : {}),
+        ...(hasCertificateDate ? { expiration_date: expiration || null } : {}),
         used_on: usedOn,
         // Count-based benefits never carry a dollar amount.
         amount_usd: isCountBased ? null : (amount === '' ? null : parseFloat(amount)),
@@ -111,7 +115,7 @@ export default function LogUsageModal({
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
-        {benefit.category === 'free_night' && !milestone && <div className="mb-4 border-b border-slate-200 pb-4">
+        {hasCertificateDate && <div className="mb-4 border-b border-slate-200 pb-4">
           <label className="label" htmlFor="certificate-expiration">Certificate expiration date</label>
           <input id="certificate-expiration" type="date" className="input" value={expiration} onChange={e => setExpiration(e.target.value)} />
           <button className="btn-ghost text-xs mt-2" disabled={saving} onClick={saveExpiration}>Save expiration only</button>
@@ -120,7 +124,7 @@ export default function LogUsageModal({
 
         <div className={showAmountField ? 'grid grid-cols-2 gap-3' : ''}>
           <div>
-            <label className="label" htmlFor="entry-date">{milestone ? 'Date achieved' : earnedNights ? 'Date earned' : 'Date used'}</label>
+            <label className="label" htmlFor="entry-date">{milestone ? 'Date achieved' : earnedNights ? 'Date earned' : isSpendThreshold ? 'Date spent' : 'Date used'}</label>
             <input id="entry-date" type="date" className="input" value={usedOn} onChange={e => {
               setUsedOn(e.target.value);
               if (benefit.value_effective_date) setAmount(String(valueAtDate(benefit, e.target.value) ?? ''));
@@ -144,8 +148,9 @@ export default function LogUsageModal({
               />
               {isSpendThreshold && (
                 <div className="text-xs text-slate-500 mt-1">
-                  Enter dollars spent this purchase (or a monthly total). Progress toward
-                  ${benefit.spend_threshold_usd?.toLocaleString() ?? '—'} accumulates across all entries.
+                  Enter new qualifying spend (a purchase or a monthly total), not an amount already logged. Progress toward
+                  ${benefit.spend_threshold_usd?.toLocaleString() ?? '—'} accumulates across entries.
+                  {hyattSpend && ' The earned certificate will appear separately on the dashboard.'}
                 </div>
               )}
             </div>

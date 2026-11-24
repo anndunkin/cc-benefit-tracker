@@ -271,7 +271,8 @@ export interface BenefitProjection {
   // status: 'used' (>=cap or count>=max), 'partial' (some usage), 'unused'
   // (period elapsed or current with no activity yet), 'future' (period has not started).
   period_history: PeriodHistoryEntry[];
-  status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked';
+  status: 'available' | 'partial' | 'exhausted' | 'unlimited' | 'locked' | 'expired';
+  certificate_kind?: 'annual_renewal' | 'hyatt_spend';
   usages: Usage[];                 // for this period only
   next_reset: string | null;       // ISO date when it resets
 }
@@ -391,6 +392,7 @@ export interface RefreshStatusInfo {
 export interface AppFilePayload {
   seed_version?: string;
   benefit_choices?: { parent_id: number; ref_year: number; selections_json: string }[];
+  certificate_awards?: CertificateAward[];
   version: number;
   exported_at: string;
   cards: Card[];
@@ -400,6 +402,14 @@ export interface AppFilePayload {
   refresh_runs: RefreshRun[];
   refresh_changes: RefreshChange[];
   points_currencies: PointsCurrency[];
+}
+
+export interface CertificateAward {
+  source_id: number;
+  award_id: number;
+  cycle_year: number;
+  starts_on: string;
+  kind: 'annual_renewal' | 'hyatt_spend';
 }
 
 export interface FileResult {

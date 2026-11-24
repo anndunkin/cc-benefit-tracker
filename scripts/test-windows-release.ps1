@@ -35,7 +35,15 @@ try {
   Run-Setup $setup
   if ((Get-AuthenticodeSignature $exe).Status -ne 'Valid') { throw 'Installed application signature invalid' }
   if ((Get-AuthenticodeSignature (Join-Path $installDir "Uninstall $product.exe")).Status -ne 'Valid') { throw 'Uninstaller signature invalid' }
+  $rebuilt = (Get-FileHash node_modules/better-sqlite3/build/Release/better_sqlite3.node -Algorithm SHA256).Hash
+  $vendored = (Get-FileHash prebuilt-win32-x64/better_sqlite3.node -Algorithm SHA256).Hash
+  $installedBinding = Get-ChildItem "$installDir/resources" -Recurse -Filter 'better_sqlite3.node' | Select-Object -First 1
+  if (-not $installedBinding -or ($rebuilt -ne $vendored) -or ((Get-FileHash $installedBinding.FullName -Algorithm SHA256).Hash -ne $rebuilt)) {
+    throw 'Rebuilt, vendored and installed SQLite bindings must match'
+  }
+  Write-Host "PASS: rebuilt, vendored and installed SQLite binding SHA-256 $rebuilt"
   Smoke
+  Write-Host 'PASS: certificate reconciliation, deduplication and rendered Hyatt award tile'
   Write-Host 'PASS: 1.0.19 to current-version upgrade, native SQLite ABI, renderer, preload, preserved data and new controls'
   # Reinstall while app is running exercises the custom running-process check.
   Run-Setup $setup

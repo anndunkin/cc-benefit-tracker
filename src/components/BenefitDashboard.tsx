@@ -53,7 +53,24 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
     setProjections(proj); setCards(cs); setPrograms(ps);
     setLoading(false);
   }
-  useEffect(() => { reload(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [refYear]);
+  useEffect(() => {
+    reload();
+    let day = localIsoDate();
+    const checkDate = () => {
+      const current = localIsoDate();
+      if (current !== day) {
+        day = current;
+        reload();
+      }
+    };
+    window.addEventListener('focus', checkDate);
+    const timer = window.setInterval(checkDate, 60_000);
+    return () => {
+      window.removeEventListener('focus', checkDate);
+      window.clearInterval(timer);
+    };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [refYear]);
 
   // Build the set of benefit IDs whose current-period cap has been met (uses_count >= uses_max).
   // Prerequisite tiers are hidden until their parent's cap is met. Untracked (uses_max === null)
@@ -183,7 +200,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
         } else if (cadence !== 'all') {
           if (p.benefit.reset_cadence !== cadence) return false;
         }
-        if (!showExhausted && p.status === 'exhausted') return false;
+        if (!showExhausted && (p.status === 'exhausted' || p.status === 'expired')) return false;
       }
       return true;
     });
@@ -301,7 +318,7 @@ export default function BenefitDashboard({ mode, title, subtitle, emptyMessage }
             </select>
             <label className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
               <input type="checkbox" checked={showExhausted} onChange={e => setShowExhausted(e.target.checked)} />
-              Show exhausted
+              Show used or expired
             </label>
             <label className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
               <input type="checkbox" checked={showHidden} onChange={e => setShowHidden(e.target.checked)} />
@@ -440,6 +457,8 @@ function ConsumableTile({
   // enter the actual amount.
   const isSingleUse = usesMax === 1 && !isDollarValued && !isSpendThreshold;
   const isMarkedUsed = isSingleUse && usesCount >= 1;
+  const isExpired = p.status === 'expired';
+  const needsExpiry = p.certificate_kind === 'hyatt_spend' && !b.expiration_date;
 
   async function toggleUsed() {
     if (busy) return;
@@ -535,9 +554,13 @@ function ConsumableTile({
       </div>
 
       {b.is_hidden === 1 && <div className="text-xs text-slate-500">Hidden from default view and totals</div>}
-      {b.expiration_date && (
-        <div className="text-xs text-amber-700 dark:text-amber-400">📅 Expires {b.expiration_date}</div>
+      {b.expiration_date && !isSpendThreshold && (
+        <div className="text-xs text-amber-700 dark:text-amber-400">
+          {isExpired ? 'Expired' : p.certificate_kind === 'annual_renewal' && b.is_user_modified === 0 ? 'Expected expiration' : 'Expires'} {b.expiration_date}
+          {isExpired && usesCount === 0 ? ' (unused)' : ''}
+        </div>
       )}
+      {needsExpiry && <div className="text-xs text-amber-700 dark:text-amber-400">Earned from logged spend. Confirm the posted expiration date in Details.</div>}
       {b.expiration_note && (
         <div className="text-xs text-amber-700 dark:text-amber-400">⏱ {b.expiration_note}</div>
       )}
@@ -565,7 +588,9 @@ function ConsumableTile({
       })()}
 
       <div className="flex items-center gap-2 mt-1 flex-wrap">
-        {isSingleUse ? (
+        {isExpired || needsExpiry ? (
+          <button className="btn-ghost text-xs py-1 px-2" onClick={onLogUsage}>Details…</button>
+        ) : isSingleUse ? (
           <>
             <button
               className={`text-xs py-1 px-2 rounded-md font-medium ${
@@ -585,7 +610,7 @@ function ConsumableTile({
           </>
         ) : (
           <button className="btn-primary text-xs py-1 px-2" onClick={onLogUsage}>
-            {earnedNights ? 'Log nights earned' : '+ Log usage'}
+            {earnedNights ? 'Log nights earned' : isSpendThreshold ? 'Log spend' : '+ Log usage'}
           </button>
         )}
         <button className="btn-ghost text-xs py-1 px-2" disabled={busy} onClick={async () => {

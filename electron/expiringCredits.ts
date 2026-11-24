@@ -168,7 +168,7 @@ export function toExpiringItem(p: BenefitProjection, todayIso: string): Expiring
   // Whether anything is left is decided below from the dollars or the uses,
   // not from the projection's status: a four-pass benefit with one pass logged
   // at its full dollar value still has three passes left.
-  if (p.uses_max === null || p.status === 'locked' || p.status === 'unlimited') return null;
+  if (p.uses_max === null || p.status === 'locked' || p.status === 'unlimited' || p.status === 'expired') return null;
 
   const expiry = expiryFor(p);
   if (!expiry || expiry.expires_on < todayIso) return null;

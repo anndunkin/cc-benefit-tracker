@@ -8,7 +8,7 @@ import {
   benefitsGetAll, benefitsForCard, benefitsForProgram, benefitGetById,
   benefitCreate, benefitUpdate, benefitDelete, benefitGetChoices, benefitSetChoices,
   usagesForBenefit, usageCreate, usageUpdate, usageDelete,
-  computeProjections,
+  computeProjections, reconcileCertificateAwards,
   refreshGetStatus, refreshPendingChanges,
   refreshApproveChange, refreshRejectChange, refreshApplyRun, refreshDiscardRun,
   applyDataMigrations,
@@ -380,6 +380,7 @@ handleIpc('usages:delete', (_e, id: number) => { usageDelete(getDatabase(), id);
 // year) during the evening.
 handleIpc('projection:all', (_e, refYear?: number) => {
   const today = localIsoDate();
+  reconcileCertificateAwards(getDatabase(), today);
   return computeProjections(getDatabase(), refYear ?? parseInt(today.slice(0, 4), 10), utcDateFor(today));
 });
 
@@ -596,6 +597,7 @@ handleIpc('expiring:list', (event): ExpiringReport => {
   if (!fromAppWindow(event)) throw new Error('Not available from this page.');
   const today = localIsoDate();
   const year = parseInt(today.slice(0, 4), 10);
+  reconcileCertificateAwards(getDatabase(), today);
   return buildExpiringReport(computeProjections(getDatabase(), year, utcDateFor(today)), today);
 });
 
